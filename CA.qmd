@@ -1,0 +1,503 @@
+---
+title: "Correspondence analysis (CA)"
+params:
+  colsite: "burlywood4"
+  colspp: "cornflowerblue"
+---
+
+```{r, results='hide', message=FALSE}
+#| code-fold: true
+
+# Paths
+library(here)
+
+# Multivariate analysis
+library(ade4)
+library(adegraphics)
+
+# Matrix algebra
+library(expm)
+
+# Plots
+library(ggplot2)
+source(here("functions/plot.R"))
+```
+
+*The contents of this page relies heavily on [@legendre2012].*
+
+## Introduction
+
+Correspondence analysis (CA) was developed independently by several authors between the 1930s and 1960s. It has been mainly applied to analysis of *ecological data tables* (species $\times$ environment) such as the bat data we will analyze here.
+
+Notably, Hill discovered it in 1973 with an iterative method that he called reciprocal averaging. It involves ordering species with sites initially positioned randomly, reciprocally order sites with species, etc. This iterative procedure converges to reach the same results as what is achieved with CA's first axis.
+
+CA is designed to analyze contingency tables (count tables) such $Y$:
+
+```{r, echo = FALSE, message = FALSE}
+dat <- readRDS(here("data/Barbaro2012.rds"))
+Y <- dat$comm
+
+r <- dim(Y)[1]
+c <- dim(Y)[2]
+
+plotmat(r = r, c = c)
+```
+
+Here is a preview of $Y$ with our example dataset:
+
+```{r, echo = FALSE, message = FALSE}
+knitr::kable(Y)
+```
+
+```{r}
+(r <- dim(Y)[1])
+(c <- dim(Y)[2])
+```
+
+This table represents the abundance of different bird species (columns) at different sites (rows) in New Zealand.
+
+More generally CA, can be used to analyze tables which are dimensionnally homogeneous and contain no negative values.
+
+CA preserves $\chi^2$ distances $D$ between rows and columns of the contingency table:
+
+$$
+D(x_1, x_2) = \sqrt{\sum_{j = 1}^p \frac{1}{y_{\cdot j}/y_{\cdot \cdot}}\left(\frac{y_{1j}}{y_{1\cdot}} -  \frac{y_{2j}}{y_{2\cdot}}\right)^2}
+$$
+
+Where $x_1$ and $x_2$ represent two items of the rows/columns. $p$ is the number of rows (if $x_1$ and $x_2$ are items of columns) or columns else.
+
+$y_{\cdot j}$ represent either:
+
+-   if $x_1$ and $x_2$ are items of the columns: the sum of the $j$-th row. For a species x environment table, it is the total number of individuals in the $j$-th site.
+-   if $x_1$ and $x_2$ are items of the rows: the sum of the $j$-th column. For a species x environment table, it is the total number of individuals of the $j$-th species.
+
+$y_{\cdot \cdot}$ is the sum of all individuals of the table.
+
+$\frac{y_{1j}}{y_{1\cdot}}$ are relative frequencies of individuals per rows (if $x_1$ and $x_2$ are items of the rows) or columns.
+
+For example, we compute the $\chi^2$ distance between `sp1` and `sp2`:
+
+```{r}
+# Get how much each site contributed to the total count of species
+freq <- apply(Y, 2, FUN = function(x) x/sum(x))
+
+# Get total number of individuals of bats in all sites
+(ytot <- sum(Y))
+
+sqrt( sum(1/(rowSums(Y)/ytot)*(freq[, "sp1"] - freq[, "sp2"])^2 ) )
+```
+
+And between sites `1` and `2`:
+
+```{r}
+# Get the relative composition of species for each site
+freq <- t(apply(Y, 1, FUN = function(x) x/sum(x)))
+
+sqrt( sum(1/(colSums(Y)/ytot)*(freq["1",] - freq["2", ])^2 ) )
+```
+
+## Computation
+
+::: {.callout-tip title="*TL;DR*"}
+Given a data matrix $Y$, we "center-scale" this matrix ($\bar{Q}$).
+
+We can diagonalize matrices $\bar{Q} \bar{Q'}$ and $\bar{Q}' \bar{Q}$.
+
+$U$ ($c \times c$) contains the loadings of the columns (species) of the contingency table.
+
+$$
+\bar{Q}' \bar{Q} =  U \Lambda U^{-1}
+$$
+
+$\hat{U}$ ($r \times c$) contains the loadings of the rows (sites) of the contingency table.
+
+$$
+\bar{Q} \bar{Q}' =  \hat{U} \Lambda \hat{U}^{-1}
+$$
+:::
+
+1.  Transform the table
+
+We transform values of the contingency table $Y$ with counts $f_{ij}$ into proportions $p_{ij}$:
+
+$$
+P = Y/f_{\cdot \cdot}
+$$
+
+With our example data:
+
+```{r}
+P <- Y/sum(Y)
+```
+
+Then we transform values of this table into a quantity related to $\chi^2$ values $\bar{Q}$:
+
+$$
+\bar{Q} = [\bar{q}_{ij}] = \left[ \frac{p_{ij} - p_{i\cdot} p_{\cdot j}}{\sqrt{p_{i\cdot} p_{\cdot j}}} \right]
+$$
+
+The $\bar{q}_{ij}$ values are equal to the $\chi$ values, a constant apart: $\bar{q}_{ij} = \chi_{ij}/\sqrt{f_{\cdot \cdot}}$.
+
+With our data:
+
+```{r}
+# Initialize Qbar matrix
+Qbar <- matrix(ncol = ncol(Y), nrow = nrow(Y))
+colnames(Qbar) <- colnames(Y)
+rownames(Qbar) <- rownames(Y)
+
+for(i in 1:nrow(Y)) { # For each row
+  for (j in 1:ncol(Y)) { # For each column
+    # Do the sum
+    pi_ <- sum(P[i, ])
+    p_j <- sum(P[, j])
+    
+    # Compute the transformation
+    Qbar[i, j] <- (P[i, j] - (pi_*p_j))/sqrt(pi_*p_j)
+  }
+}
+```
+
+2.  Singular value decomposition of $\bar{Q}$
+
+$$
+\bar{Q} = \hat{U}WU'
+$$
+
+Where $\bar{Q}$ is $r \times c$, $\hat{U}$ is $r \times c$, $W$ is a $c \times c$ diagonal matrix (assuming $r \geq c$; the table can be transposed to meet this condition) and $U'$ is $c \times c$.
+
+Note that the last eigenvalue of this SVD will always be null (due to the centering).
+
+```{r}
+sv <- svd(Qbar)
+
+Uhat <- sv$u
+W <- diag(sv$d)
+U <- sv$v
+Uprime <- t(U)
+
+length(sv$d)
+
+sv$d # Last eigenvalue is zero
+```
+
+With the SVD, we can rewrite $\bar{Q}' \bar{Q}$:
+
+$$
+\bar{Q}' \bar{Q} = U W' \hat{U'} \hat{U} W U'
+$$
+
+We have $\hat{U}' \hat{U} = I$ (because $\hat{U}$ is orthonormal), so:
+
+$$
+\bar{Q}' \bar{Q} =  U W' W U'
+$$
+
+If we rewrite $W' W$ as $\Lambda$, and since $U' = U^{-1}$ ($U$ is orthonormal), then we can write this as a diagonalization:
+
+$$
+\bar{Q}' \bar{Q} =  U \Lambda U^{-1}
+$$
+
+Similarly, we can rewrite $\bar{Q} \bar{Q}'$:
+
+$$
+\bar{Q} \bar{Q}' =  \hat{U} \Lambda \hat{U}^{-1}
+$$
+
+With that, we wouldn't even need the SVD in the first place (a classical diagonalization of $\bar{Q} \bar{Q}'$/$\bar{Q}' \bar{Q}$ works.)
+
+```{r}
+Lambda <- W %*% t(W)
+lambda <- diag(Lambda)
+
+# Diagonalize Q'Q ---
+dg1 <- eigen(t(Qbar) %*% Qbar)
+
+# Check eigenvalues
+length(dg1$values)
+dg1$values # Last value is zero
+
+# Eigenvalues are equal to the SVD values
+all((dg1$values - lambda) < 10e-10)
+
+# Eigenvectors are equal to U
+# dg1$vectors
+# U
+
+# The vectors are in opposite directions so we use the absolute value
+all(abs(dg1$vectors[, 1:(c-1)]/U[, 1:(c-1)]) - 1 < 10e-10)
+```
+
+```{r}
+# Diagonalize QQ' ---
+dg2 <- eigen(Qbar %*% t(Qbar))
+
+# Check eigenvalues
+length(dg2$values) # r eigenvalues
+dg2$values # Last r - (c - 1) values are zero
+
+# Eigenvalues are equal to the SVD values
+# We test only the first values, the rest are zero
+all((dg2$values[1:c] - lambda) < 10e-10)
+
+# Eigenvectors are equal to Uhat (we test only eigenvectors for non-null eigenvalues)
+all(abs(dg2$vectors[, 1:(c-1)]/Uhat[, 1:(c-1)]) - 1 < 10e-10)
+```
+
+## Scalings
+
+::: {.callout-tip title="*TL;DR*"}
+Once we diagonalized the stuff, there is still a question of scaling to plot them in the multivariate plane.
+
+**Columns (species) can be represented with:**
+
+-   $U$ (the matrix of eigenvectors : $\bar{Q}'Q = U \Lambda U^{-1}$) (unscaled)
+-   $V = D(p_{\cdot j})^{-1/2} U$ (scaling type 1)
+-   $\hat{F} = V \Lambda^{1/2}$ (scaling type 2)
+-   $V \Lambda^{1/4}$ (scaling type 3).
+
+**Rows (sites) can be represented with:**
+
+-   $\hat{U}$ (the matrix of eigenvectors: $\bar{Q} \bar{Q}' = \hat{U} \Lambda \hat{U}^{-1}$) (unscaled)
+-   $\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}$ (scaling type 2)
+-   $F = \hat{V} \Lambda^{1/2}$ (scaling type 1)
+-   $\hat{V} \Lambda^{1/4}$ (scaling type 3)
+:::
+
+There are several scalings used in CA, which are useful to plot both variables on the same plot (biplot).
+
+First, the original coordinates are scaled to the square root of the margins of the proportion matrix.
+
+-   For the columns (species), we have $V = D(p_{\cdot j})^{-1/2} U$.
+-   For the rows (sites), we have $\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}$.
+
+To get the position of these in the multivariate space, we have to use $\Lambda$:
+
+-   Position of the columns (species) in the multivariate space ($U$): $\hat{F} = V \Lambda^{1/2}$
+
+-   Position of the rows (sites) in the multivariate space ($\hat{U}$): $F = \hat{V} \Lambda^{1/2}$
+
+Since these examples do not take into account the null eigenvalues, one column (= multivariate axis) will be discarded as it is not interpretable.
+
+With our example, we have:
+
+```{r}
+# Scale species (columns)
+V <- diag(1/sqrt(colSums(P))) %*% U
+dim(V)
+
+# Get species coordinates in the multivariate space (columns)
+Fhat <- V %*% diag(sqrt(lambda))
+dim(Fhat)
+all(Fhat[, ncol(Fhat)] < 10e-10) # The last values will be discarded (all coordinates are zero)
+```
+
+```{r}
+# Scale sites (rows)
+Vhat <- diag(1/sqrt(rowSums(P))) %*% Uhat
+dim(Vhat)
+
+# Get sites coordinates in the multivariate space (rows)
+F_ <- Vhat %*% diag(sqrt(lambda))
+dim(F_)
+all(F_[, ncol(F_)] < 10e-10) # The last values discarded (all coordinates are zero)
+```
+
+**These transformed coordinates that are used in the outputs of `dudi.coa`.**
+
+```{r, results='hide'}
+ca <- dudi.coa(Y, 
+               nf = c-1, scannf = FALSE)
+
+# Species (columns)
+all(abs(ca$co/Fhat[, 1:(c-1)]) - 1 < 10e-10)
+
+# Sites (rows)
+all(abs(ca$li/F_[, 1:(c-1)]) - 1 < 10e-10)
+```
+
+Now, there are different types of scalings for biplots. Below, we assume a sites x species matrix:
+
+-   Type 1: use $F$ (sites) and and $V$ (species). This preserves $\chi^2$ distances between sites on the plot. Here, sites are positioned at the centroid of species.
+
+```{r, fig.show='hide', echo=FALSE}
+scatter(ca, method = 2,
+        posieig = 'none')
+
+s.label(ca$c1,
+        ppoints.col = params$colspp,
+        plabels.col = params$colspp,
+        plabels.optim = TRUE) # Spp are constrained at variance 1
+s.label(ca$li, 
+        ppoints.col = params$colsite,
+        plabels.col = params$colsite,
+        plabels.optim = TRUE,
+        add = TRUE) # Sites distances are preserved
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+
+plot(x = V[, 1], y = V[, 2],
+     col = NULL,
+     asp = 1)
+text(x = V[, 1], y = V[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+text(x = F_[, 1], y = F_[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+-   Type 2: use $\hat{F}$ (species) and and $\hat{V}$ (sites). This preserves $\chi^2$ distances between species on the plot. Here, species are positioned at the centroid of sites.
+
+```{r, fig.show='hide', echo=FALSE}
+scatter(ca, method = 3, 
+        posieig = 'none')
+
+s.label(ca$l1, 
+        ppoints.col = params$colsite,
+        plabels.col = params$colsite,
+        plabels.optim = TRUE) # Sites are constrained at variance 1
+s.label(ca$co,
+        ppoints.col = params$colspp,
+        plabels.col = params$colspp,
+        plabels.optim = TRUE,
+        add = TRUE) # Spp distances are preserved
+
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+
+plot(x = Vhat[, 1], y = Vhat[, 2],
+     col = NULL,
+     asp = 1)
+text(x = Vhat[, 1], y = Vhat[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+text(x = Fhat[, 1], y = Fhat[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+-   Type 3: a compromise between scalings 1 and 2. It preserves none of the $\chi^2$ distances and is obtained with $\hat{V}\Lambda^{1/4}$ (for sites) and $V\Lambda^{1/4}$ (for species).
+
+```{r, fig.show='hide', echo=FALSE}
+# This is not exactly adequate
+scatter(ca, method = 1,
+        posieig = 'none')
+
+# This is
+sites_ade4 <- as.matrix(ca$l1) %*% diag(ca$eig^(1/4))
+s.label(sites_ade4, 
+        ylim = c(-5, 5),
+        xlim = c(-5, 5),
+        ppoints.col = params$colsite,
+        plabels.col = params$colsite,
+        plabels.optim = TRUE)
+spp_ade4 <- as.matrix(ca$c1) %*% diag(ca$eig^(1/4))
+s.label(spp_ade4,
+        ppoints.col = params$colspp,
+        plabels.col = params$colspp,
+        plabels.optim = TRUE,
+        add = TRUE)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+sites <- Vhat %*% diag(lambda^(1/4))
+spp <- V %*% diag(lambda^(1/4))
+
+plot(x = spp[, 1], y = spp[, 2],
+     col = NULL,
+     ylim = c(-5, 5),
+     xlim = c(-5, 5),
+     asp = 1)
+text(x = sites[, 1], y = sites[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+text(x = spp[, 1], y = spp[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+-   Type 4: use $F$ (sites) and $\hat{F}$ (species). Then, both $\chi^2$ distances are preserved. It is useful for a table crossing two factors.
+
+```{r, fig.show='hide', echo=FALSE}
+s.label(ca$li, 
+        ylim = c(-2, 2),
+        xlim = c(-3, 2),
+        ppoints.col = params$colsite,
+        plabels.col = params$colsite,
+        plabels.optim = TRUE)
+s.label(ca$co,
+        ppoints.col = params$colspp,
+        plabels.col = params$colspp,
+        plabels.optim = TRUE,
+        add = TRUE)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+plot(x = F_[, 1], y = F_[, 2],
+     col = NULL,
+     ylim = c(-2, 2),
+     xlim = c(-2.5, 1),
+     asp = 1)
+text(x = F_[, 1], y = F_[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+text(x = Fhat[, 1], y = Fhat[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+## Interpretation
+
+$V$ and $\hat{V}$ are related with the following equation:
+
+$$
+\hat{V} \Lambda^{1/2} = D(p_{i\cdot})^{-1/2}\bar{Q}D(p_{\cdot j})^{1/2}V
+$$
+
+This equation relates the ordination of rows (sites) ($\hat{V}$) to the ordination of columns (species) ($V$). The "conversion factor" is $\Lambda^{1/2}$, which translates to $\sqrt{\lambda_h}$ along principal axis $h$.
+
+Indeed, the eigenvalue $\lambda_h$ is a measure of the correlation of the rows and columns ordinations along axis $h$.
+
+If species have a unimodal (bell-shaped) response along the gradient defined by the sites ordination along a given axis, then their position should be close to their niche optimum.
+
+Depending on he position of, say, species, in the multivariate space, there are several interpretations:
+
+-   species that are absent from most sites: often at the edge, close to a site where they happen to be present. They have little influence on the analysis.
+-   species that are in the center: either have their optimum there, they have a multimodal niche or their niche is not influenced by the latent variables of the ordination axes.
+-   species found away from the center but not at the edges: more likely to display clear relationships with the axis
+
+::: callout-note
+Rare species are generally not very interesting because they are exceptions, not a general tendency. So some authors propose strategies to remove them, notably an iterative procedure. First do the complete CA, then remove the species seen one, twice... etc. Note the total inertia and the eigenvalues. When there is a jump, stop.
+:::
+
+::: callout-note
+When there is a succession of species, along an hypothetical gradient, the CA may lead to an arch shape. There are techniques to detrend it, but knowing how to interpret this effect is probably more important.
+:::

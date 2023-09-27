@@ -1,0 +1,29 @@
+project:
+  type: website
+  render: 
+    - index.qmd
+    - CA.qmd
+    - CCA.qmd
+    - dcCA.qmd
+
+website:
+  title: "The theory of multivariate analyses"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: CA.qmd
+        text: Correspondence analysis (CA)
+      - href: CCA.qmd
+        text: Canonical CA (CCA)
+      - href: dcCA.qmd
+        text: Double-constrained CA (dc-CA)
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    toc-depth: 3
+
+bibliography: references.bib

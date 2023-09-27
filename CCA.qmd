@@ -1,0 +1,774 @@
+---
+title: "Canonical Correspondence Analysis (CCA)"
+params:
+  colsite: "burlywood4"
+  colspp: "cornflowerblue"
+---
+
+```{r, results='hide', message=FALSE}
+#| code-fold: true
+
+# Paths
+library(here)
+
+# Multivariate analysis
+library(ade4)
+library(adegraphics)
+
+# Matrix algebra
+library(expm)
+
+# Plots
+library(ggplot2)
+source(here("functions/plot.R"))
+```
+
+*The contents of this page relies heavily on [@legendre2012].*
+
+## Introduction
+
+CCA is a method of the family of *canonical* or *direct gradient analyses*, in which a matrix of predictor variables intervenes in the computation of the ordination vectors.
+
+CCA is an asymmetric method because the predictor variables and the response variables are not equivalent in the analysis.
+
+CCA takes two matrices in input:
+
++ A data matrix $Y$ ($r \times c$)
++ A matrix of predictor variables $E$ ($r \times l$)
+
+```{r, echo = FALSE, message = FALSE}
+dat <- readRDS(here("data/Barbaro2012.rds"))
+Y <- dat$comm
+E <- dat$envir
+
+r <- dim(Y)[1]
+c <- dim(Y)[2]
+l <- dim(E)[2]
+
+plotmat(r = r, c = c, l = l, 
+        E = TRUE)
+```
+
+Here, $Y$ represents the abundance of different bird species (columns) at different sites (rows):
+
+```{r, echo = FALSE, message = FALSE}
+knitr::kable(Y)
+```
+
+$E$ represents environmental variables (columns) associated to each site (rows).
+
+```{r, echo = FALSE, message = FALSE}
+knitr::kable(E)
+```
+
+```{r}
+(r <- dim(Y)[1])
+(c <- dim(Y)[2])
+(l <- dim(E)[2])
+```
+
+
+
+## Computation
+
+::: {.callout-tip title="*TL;DR*"}
+We have a data matrix $Y$ ($r \times c$) and a matrix $E$ ($r \times l$) of predictors variables.
+
+We regress $\bar{Q}$ ("centered" $Y$) on $E_{stand}$ (which is the centered and scaled $E$ matrix): 
+
+$$
+\hat{\bar{Q}} = D(p_{i\cdot})^{1/2} E_{stand}B
+$$
+
+Then, we diagonalize matrix $S_{\hat{\bar{Q}}'\hat{\bar{Q}}} = \hat{\bar{Q}}'\hat{\bar{Q}}$.
+
+$$
+S_{\hat{\bar{Q}}'\hat{\bar{Q}}} =  U \Lambda U^{-1}
+$$ 
+
+The matrix $U$ ($c \times \text{mindim}$) contains the loadings of the columns (species) of the contingency table. There are $\text{mindim} = \min(r-1, c, l)$ non-null eigenvalues.
+
+
+Then, we can find the loadings rows (sites) $\hat{U}$ ($r \times \text{mindim}$) from the columns (species) loadings using the following formula:
+
+$$
+\hat{U} = \bar{Q} U \Lambda^{-1/2}
+$$
+:::
+
+
+### Transform matrix
+
+We start by "centering" the matrix $Y$ to get $\bar{Q}$ (as with CA).
+
+Here, we have:
+
+```{r}
+#| code-fold: true
+P <- Y/sum(Y)
+
+# Initialize Qbar matrix
+Qbar <- matrix(ncol = ncol(Y), nrow = nrow(Y))
+colnames(Qbar) <- colnames(Y)
+rownames(Qbar) <- rownames(Y)
+
+for(i in 1:nrow(Y)) { # For each row
+  for (j in 1:ncol(Y)) { # For each column
+    # Do the sum
+    pi_ <- sum(P[i, ])
+    p_j <- sum(P[, j])
+    
+    # Compute the transformation
+    Qbar[i, j] <- (P[i, j] - (pi_*p_j))/sqrt(pi_*p_j)
+  }
+}
+```
+
+```{r, echo=FALSE}
+knitr::kable(Qbar)
+```
+
+### Weights on $E$
+
+We standardize $E$ as $E_{stand}$, but we standardize so that the variables associated to the sites wihch have more observations have more weight.
+
+To do that, we use the inflated matrix $E_{infl}$ to compute its mean $\bar{E}_{infl}$  and standard deviation $\sigma(E_{infl})$ per column. In $E_{infl}$, the rows corresponding to each site are duplicates as many times as there are observations for this given site (so that $E_{infl}$ is of dimension $y_{\cdot \cdot} \times l$).
+
+$$
+E_{stand} = \frac{E - \bar{E}_{infl}}{\sigma(E_{infl})}
+$$
+
+With our data: first, we compute $E_{infl}$:
+
+```{r}
+#| code-fold: true
+Einfl <- matrix(data = 0,
+                ncol = ncol(E), 
+                nrow = sum(Y))
+colnames(Einfl) <- colnames(E)
+rownames(Einfl) <- 1:nrow(Einfl)
+
+# Get the number of times to duplicate each site
+nrep_sites <- rowSums(Y)
+
+nrstart <- 0
+for (i in 1:nrow(E)) {
+  ri <- as.matrix(E)[i, ]
+  
+  rname <- rownames(E)[i]
+  
+  # Get how many times to duplicate this site
+  nr <- nrep_sites[as.character(rname)]
+  
+  Einfl[(nrstart+1):(nrstart+nr), ] <- matrix(rep(ri, nr), 
+                                              nrow = nr, 
+                                              byrow = TRUE)
+  
+  rownames(Einfl)[(nrstart+1):(nrstart+nr)] <- paste(rname,
+                                                     1:nr,
+                                                     sep = "_")
+  nrstart <- nrstart + nr
+}
+paste("Dimension:", paste(dim(Einfl), collapse = " "))
+knitr::kable(head(Einfl, 10))
+```
+
+Then, we compute the mean and standard deviation per column and standardize $E$.
+
+```{r}
+Einfl_mean <- apply(Einfl, 2, mean)
+
+n <- nrow(Einfl)
+Einfl_sd <- apply(Einfl, 2, 
+                  function(x) sd(x)*sqrt((n-1)/n))
+```
+
+```{r}
+Estand <- scale(E, 
+                center = Einfl_mean,
+                scale = Einfl_sd)
+knitr::kable(Estand)
+```
+
+### Regression
+
+After that, we perform the weighted multiple linear regression of $\bar{Q}$ by $E_{stand}$. Each row of $\bar{Q}$ $\bar{q}$ is approximated by $\hat{\bar{q}}$ using multiple linear regression on $E_{stand}$: $\hat{\bar{q}} = b_0 + b_1 e_{1} + \ldots + b_e e_{l}$, where $e_i$ are columns of $E_{stand}$ and $b_i$ are regression coefficients. In a matrix form, it is written:
+
+$$
+\hat{\bar{Q}} = D(p_{i\cdot})^{1/2}E_{stand}B
+$$
+
+Where
+
+$$
+B = [E_{stand}' D(p_{i\cdot}) E_{stand}]^{-1}E_{stand}'D(p_{i\cdot})^{1/2}\bar{Q}
+$$
+
+With our example:
+
+```{r}
+# Diagonal matrix weights
+Dpi_ <-  diag(rowSums(P))
+colnames(Dpi_) <- rownames(P)
+
+# Regression coefficient
+B <- solve(t(Estand) %*% Dpi_ %*% Estand) %*% t(Estand) %*% sqrt(Dpi_) %*% Qbar
+```
+
+Now, we can get the predicted values for $\bar{Q}$. For instance, let's plot predicted vs observed values for site 2:
+
+```{r}
+# Compute predicted values
+Qbarhat <- sqrt(Dpi_) %*% Estand %*% B
+colnames(Qbarhat) <- colnames(Qbar)
+rownames(Qbarhat) <- rownames(Qbar)
+dim(Qbarhat)
+
+# Get predicted and observed values for one site
+ind <- 2
+
+pred <- Qbarhat[ind, ]
+obs <- Qbar[ind, ]
+```
+
+```{r}
+#| code-fold: true
+df <- data.frame(pred, obs, names = names(pred))
+df<- df |> 
+  tidyr::pivot_longer(cols = c("pred", "obs"))
+
+ggplot(df, aes(x = names, y = value, col = name)) +
+  geom_point() +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+### Diagonalization
+
+Then, we diagonalize the covariance matrix of predicted values $S_{\hat{\bar{Q}}' \hat{\bar{Q}}}$.
+
+First, we compute the covariance matrix (note that here we don't divide by the degrees of freedom).
+
+$$
+S_{\hat{\bar{Q}}' \hat{\bar{Q}}} = \hat{\bar{Q}}' \hat{\bar{Q}}
+$$
+
+```{r}
+Sqq <- t(Qbarhat) %*% Qbarhat
+```
+
+```{r, include = FALSE}
+# It is equal to that
+Sqe <- t(Qbarhat) %*% sqrt(Dpi_) %*% as.matrix(Estand)
+See <- t(Estand) %*% Dpi_ %*% as.matrix(Estand)
+Sqq2 <- Sqe %*% solve(See) %*% t(Sqe)
+all(Sqq/Sqq2 - 1 < 10e-10)
+```
+
+We diagonalize $S_{\hat{\bar{Q}}' \hat{\bar{Q}}}$:
+
+$$
+S_{\hat{\bar{Q}}' \hat{\bar{Q}}} = U \Lambda U^{-1}
+$$
+
+$\Lambda$ is the matrix of eigenvalues (there are $\min(r-1, c, l)$ non-null eigenvalues) and $U$ contains the columns (species) loadings.
+
+```{r}
+neig <- min(c(r-1, c, l))
+```
+
+Here, $r-1 =$ `r r-1`, $c =$ `r c` and $l =$ `r l` so the minimum (and the number of eigenvalues) is `r neig`.
+
+```{r}
+eig <- eigen(Sqq)
+
+(lambda <- eig$values) # There are l = 6 non-null eigenvalues
+lambda <- lambda[1:neig]
+
+Lambda <- diag(lambda)
+U <- eig$vectors[, 1:neig] # We keep only the eigenvectors
+rownames(U) <- colnames(Y)
+```
+
+Finally, we can get the ordination of rows (sites) by using the link between rows and columns ordination:
+
+$$
+\hat{U} = \bar{Q} U \Lambda^{-1/2}
+$$
+
+```{r}
+Uhat <- Qbar %*% U %*% diag(lambda^(-1/2))
+rownames(Uhat) <- rownames(Qbar)
+
+dim(Uhat)
+```
+
+
+
+## Scaling
+
+::: {.callout-tip title="*TL;DR*"}
+As with CA, we have the following scalings:
+
+-   Columns (species) scores: $U$, $V = D(p_{\cdot j})^{-1/2}U$, $\hat{F} = V \Lambda^{1/2}$ and $V \Lambda^{1/4}$
+-   Rows (sites) scores: $\hat{U}$, $\hat{V} = D(p_{\cdot j})^{-1/2}\hat{U}$, $F = \hat{V} \Lambda^{1/2}$ and $\hat{V} \Lambda^{1/4}$
+
+There are also scores for the predicted values of the row (sites) scores:
+
+-   Scaling type 1: $Z_1 = D(p_{i\cdot})^{-1/2}\hat{Y}U$
+-   Scaling type 2: $Z_2 = D(p_{i\cdot})^{-1/2}\hat{Y}U \Lambda^{-1/2}$
+-   Scaling type 3: $Z_3 = D(p_{i\cdot})^{-1/2}\hat{Y}U \Lambda^{-1/4}$
+
+There are also scalings for explanatory variables:
+
+-   Scaling type 1: $BS_1 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/2}$
+-   Scaling type 2: $BS_2 = E_{stand}' D(p_{i\cdot})Z_{stand}$
+-   Scaling type 3: $BS_3 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/4}$
+:::
+
+```{r}
+ca <- dudi.coa(Y, 
+               nf = c-1, 
+               scannf = FALSE)
+cca <- pcaiv(dudi = ca, 
+             df = E,
+             scannf = FALSE,
+             nf = neig)
+
+lambda[1:neig]/cca$eig # Eigenvalues are the same as computed manually
+```
+
+### Compute scaling
+
+In CCA, just like with CA, there are different scalings (types 1, 2 and 3). So there are scalings for:
+
+-   columns (species)
+
+```{r}
+# Scale species (columns)
+V <- diag(1/sqrt(colSums(P))) %*% U
+dim(V)
+
+# Get species coordinates in the multivariate space (columns)
+Fhat <- V %*% diag(sqrt(lambda))
+dim(Fhat)
+```
+
+-   rows (sites)
+
+```{r}
+# Scale sites (rows)
+Vhat <- diag(1/sqrt(rowSums(P))) %*% Uhat
+dim(Vhat)
+
+# Get sites coordinates in the multivariate space (rows)
+F_ <- Vhat %*% diag(sqrt(lambda))
+dim(F_)
+```
+
+-   predicted rows (sites scores that are a combination of explanatory variables).
+
+    -   Scaling type 1: $Z_1 = D(p_{i\cdot})^{-1/2}\hat{Y}U$
+
+    ```{r}
+    Z1 <- diag(diag(Dpi_)^(-1/2)) %*% Qbarhat %*% U
+    dim(Z1)
+    ```
+
+    -   Scaling type 2: $Z_2 = D(p_{i\cdot})^{-1/2}\hat{Y}U \Lambda^{-1/2}$
+
+    ```{r}
+    Z2 <- diag(diag(Dpi_)^(-1/2)) %*% Qbarhat %*% U %*% diag(lambda^(-1/2))
+    dim(Z2)
+    ```
+
+    -   Scaling type 3: $Z_3 = D(p_{i\cdot})^{-1/2}\hat{Y}U \Lambda^{-1/4}$
+
+    ```{r}
+    Z3 <- diag(diag(Dpi_)^(-1/2)) %*% Qbarhat %*% U %*% diag(lambda^(-1/4))
+    dim(Z3)
+    ```
+
+-   explanatory variables (environmental factors). The scores for the explanatory variables are computed from matrix $Z_{stand}$: so we first need to standardize $Z$ into $Z_{stand}$ (the computation can involve $Z_1$, $Z_2$ or $Z_3$ and give the same result).
+
+```{r}
+#| code-fold: true
+
+# Compute inflated matrix ------
+Zinfl <- matrix(data = 0,
+                ncol = ncol(Z1), 
+                nrow = sum(Y))
+rownames(Zinfl) <- 1:nrow(Zinfl)
+# Give names to Z1
+rownames(Z1) <- rownames(Y)
+
+# Get the number of times to duplicate each site
+nrep_sites <- rowSums(Y)
+
+nrstart <- 0
+for (i in 1:nrow(Z1)) {
+  ri <- Z1[i, ]
+  
+  rname <- rownames(Z1)[i]
+  
+  # Get how many times to duplicate this site
+  nr <- nrep_sites[as.character(rname)]
+  
+  Zinfl[(nrstart+1):(nrstart+nr), ] <- matrix(rep(ri, nr), 
+                                              nrow = nr, 
+                                              byrow = TRUE)
+  
+  rownames(Zinfl)[(nrstart+1):(nrstart+nr)] <- paste(rname, 
+                                                     1:nr, 
+                                                     sep = "_")
+  nrstart <- nrstart + nr
+}
+
+paste("Dimension of Zinfl:", 
+      paste(dim(Zinfl), collapse = " "))
+
+# Compute mean/sd ------
+Zinfl_mean <- apply(Zinfl, 2, mean)
+
+n <- nrow(Zinfl)
+Zinfl_sd <- apply(Zinfl, 2, 
+                  function(x) sd(x)*sqrt((n-1)/n))
+
+# Compute Zstand ------
+Zstand <- scale(Z1, 
+                center = Zinfl_mean,
+                scale = Zinfl_sd)
+
+paste("Dimension of Zstand:", 
+      paste(dim(Zstand), collapse = " "))
+```
+
+-   Scaling type 1: $BS_1 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/2}$
+
+```{r}
+BS1 <- t(Estand) %*% Dpi_ %*% Zstand %*% sqrt(Lambda)
+dim(BS1)
+```
+
+-   Scaling type 2: $BS_2 = E_{stand}' D(p_{i\cdot})Z_{stand}$
+
+```{r}
+BS2 <- t(Estand) %*% Dpi_ %*% Zstand
+dim(BS2)
+```
+
+-   Scaling type 3: $BS_3 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/4}$
+
+```{r}
+BS3 <- t(Estand) %*% Dpi_ %*% Zstand %*% diag(lambda^(1/4))
+dim(BS3)
+```
+
+::: callout-note
+$\hat{F}$, $Z_1$ and $BS_2$ are the values used in the outputs of `pcaiv`.
+
+```{r}
+cca$co[, 1]/Fhat[, 1]
+cca$li[, 1]/Z1[, 1]
+cca$cor[, 1]/BS2[, 1]
+```
+:::
+
+### Plot scalings
+
+Let's plot graphs for different scalings.
+
+-   Scaling type 1 (rows (sites): $F$ or $Z_1$, columns (species): $V$, explanatory variable: $BS_1$). Here, $\chi^2$ distances between rows (sites) are preserved they are positioned at the centroid of species.
+
+```{r, include = FALSE}
+# This corresponds to the graph with predicted sites position (below, with Z1)
+
+s.label(cca$c1, # Species constrained at variance 1
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp)
+s.label(cca$li, # Sites position by averaging
+        plabels.optim = TRUE,
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite,
+        add = TRUE)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+
+plot(x = V[, 1], y = V[, 2],
+     col = NULL,
+     asp = 1,
+     main = "Observed sites scores")
+text(x = V[, 1], y = V[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+text(x = F_[, 1], y = F_[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+arrows(x0 = rep(0, nrow(BS1)),
+       y0 = rep(0, nrow(BS1)),
+       x1 = BS1[, 1], 
+       y1 = BS1[, 2],
+       length = 0.1,
+       asp = 1)
+text(x = BS1[, 1], 
+     y = BS1[, 2],
+     label = colnames(E),
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+The plot with the predicted sites scores should show the same coordinates for sites as with `ade4`:
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+
+plot(x = V[, 1], y = V[, 2],
+     col = NULL,
+     asp = 1,
+     main = "Predicted sites scores")
+text(x = V[, 1], y = V[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+text(x = Z1[, 1], y = Z1[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+arrows(x0 = rep(0, nrow(BS1)),
+       y0 = rep(0, nrow(BS1)),
+       x1 = BS1[, 1], 
+       y1 = BS1[, 2],
+       length = 0.1,
+       asp = 1)
+text(x = BS1[, 1], 
+     y = BS1[, 2],
+     label = colnames(E),
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+-   Scaling type 2 (rows (sites): $\hat{V}$ or $Z_2$, columns (species): $\hat{F}$, explanatory variable: $BS_2$). Here, $\chi^2$ distances between columns (species) are preserved they are positioned at the centroid of sites.
+
+On these graphs, species are in the same position as with `ade4`.
+
+```{r, include=FALSE}
+# This corresponds to the graph with predicted sites position (below, with Z2)
+
+s.label(cca$l1, # Sites variance is 1
+        plabels.optim = TRUE,
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite)
+s.label(cca$co, # Spp positionned by averaging
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp,
+        add = TRUE)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+
+plot(x = Fhat[, 1], y = Fhat[, 2],
+     col = NULL,
+     asp = 1,
+     xlim = c(-3, 3),
+     ylim = c(-3, 3),
+     main = "Observed sites scores")
+text(x = Fhat[, 1], y = Fhat[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+text(x = Vhat[, 1], y = Vhat[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+arrows(x0 = rep(0, nrow(BS2)),
+       y0 = rep(0, nrow(BS2)),
+       x1 = BS2[, 1], 
+       y1 = BS2[, 2],
+       length = 0.1,
+       asp = 1)
+text(x = BS2[, 1], 
+     y = BS2[, 2],
+     label = colnames(E),
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+
+plot(x = Fhat[, 1], y = Fhat[, 2],
+     col = NULL,
+     asp = 1,
+     xlim = c(-4, 4),
+     ylim = c(-4, 4),
+     main = "Predicted sites scores")
+text(x = Fhat[, 1], y = Fhat[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+text(x = Z2[, 1], y = Z2[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+arrows(x0 = rep(0, nrow(BS2)),
+       y0 = rep(0, nrow(BS2)),
+       x1 = BS2[, 1], 
+       y1 = BS2[, 2],
+       length = 0.1,
+       asp = 1)
+text(x = BS2[, 1], 
+     y = BS2[, 2],
+     label = colnames(E),
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+-   Scaling type 3 (rows (sites): $\hat{V} \Lambda^{1/4}$ or $Z_3$, columns (species): $V \Lambda^{1/4}$, explanatory variable: $BS_3$)
+
+```{r, include=FALSE}
+# This corresponds to the graph with predicted sites position (below, with Z3)
+
+sites_ade4 <- as.matrix(cca$l1) %*% diag(cca$eig^(1/4))
+spp_ade4 <- as.matrix(cca$c1) %*% diag(cca$eig^(1/4))
+
+s.label(sites_ade4,
+        plabels.optim = TRUE,
+        xlim = c(-4, 4),
+        ylim = c(-4, 4),
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite)
+s.label(spp_ade4,
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp,
+        add = TRUE)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+sites <- Vhat %*% diag(lambda^(1/4))
+spp <- V %*% diag(lambda^(1/4))
+
+plot(x = spp[, 1], y = spp[, 2],
+     col = NULL,
+     asp = 1,
+     xlim = c(-3, 3),
+     ylim = c(-3, 3),
+     main = "Observed sites scores")
+text(x = spp[, 1], y = spp[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+text(x = sites[, 1], y = sites[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+arrows(x0 = rep(0, nrow(BS3)),
+       y0 = rep(0, nrow(BS3)),
+       x1 = BS3[, 1], 
+       y1 = BS3[, 2],
+       length = 0.1,
+       asp = 1)
+text(x = BS3[, 1], 
+     y = BS3[, 2],
+     label = colnames(E),
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+plot(x = spp[, 1], y = spp[, 2],
+     col = NULL,
+     xlim = c(-3, 3),
+     ylim = c(-3, 3),
+     asp = 1,
+     main = "Predicted sites scores")
+text(x = spp[, 1], y = spp[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+text(x = Z3[, 1], y = Z3[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+arrows(x0 = rep(0, nrow(BS3)),
+       y0 = rep(0, nrow(BS3)),
+       x1 = BS3[, 1], 
+       y1 = BS3[, 2],
+       length = 0.1,
+       asp = 1)
+text(x = BS3[, 1], 
+     y = BS3[, 2],
+     label = colnames(E),
+     asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+## Interpretation
+
+In CCA, each ordination axis corresponds to a linear combination of the explanatory variables that maximizes the explained variance in the response data.
+
+This analysis constrains rows (sites) scores to be linear combinations of the environmental variables (scaling $Z_i$).
+
+Species can be ordered along environmental variables axes by projecting species coordinates on the vector of this variable. This gives species niche optimum, but there are strong assumptions:
+
+-   unimodal distribution of niches preferences along the variable of interest
+-   species distributions are indeed controlled by the environment
+-   the study gradient is long enough to capture the range of species abundance variation.
+
+The part of variation explained by the environmental variables can be computed as 
+$$
+\frac{\sum_k \lambda_k(CCA)}{\sum_l \lambda_l(CA)}
+$$
+
+```{r}
+sum(lambda)/sum(ca$eig)
+```
+
+Here, the environmental variables explain `r round(sum(lambda)/sum(ca$eig), 3)*100` % of the total variation.
+
+Warning: in CCA, using noisy or not relevant explanatory variables leads to spurious relationships.
+
+### Residual analysis
+
+In order to examinate residuals, a CA can be performed on the table of residuals $\bar{Q}_{res}$:
+
+$$
+\bar{Q}_{res} = \bar{Q} - \hat{\bar{Q}}
+$$
+
+```{r}
+Qres <- Qbar - Qbarhat
+
+res_pca <- dudi.pca(Qres, scannf = FALSE, nf = 27)
+
+scatter(res_pca)
+```
+
+### Tests of significance
+
+It is possible to test the significance of the the relationship between $E$ and $Y$ with a permutation test.
+
+```{r}
+randtest(cca, nrepet = 999)
+```

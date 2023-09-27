@@ -1,0 +1,706 @@
+---
+title: "Double-constrained Correspondence Analysis (dc-CA)"
+params:
+  colsite: "burlywood4"
+  colspp: "cornflowerblue"
+---
+
+
+```{r, results='hide', message=FALSE}
+#| code-fold: true
+
+# Paths
+library(here)
+
+# Multivariate analysis
+library(ade4)
+library(adegraphics)
+
+# dc-CA
+source(here("functions/dpcaiv2-ade4.R"))
+
+# Matrix algebra
+library(expm)
+
+# Plots
+library(ggplot2)
+source(here("functions/plot.R"))
+```
+
+
+*The contents of this page relies heavily on [@terbraak2018].*
+
+## Introduction
+
+dc-CA was developed as a natural extension of CCA and has been used to study the relationship between species traits and environmental variables.
+
+In dc-CA, we have 3 matrices:
+
++ A data matrix $Y$ ($r \times c$)
++ A matrix of predictor variables $E$ ($r \times l$)
++ A matrix of predictor variables $T$ ($c \times k$)
+
+
+```{r, echo = FALSE, message = FALSE}
+dat <- readRDS(here("data/Barbaro2012.rds"))
+Y <- dat$comm
+E <- dat$envir
+T_ <- dat$traits
+
+r <- dim(Y)[1]
+c <- dim(Y)[2]
+l <- dim(E)[2]
+k <- dim(T_)[2]
+
+plotmat(r = r, c = c, 
+        E = TRUE, T_ = TRUE,
+        l = l, k = k)
+```
+
+The aim of dc-CA is to find a linear combination of the predictor variables in $E$ and $T$ (environmental variables and traits) that maximizes the correlation.
+
+Below are these matrices for our data:
+
+$Y =$
+```{r, echo = FALSE, message = FALSE}
+knitr::kable(Y)
+```
+
+
+$E =$
+```{r, echo = FALSE, message = FALSE}
+knitr::kable(E)
+```
+
+$T =$
+```{r, echo = FALSE, message = FALSE}
+knitr::kable(T_)
+```
+
+```{r}
+(r <- dim(Y)[1])
+(c <- dim(Y)[2])
+(l <- dim(E)[2])
+(k <- dim(T_)[2])
+```
+
+dc-CA must not have to many traits compared to species: that is a disadvantage compared to RLQ, but on the other hand dc-CA allows to see relationships that RLQ would miss [@terbraak2018].
+
+There are several ways to perform dc-CA [@terbraak2018], notably:
+
+-   singular value decomposition (the method used here)
+-   an iterative method *à la* reciprocal averaging
+-   canonical correlation analysis between $T$ et $E$, weighted by $Y$
+
+## Computation
+
+::: {.callout-tip title="*TL;DR*"}
+We perform the SVD of $D = [E_{center}' D(y_{i \cdot}) E_{center}]^{-1/2} E_{center}' Y T_{center} [T_{center}' D(y_{\cdot j}) T_{center}]^{-1/2}$
+
+$$
+D = P \Lambda_{SDV} Q'
+$$
+This allows us to find the eigenvectors $P$ (rows or environment eigenvectors) and $Q$ (columns or traits eigenvectors).
+
+The eigenvalues of the dc-CA are the squared eigenvalues of the SVD: $\Lambda_{dc-CA} = \Lambda_{SVD}^2$
+
+There are $\min(k, l)$ non-null eigenvalues???
+
+Then, the regression coefficients for explanatory variables can be found with 
+
++ $B = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P$ (row explanatory variables = environmental variables)
++ $C = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q$ (columns explanatory variables = species traits)
+
+The rows/column scores are detailed below in the Scalings section.
+:::
+
+
+First, we need to center the traits and environment matrices (resp. $T_{cent}$ and $E_{cent}$). To do that, we have to compute "inflated" versions of these matrices matching the occurrence counts in $Y$.
+
+$$
+E_{stand} = E - \bar{E}_{infl} =\left[e_i \sum_i y_{i\cdot}e_i/y_{\cdot\cdot} \right]
+$$
+
+$$
+T_{stand} = T - \bar{T}_{infl} = \left[t_j \sum_j y_{\cdot j}t_j/y_{\cdot\cdot} \right]
+$$
+
+With our data:
+
+```{r}
+# Center E -----
+yi_ <- rowSums(Y)
+Ecenter <- matrix(nrow = nrow(E), ncol = ncol(E))
+
+for(i in 1:ncol(Ecenter)) {
+  Ecenter[, i] <- E[, i] - sum(E[, i]*yi_)/sum(Y)
+}
+# This is the same as computing a mean on inflated data matrix Einfl and centering E with these means
+
+# Center T -----
+y_j <- colSums(Y)
+Tcenter <- matrix(nrow = nrow(T_), ncol = ncol(T_))
+rownames(Tcenter) <- rownames(T_)
+colnames(Tcenter) <- colnames(T_)
+
+for(j in 1:ncol(Tcenter)) {
+  Tcenter[, j] <- T_[, j] - (sum(T_[, j]*y_j)/sum(Y))
+}
+```
+
+```{r}
+# Check centering -----
+M1 <- matrix(rep(1, nrow(Y)), nrow = 1)
+all((M1 %*% diag(rowSums(Y)) %*% Ecenter) < 10e-10)
+
+M1 <- matrix(rep(1, ncol(Y)), nrow = 1)
+all((M1 %*% diag(colSums(Y)) %*% Tcenter) < 10e-10)
+```
+
+Maximizing the fourth-corner correlation means finding $\hat{u}$ and $u$ that maximize $\hat{u}'Yu$ (where $\hat{u}$ are the sites (rows) scores and $u$ are the species (columns) scores).
+
+$\hat{u}$ and $u$ are linear combinations of traits and environmental variables: $\hat{u} = E_{center}b$ and $u = T_{center}c$. 
+
+So in the end, we need to maximize $\hat{u}'Yu$ with respect to the coefficients vectors $b$ and $c$:
+
+$$
+\max_{b, c}(\hat{u}'Yu) = \max_{b, c}\left(\left[E_{center}b\right]'Y  T_{center}c \right) 
+$$
+
+::: {.callout-note}
+These equations are written for the first axis, but we can also write them in matrix form:
+
+$$
+\max_{B, C}(\hat{U}'YU) = \max_{B, C}\left(\left[E_{center}B\right]'Y T_{center}C \right) 
+$$
+::: 
+
+In addition, we introduce the following constraint on the norm of the columns vectors of $\hat{U}$ and $U$: $\hat{u}' D(y_{i\cdot}) \hat{u} = 1$ and $u' D(y_{\cdot j})u = 1$. In fact, tjese constraints will be relaxed later depending on the scaling (see below).
+
+To find the coefficients $B$ and $C$ defined above, we need to diagonalize the following matrices $M$ and $M_2$:
+
++ To find $B$, we must diagonalize $M$:
+$$
+M = \left[E_{center}' D(y_{i\cdot}) E_{center} \right]^{-1} E_{center}'YT_{center} \left[T_{center}' D(y_{\cdot j}) T_{center} \right]^{-1} T_{center}' Y' E_{center}
+$$
+Where matrices $D(y_{i \cdot})$ and $D(y_{\cdot j})$ are the diagonal matrices with the column and row sums (respectively). They are analogous to matrices $D(p_{i \cdot})$ and $D(p_{\cdot j})$ defined for CA and CCA (but we use $Y$ instead of $P$ to define the margins).
+We can view $M$ as:
+$$
+M = \hat{E}_{center} \hat{T}_{center} = \beta T_{center} \gamma E_{center}
+$$
+With $\beta = \left[E_{center}' D(y_{i\cdot}) E_{center} \right]^{-1} E_{center}'Y$ and $\gamma = \left[T_{center}' D(y_{\cdot j}) T_{center} \right]^{-1} T_{center}' Y'$. Here, we predict the environment with traits so that $\hat{E}_{center} = \beta T_{center}$ and the traits with the environment so that $\hat{T}_{center} = \gamma E_{center}$.
+So we maximize the correlation between $\hat{E}_{center}$ and $\hat{T}_{center}$.
+
++ Similarly, to find $C$, we must diagonalize $M_2$:
+
+$$
+M_2 = \left[T_{center}' D(y_{\cdot j}) T_{center} \right]^{-1} T_{center}' Y' E_{center} \left[E_{center}' D(y_{i\cdot}) E_{center} \right]^{-1} E_{center}'YT_{center}
+$$
+Here, we can view $M_2$ as:
+$$$M_2 = \hat{T}_{center} \hat{E}_{center} = \gamma E_{center} \beta T_{center}$$
+
+The eigenvectors matrices of these diagonalizations give us $B$ and $C$:
+
+$$
+M = B \Lambda_b B^{-1} ~~ \text{and} ~~ M_2 = C \Lambda_c C^{-1}
+$$
+
+We can either diagonalize $M$ and $M_2$ of perform a single SVD of a matrix $D$ defined below and get a similar result. Both methods are presented below.
+
+### Diagonalizations
+
+We diagonalize $M$ and $M_2$:
+
+```{r}
+# Define weights
+Dyi_ <- diag(rowSums(Y))
+Dy_j <- diag(colSums(Y))
+
+# Compute M
+M <- solve(t(Ecenter) %*% Dyi_ %*% Ecenter) %*% t(Ecenter) %*% Y %*% Tcenter %*% solve(t(Tcenter) %*% Dy_j %*% Tcenter) %*% t(Tcenter) %*% t(Y) %*% Ecenter
+
+# Compute M2
+M2 <- solve(t(Tcenter) %*% Dy_j %*% Tcenter) %*% t(Tcenter) %*% t(Y) %*% Ecenter %*% solve(t(Ecenter) %*% Dyi_ %*% Ecenter) %*% t(Ecenter) %*% Y %*% Tcenter 
+```
+
+
+```{r}
+# Diagonalize M
+eigB <- eigen(M)
+lambdaB <- eigB$values
+lambdaB # All non-null eigenvectors
+vB <- eigB$vectors
+
+# Diagonalize M2
+eigC <- eigen(M2)
+lambdaC <- eigC$values
+lambdaC # six non-null eigenvalues
+vC <- eigC$vectors
+
+all(lambdaB - lambdaC[1:l] < 10e-10)
+```
+
+
+  ### SVD
+
+Alternatively, we can compute the SVD of a matrix $D$ computed from $M$ and get a similar result. $D$ is defined as:
+
+$$
+D = M^{1/2} = [E_{center}' D(y_{i \cdot}) E_{center}]^{-1/2} E_{center}' Y T_{center} [T_{center}' D(y_{\cdot j}) T_{center}]^{-1/2}
+$$ 
+
+With our dataset:
+
+
+```{r}
+D <- solve(sqrtm(t(Ecenter) %*% Dyi_ %*% Ecenter)) %*%
+  t(Ecenter) %*% Y %*% Tcenter %*%
+  solve(sqrtm(t(Tcenter) %*% Dy_j %*% Tcenter))
+```
+
+We perform the SVD of $D$: $D = P \Lambda_{SVD} Q'$.
+
+```{r}
+sv <- svd(D)
+
+lambda_svd <- sv$d
+Lambda_svd <- diag(lambda_svd)
+
+P_svd <- sv$u
+Q_svd <- sv$v
+
+dim(P_svd)
+dim(Q_svd)
+```
+
+
+The eigenvalues of the SVD are the square roots of the final eigenvalues obtained by diagonalization: $\Lambda_{dc-CA} = \Lambda_{SVD}^2$
+
+```{r}
+lambda <- lambda_svd^2
+Lambda <- diag(lambda)
+```
+
+Now, we can compute the regression coefficients of the sites environmental variables ($B$) as:
+
+$$
+B = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P \Lambda_{SVD}
+$$
+
+```{r}
+B <- solve(sqrtm(t(Ecenter) %*% Dyi_ %*% Ecenter)) %*%  P_svd %*% Lambda_svd
+```
+
+Same for the coefficients of species traits $C$:
+
+$$
+C = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q\Lambda_{SVD}
+$$
+
+```{r}
+C <- solve(sqrtm(t(Tcenter) %*% Dy_j %*% Tcenter)) %*% Q_svd %*% Lambda_svd
+```
+
+```{r}
+# Compare both methods
+B/vB # The eigenvectors are almost the same
+apply(B, 2, function(x) sqrt(sum(x^2))) # column vectors of B have different norms
+apply(vB, 2, function(x) sqrt(sum(x^2))) # column vectors of vB are of norm 1
+
+C/vC[, 1:l] # The eigenvectors are almost the same
+apply(C, 2, function(x) sqrt(sum(x^2))) # column vectors of C have different norms
+apply(vC, 2, function(x) sqrt(sum(x^2))) # column vectors of vC are of norm 1
+```
+
+
+## Scalings
+
+::: {.callout-tip title="*TL;DR*"}
+There are two types of coordinates: linear combination scores (LC scores) and weighted averages scores (WA scores).
+
+LC scores are computed from the regression coefficients and the predictor variable table associated with the same dimension.
+
++ Scaling type 1 (that preserve the rows distances): $\hat{Z}_1 = E_{center}B$ (for rows = sites) and $Z_1 = T_{center}C\Lambda_{dc-CA}^{-1/2}$ (for columns = species)
+- Scaling type 2 (that preserve the columns distances) : $\hat{Z}_2 = E_{center}B\Lambda_{dc-CA}^{-1/2}$ (for rows = sites) and  $Z_2 = T_{center}C$ (for columns = species)
+- Scaling type 3 (symmetric scaling): $\hat{Z}_3 =  E_{center}B\Lambda_{dc-CA}^{-1/4}$ (for rows = sites) and  $Z_3 = T_{center}C\Lambda_{dc-CA}^{-1/4}$ (for columns = species)
+
+***Note: these results are in disagreement with the article of [@terbraak2018], since the scalings of the columns should be times $\Lambda^{-1}$, and there is a problem with the variance of `$co`. We find that there should be $\Lambda^{1-\alpha}$ in (17) instead of $\Lambda^{\alpha-1}$.***
+
+WA scores are computed from the predicted coordinates of the other dimension:
+
++ The WA row (sites) scores are computed from the $Z_i$ column (species) scores as $\hat{U}_i = D(y_{\cdot i})^{-1} Y Z_i$
++ The WA column (species) scores are computed from the $\hat{Z}_i$ row (sites) scores as $U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i$
+:::
+
+### Linear combinations (LC) scores
+
+Using the coefficients $B$ and $C$, we can get the *predicted* species/sites scores as a linear combination of coefficients and traits/environment matrices.
+
+```{r}
+ca <- dudi.coa(Y, 
+               nf = c-1, 
+               scannf = FALSE)
+
+dcca <- dpcaiv2(dudi = ca, 
+                dfR = E,
+                dfQ = T_,
+                scannf = FALSE, 
+                nf = min(k, l))
+```
+
+Coordinates computed with our method are equal to those computed by `ade4`, but we need to multiply them by a scaling factor $\sqrt{y_{\cdot \cdot}}$.
+
+```{r}
+(scaling <- sqrt(sum(Y)))
+```
+
+```{r, echo=FALSE}
+# Compare ade4 and computed coefficients
+B*scaling/dcca$faR[-1,]
+C*scaling/dcca$faQ[-1,]
+```
+
+- Scaling type 1 (that preserve the rows distances): $\hat{Z}_1 = E_{center}B$ (for rows = sites) and  $Z_1 = T_{center}C \Lambda_{SVD}^{-1} = T_{center}C \Lambda_{dc-CA}^{-1/2}$ (for columns = species).
+
+```{r}
+Zhat1 <- Ecenter %*% B
+Z1 <- Tcenter %*% C %*% diag(lambda^(-1/2))
+```
+
+
+```{r, include=FALSE}
+Zhat1*scaling/dcca$li
+Z1*scaling/dcca$c1
+```
+
+
+```{r, include = FALSE}
+s.label(dcca$c1, # Species constrained at variance 1
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp)
+s.label(dcca$li, # Sites position by averaging
+        plabels.optim = TRUE,
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite,
+        add = TRUE)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+Z1inv <- Z1*scaling
+Z1inv[, 1] <- -Z1inv[, 1]
+
+Zhat1inv <- Zhat1*scaling
+Zhat1inv[, 1] <- -Zhat1inv[, 1]
+
+plot(x = Z1inv[, 1], y = Z1inv[, 2],
+     col = NULL,
+     asp = 1,
+     main = "LC scores (scaling type 1: row-preserving)")
+text(x = Z1inv[, 1], y = Z1inv[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 1)
+text(x = Zhat1inv[, 1], y = Zhat1inv[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 1)
+# arrows(x0 = rep(0, nrow(BS1)),
+#        y0 = rep(0, nrow(BS1)),
+#        x1 = BS1[, 1], 
+#        y1 = BS1[, 2],
+#        length = 0.1,
+#        asp = 1)
+# text(x = BS1[, 1], 
+#      y = BS1[, 2],
+#      label = colnames(E),
+#      asp = 1)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+
+- Scaling type 2 (that preserve the columns distances) : $\hat{Z}_2 = E_{center}B\Lambda_{SVD}^{-1} = E_{center}B\Lambda_{dc-CA}^{-1/2}$ (for rows = sites) and  $Z_2 = T_{center}C$ (for columns = species) (Here we use the formula that works, different from ter Braak, for Z2 agree)
+
+```{r}
+Zhat2 <- Ecenter %*% B %*% diag(lambda_svd^(-1))
+
+Z2 <- Tcenter %*% C %*% diag(lambda_svd^(-2))
+Z2_agree <- Tcenter %*% C
+```
+
+
+```{r}
+Zhat2*scaling/dcca$l1 # Ok
+
+Z2*scaling/dcca$co # Not ok (but using tB formula)
+Z2_agree*scaling/dcca$co # Ok
+```
+
+```{r}
+# Since ter Braak and ade4 disagree, check the variance of co and Z2 or Z2_agree (it should be the eigenvalues of each axis)
+
+#' Get the variance of vector x
+#'
+#' @param x The vector
+#' @param w The weights
+#'
+#' @return The variance
+varvec <- function(x, w) {
+  sum(w*(x-mean(x))^2)
+}
+
+res_ade4 <- apply(as.matrix(dcca$co), 
+                  2, 
+                  function(x) varvec(x, dcca$cw))
+res_ade4/dcca$eig
+  
+res_tB <- apply(Z2*scaling, 
+                2, 
+                function(x) varvec(x, dcca$cw))
+res_tB/dcca$eig 
+
+res_agree <- apply(Z2_agree*scaling, 
+                   2, 
+                   function(x) varvec(x, dcca$cw))
+res_agree/dcca$eig
+```
+
+```{r, include = FALSE}
+s.label(dcca$l1, # Sites constrained at variance 1
+        plabels.optim = TRUE,
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite)
+s.label(dcca$co, # Species position by averaging
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp,
+        add = TRUE)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+Z2inv <- Z2_agree*scaling
+Z2inv[, 1] <- -Z2inv[, 1]
+
+Zhat2inv <- Zhat2*scaling
+Zhat2inv[, 1] <- -Zhat2inv[, 1]
+
+plot(x = Zhat2inv[, 1], y = Zhat2inv[, 2],
+     col = NULL,
+     asp = 2,
+     main = "LC scores (scaling type 2: column-preserving)")
+text(x = Z2inv[, 1], y = Z2inv[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 2)
+text(x = Zhat2inv[, 1], y = Zhat2inv[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 2)
+# arrows(x0 = rep(0, nrow(BS2)),
+#        y0 = rep(0, nrow(BS2)),
+#        x2 = BS2[, 1], 
+#        y2 = BS2[, 2],
+#        length = 0.2,
+#        asp = 2)
+# text(x = BS2[, 1], 
+#      y = BS2[, 2],
+#      label = colnames(E),
+#      asp = 2)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+- Scaling type 3 (symmetric scaling): $\hat{Z}_3 = E_{center}B\Lambda_{SVD}^{-1/2} = E_{center}B\Lambda_{dc-CA}^{-1/4}$ (for rows = sites) and  $Z_3 = T_{center}C\Lambda_{SVD}^{-1/2} = T_{center}C\Lambda_{dc-CA}^{-1/4}$ (for columns = species) (we the heuristic formula)
+
+```{r}
+Zhat3 <- Ecenter %*% B %*% diag(lambda^(-1/4))
+
+Z3 <- Tcenter %*% C %*% diag(lambda^(-1/4))
+# Should be
+# Z3 <- Tcenter %*% C %*% diag(lambda^(-3/4))
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+Z3inv <- Z3*scaling
+Z3inv[, 1] <- -Z3inv[, 1]
+
+Zhat3inv <- Zhat3*scaling
+Zhat3inv[, 1] <- -Zhat3inv[, 1]
+
+plot(x = Zhat3inv[, 1], y = Zhat3inv[, 2],
+     col = NULL,
+     asp = 2,
+     xlim = c(-2, 2),
+     ylim = c(-2, 2),
+     main = "LC scores (scaling type 3: symmetric)")
+text(x = Z3inv[, 1], y = Z3inv[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 2)
+text(x = Zhat3inv[, 1], y = Zhat3inv[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 2)
+# arrows(x0 = rep(0, nrow(BS2)),
+#        y0 = rep(0, nrow(BS2)),
+#        x2 = BS2[, 1], 
+#        y2 = BS2[, 2],
+#        length = 0.2,
+#        asp = 2)
+# text(x = BS2[, 1], 
+#      y = BS2[, 2],
+#      label = colnames(E),
+#      asp = 2)
+
+abline(h = 0)
+abline(v = 0)
+```
+
+### Weighted averages (WA) scores
+
+We can also get the weighted averages (WA) scores of the rows/columns. Indeed, rows scores are related to columns scores and conversely.
+
++ The WA scores for the rows (sites) are $\hat{U}$ and are computed from the ***column (species)*** scores:
+
+$$
+\hat{U}_i = D(y_{\cdot i})^{-1} Y Z_i
+$$
+
++ The WA scores for the column (species) are $U$ and are computed from the ***row (sites)*** scores:
+
+$$
+U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i
+$$
+
+```{r}
+# Column (species) scores
+U1 <- solve(Dy_j) %*% t(Y) %*% Zhat1  
+U2 <- solve(Dy_j) %*% t(Y) %*% Zhat2
+U3 <- solve(Dy_j) %*% t(Y) %*% Zhat3
+
+# Rows (sites) scores
+Uhat1 <- solve(Dyi_) %*% Y %*% Z1
+Uhat2 <- solve(Dyi_) %*% Y %*% Z2
+Uhat3 <- solve(Dyi_) %*% Y %*% Z3
+```
+
+
+```{r, include=FALSE}
+# WA scores
+Uhat1*scaling/dcca$lsR
+U2*scaling/dcca$lsQ
+```
+
+
+```{r, include = FALSE}
+s.label(dcca$lsR, # sites WA scores
+        plabels.optim = TRUE,
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite,
+        xlim = c(-2, 2),
+        ylim = c(-2, 2))
+s.label(dcca$lsQ, # species WA scores
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp,
+        add = TRUE)
+```
+
+```{r, fig.height=6, fig.width=6}
+#| code-fold: true
+U2inv <- U2*scaling
+U2inv[, 1] <- -U2inv[, 1]
+
+Uhat1inv <- Uhat1*scaling
+Uhat1inv[, 1] <- -Uhat1inv[, 1]
+
+plot(x = Uhat1inv[, 1], y = Uhat1inv[, 2],
+     col = NULL,
+     asp = 2,
+     xlim = c(-2, 2),
+     ylim = c(-2, 2),
+     main = "WA scores (with scaling type 1: row-preserving)")
+text(x = U2inv[, 1], y = U2inv[, 2],
+     label = colnames(Y),
+     col = params$colspp,
+     asp = 2)
+text(x = Uhat1inv[, 1], y = Uhat1inv[, 2],
+     label = rownames(Y),
+     col = params$colsite,
+     asp = 2)
+# arrows(x0 = rep(0, nrow(BS2)),
+#        y0 = rep(0, nrow(BS2)),
+#        x2 = BS2[, 1], 
+#        y2 = BS2[, 2],
+#        length = 0.2,
+#        asp = 2)
+# text(x = BS2[, 1], 
+#      y = BS2[, 2],
+#      label = colnames(E),
+#      asp = 2)
+
+abline(h = 0)
+abline(v = 0)
+```
+## More tests
+
+Below, we test the variances of various scores.
+
++ LC scores for rows:
+```{r}
+# l1 variances should be 1
+apply(as.matrix(dcca$l1), 
+      2, 
+      function(x) varvec(x, dcca$lw))
+
+# li variances should be eigenvalues
+apply(as.matrix(dcca$li), 
+      2, 
+      function(x) varvec(x, dcca$lw))/dcca$eig
+```
++ LC scores for columns
+```{r}
+# c1 variances should be 1
+apply(as.matrix(dcca$c1), 
+      2, 
+      function(x) varvec(x, dcca$cw))
+
+# co variances should be eigenvalues
+apply(as.matrix(dcca$co), 
+      2, 
+      function(x) varvec(x, dcca$cw))/dcca$eig 
+```
+```{r}
+# Z2 variances should be the eigenvalues
+apply(Z2*scaling, 
+      2, 
+      function(x) varvec(x, dcca$cw))/dcca$eig
+```
++ WA scores:
+```{r}
+# Hypothesis: these scires shound be the eigenvalues
+apply(as.matrix(dcca$lsR), 
+      2, 
+      function(x) varvec(x, dcca$lw))/dcca$eig
+
+# co variances should be eigenvalues
+apply(as.matrix(dcca$lsQ), 
+      2, 
+      function(x) varvec(x, dcca$cw))/dcca$eig
+```
+
+## Interpretation
+
+This method finds the linear correlation of row explanatory variables (environmental variables) and the linear correlation of columns explanatory variables (species traits) that maximizes the fourth-corner correlation, i.e. the correlation between these linear combinations of row and columns-variables.
+
+There are other related methods, that have been better described and also more used in ecology: RLQ, community weighted means RDA (CMW-RDA). 
+
+Contrary to RLQ, dc-CA takes into account the correlation between the row and column variables. Thus, while RLQ can analyze any number of row and column variables, it is not the case with dc-CA the number of row and column variables must not be large compared to the number of rows/columns in the tables.
+
+The eigenvaines of dc-CA are the squares of the fourth-corner correlations.

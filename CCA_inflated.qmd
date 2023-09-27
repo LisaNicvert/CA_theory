@@ -1,0 +1,294 @@
+---
+title: "CCA on inflated matrices"
+---
+
+
+```{r, results='hide', message=FALSE}
+#| code-fold: true
+
+# Multivariate analysis
+library(ade4)
+library(adegraphics)
+
+# Matrix algebra
+library(expm)
+
+# Plots
+library(ggplot2)
+
+# Paths
+library(here)
+```
+
+## CCA using inflated matrices
+
+The CCA of $Y$ by $E$ is equivalent to the RDA of $\bar{Q}_{infl}$ by $E_{infl}$: instead of using weighted 
+matrices as above, we can follow the following procedure.
+
+```{r, echo = FALSE, message = FALSE}
+dat <- readRDS(here("data/Barbaro2012.rds"))
+
+Y <- dat$comm
+E <- dat$envir
+```
+
+
+```{r}
+(r <- dim(Y)[1])
+(c <- dim(Y)[2])
+(l <- dim(E)[2])
+```
+
+### Inflate matrices
+
+First, $Y$ ($r \times c$) should be inflated into $Y_{infl}$ ($f_{\cdot \cdot} \times c$), so that one row corresponds to one individual in one site.
+
+::: column-body
+::: {.column width="37%"}
+| $Y$ | sp1 | sp2 | sp3 |
+|-----|-----|-----|-----|
+| sa  | 3   | 0   | 1   |
+| sb  | 0   | 2   | 1   |
+| sc  | 0   | 1   | 0   |
+:::
+
+::: {.column width="57%"}
+| $Y_{infl}$ | sp1 | sp2 | sp3 |
+|------------|-----|-----|-----|
+| sa_sp1_1   | 1   | 0   | 0   |
+| sa_sp1_2   | 1   | 0   | 0   |
+| sa_sp1_3   | 1   | 0   | 0   |
+| sa_sp3_1   | 1   | 0   | 1   |
+| sb_sp2_1   | 0   | 1   | 0   |
+| sb_sp2_2   | 0   | 1   | 0   |
+| sb_sp3_1   | 0   | 0   | 1   |
+| sc_sp2_1   | 0   | 1   | 0   |
+:::
+:::
+
+With our data, $Y_{infl}$ is:
+
+```{r, fig.height=8, fig.width=4}
+#| code-fold: true
+Yinfl <- matrix(data = 0,
+                ncol = ncol(Y),
+                nrow = sum(Y))
+colnames(Yinfl) <- colnames(Y)
+rownames(Yinfl) <- 1:nrow(Yinfl)
+
+nrstart <- 0
+for (i in 1:nrow(Y)) {
+  # Get row
+  ri <- as.matrix(Y)[i, ]
+  
+  # Get number of rows in which to add data
+  nr <- sum(ri)
+  
+  col <- which(ri > 0) # nonzero species
+  nrep <- ri[ri > 0] # species count
+  
+  # Column coordinates to modify
+  col <- sapply(seq_along(col), 
+                function(i) rep(col[i], nrep[i]))
+  col <- as.numeric(unlist(col))
+  coord <- cbind(((nrstart+1):(nrstart+nr)), col)
+  
+  Yinfl[coord] <- 1
+  
+  # Rownames
+  spname <- colnames(ri[which(ri > 0)])
+  spname <- sapply(seq_along(spname), 
+                   function(i) rep(spname[i], nrep[i]))
+  spname <- as.character(unlist(spname))
+  rowni <- paste(rep(rownames(Y[i, ]), nr),
+                 spname,
+                 1:nr, sep = "_")
+  rownames(Yinfl)[(nrstart+1):(nrstart+nr)] <- rowni
+  
+  nrstart <- nrstart+nr
+}
+
+paste("Dimension:", paste(dim(Yinfl), collapse = " "))
+knitr::kable(head(Yinfl, 10))
+```
+
+The matrix $E_{infl}$ ($y_{\cdot \cdot} \times l$) was computed before:
+
+
+```{r}
+#| code-fold: true
+Einfl <- matrix(data = 0,
+                ncol = ncol(E), 
+                nrow = sum(Y))
+colnames(Einfl) <- colnames(E)
+rownames(Einfl) <- 1:nrow(Einfl)
+
+# Get the number of times to duplicate each site
+nrep_sites <- rowSums(Y)
+
+nrstart <- 0
+for (i in 1:nrow(E)) {
+  ri <- as.matrix(E)[i, ]
+  
+  rname <- rownames(E)[i]
+  
+  # Get how many times to duplicate this site
+  nr <- nrep_sites[as.character(rname)]
+  
+  Einfl[(nrstart+1):(nrstart+nr), ] <- matrix(rep(ri, nr), 
+                                              nrow = nr, 
+                                              byrow = TRUE)
+  
+  rownames(Einfl)[(nrstart+1):(nrstart+nr)] <- paste(rname,
+                                                     1:nr,
+                                                     sep = "_")
+  nrstart <- nrstart + nr
+}
+paste("Dimension:", paste(dim(Einfl), collapse = " "))
+knitr::kable(head(Einfl, 10))
+```
+
+### Transform matrix
+
+Then, compute $\bar{Q}_{infl}$ from $Y_{infl}$ as done in CA:
+
+```{r, fig.height=8, fig.width=4}
+#| code-fold: true
+Pinfl <- Yinfl/sum(Yinfl)
+
+# Initialize Qinfl matrix
+Qinfl <- matrix(ncol = ncol(Yinfl), 
+                nrow = nrow(Yinfl))
+rownames(Qinfl) <- rownames(Yinfl)
+colnames(Qinfl) <- colnames(Yinfl)
+
+for(i in 1:nrow(Yinfl)) { # For each row
+  for (j in 1:ncol(Yinfl)) { # For each column
+    # Do the sum
+    pi_ <- sum(Pinfl[i, ]) # Since there is only one obs
+    # per row in Yinfl this will always be 1/f__
+    p_j <- sum(Pinfl[, j])
+    
+    # Compute the transformation
+    Qinfl[i, j] <- (Pinfl[i, j] - (pi_*p_j))/sqrt(pi_*p_j)
+  }
+}
+
+knitr::kable(head(Qinfl, 10)) # Notice that column Satr changes at row 8
+```
+
+### Regression
+
+We perform a multiple linear regression for each column of $\bar{Q}_{infl}$ using $E_{infl}$.
+
+$$
+\hat{\bar{Q}}_{infl} = E_{infl} B
+$$
+
+With
+
+$$
+B = [E_{infl}' E_{infl}]^{-1} E_{infl}' \bar{Q}_{infl}
+$$
+
+With our example:
+
+```{r}
+B2 <- solve(t(Einfl) %*% Einfl) %*% t(Einfl) %*% Qinfl
+
+knitr::kable(B2)
+```
+
+We can get the predicted values. Below is an example of predicted vs observed values for site 2:
+
+```{r}
+Qbarhat2 <- Einfl %*% B2
+
+# Get predicted and observed values for one site
+ind <- 10
+# For site 2, we could choose indices 10 to 40 and it would be the same since the rows are duplicated.
+
+pred <- Qbarhat2[ind, ]
+obs <- Qinfl[ind, ]
+```
+
+```{r}
+#| code-fold: true
+df <- data.frame(pred, obs, names = names(pred))
+df<- df |> 
+  tidyr::pivot_longer(cols = c("pred", "obs"))
+
+ggplot(df, aes(x = names, y = value, col = name)) +
+  geom_point() +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r, include=FALSE}
+# Get unique values for Qbarhat:
+uQbarhat2 <- as.data.frame(Qbarhat2) |> 
+  dplyr::distinct()
+rownames(uQbarhat2) <- gsub(pattern = "_.+$", replacement = "",
+                        x = rownames(uQbarhat2))
+uQbarhat2 <- as.matrix(uQbarhat2)
+
+ind <- 2
+
+pred <- uQbarhat2[ind, ]
+obs <- Qbarhat2[ind, ]
+```
+
+```{r, include=FALSE}
+#| code-fold: true
+df <- data.frame(pred, obs, names = names(pred))
+df<- df |> 
+  tidyr::pivot_longer(cols = c("pred", "obs"))
+
+ggplot(df, aes(x = names, y = value, col = name)) +
+  geom_point() +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+### Diagonalization
+
+We compute the covariance matrix of the fitted values $\hat{\bar{Q}}_{inf}$.
+
+The covariance matrix of $E$ is noted $S_{E'E}$ (we don't divide by the degrees of freedom). Here, we have:
+
+$$
+S_{\hat{\bar{Q}}_{infl}' \hat{\bar{Q}}_{infl}} = \hat{\bar{Q}}_{infl} \hat{\bar{Q}}_{infl}'
+$$
+
+$S_{\hat{\bar{Q}}_{infl}' \hat{\bar{Q}}_{infl}}$ is a $c \times c$ matrix (where $c$ is the number of response variables = columns = species).
+
+Here, we have
+
+```{r}
+Sqq <- t(Qbarhat2) %*% Qbarhat2
+dim(Sqq)
+```
+
+Finally, we diagonalize the matrix $S_{\hat{\bar{Q}}_{infl}' \hat{\bar{Q}}_{infl}}$ (PCA of the matrix of fitted values $\hat{\bar{Q}}$).
+
+$$
+S_{\hat{\bar{Q}}_{infl}' \hat{\bar{Q}}_{infl}} = U \Lambda U^{-1}
+$$
+
+In our example:
+
+```{r}
+neig <- min(r-1, c, l)
+
+eig <- eigen(Sqq)
+
+(lambda2 <- eig$values) # There are l = 6 non-null eigenvalues
+lambda2 <- lambda2[1:neig]
+
+Lambda2 <- diag(lambda2)
+
+U2 <- eig$vectors
+U2 <- U2[, 1:neig]
+```
+
+The diagonalization should lead to the same results as the weighted method, but it is not the case.
