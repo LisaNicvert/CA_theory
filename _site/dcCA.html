@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.353">
+<meta name="generator" content="quarto-1.3.433">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -108,7 +108,8 @@ div.csl-indent {
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
     "search-detached-cancel-button-title": "Cancel",
-    "search-submit-button-title": "Submit"
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
   }
 }</script>
 
@@ -171,11 +172,14 @@ div.csl-indent {
   <li><a href="#computation" id="toc-computation" class="nav-link" data-scroll-target="#computation">Computation</a>
   <ul class="collapse">
   <li><a href="#diagonalizations" id="toc-diagonalizations" class="nav-link" data-scroll-target="#diagonalizations">Diagonalizations</a></li>
+  <li><a href="#svd" id="toc-svd" class="nav-link" data-scroll-target="#svd">SVD</a></li>
   </ul></li>
   <li><a href="#scalings" id="toc-scalings" class="nav-link" data-scroll-target="#scalings">Scalings</a>
   <ul class="collapse">
-  <li><a href="#linear-combinations-lc-scores" id="toc-linear-combinations-lc-scores" class="nav-link" data-scroll-target="#linear-combinations-lc-scores">Linear combinations (LC) scores</a></li>
-  <li><a href="#weighted-averages-wa-scores" id="toc-weighted-averages-wa-scores" class="nav-link" data-scroll-target="#weighted-averages-wa-scores">Weighted averages (WA) scores</a></li>
+  <li><a href="#pre-computations" id="toc-pre-computations" class="nav-link" data-scroll-target="#pre-computations">Pre-computations</a></li>
+  <li><a href="#scaling-type-1" id="toc-scaling-type-1" class="nav-link" data-scroll-target="#scaling-type-1">Scaling type 1</a></li>
+  <li><a href="#scaling-type-2" id="toc-scaling-type-2" class="nav-link" data-scroll-target="#scaling-type-2">Scaling type 2</a></li>
+  <li><a href="#scaling-type-3" id="toc-scaling-type-3" class="nav-link" data-scroll-target="#scaling-type-3">Scaling type 3</a></li>
   </ul></li>
   <li><a href="#more-tests" id="toc-more-tests" class="nav-link" data-scroll-target="#more-tests">More tests</a></li>
   <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
@@ -219,7 +223,7 @@ div.csl-indent {
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(expm)</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"functions/plot.R"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
@@ -1401,16 +1405,35 @@ div.csl-indent {
 <div class="callout-body-container callout-body">
 <p>We perform the SVD of <span class="math inline">\(D = [E_{center}' D(y_{i \cdot}) E_{center}]^{-1/2} E_{center}' Y T_{center} [T_{center}' D(y_{\cdot j}) T_{center}]^{-1/2}\)</span></p>
 <p><span class="math display">\[
-D = P \Lambda_{SDV} Q'
+D = P \Delta Q'
 \]</span> This allows us to find the eigenvectors <span class="math inline">\(P\)</span> (rows or environment eigenvectors) and <span class="math inline">\(Q\)</span> (columns or traits eigenvectors).</p>
-<p>The eigenvalues of the dc-CA are the squared eigenvalues of the SVD: <span class="math inline">\(\Lambda_{dc-CA} = \Lambda_{SVD}^2\)</span></p>
+<p>The eigenvalues of the dc-CA are the squared eigenvalues of the SVD: <span class="math inline">\(\Lambda = \Delta^2\)</span>.</p>
 <p>There are <span class="math inline">\(\min(k, l)\)</span> non-null eigenvalues???</p>
-<p>Then, the regression coefficients for explanatory variables can be found with</p>
+<p><strong>Regression coefficients</strong></p>
+<p>Then, the regression coefficients for explanatory variables can be found with:</p>
 <ul>
-<li><span class="math inline">\(B = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P\)</span> (row explanatory variables = environmental variables)</li>
-<li><span class="math inline">\(C = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q\)</span> (columns explanatory variables = species traits)</li>
+<li><span class="math inline">\(B = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P\Delta^\alpha\)</span> (row explanatory variables = environmental variables)</li>
+<li><span class="math inline">\(C = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q\Delta^\alpha\)</span> (columns explanatory variables = species traits)</li>
 </ul>
-<p>The rows/column scores are detailed below in the Scalings section.</p>
+<p>where <span class="math inline">\(\alpha\)</span> is a scaling factor equal to 1, 0 or 1/2. The different scalings are detailed in the next part.</p>
+<p><strong>Individuals coordinates</strong></p>
+<p>The individuals coordinates (species or sites) can be computed in two ways:</p>
+<p>Linear combinations (LC scores) are computed from those coefficients :</p>
+<ul>
+<li><span class="math inline">\(Z_i = E_{center}B_i\)</span> for the rows (sites)</li>
+<li><span class="math inline">\(\hat{Z}_i = T_{center}C_i\)</span> for columns (species)</li>
+</ul>
+<p>Weighted averages (WA scores) are computed from the scores of the <strong>other</strong> individuals:</p>
+<ul>
+<li><span class="math inline">\(\hat{U}_i = D(y_{\cdot i})^{-1} Y Z_i\)</span> for row (sites) scores</li>
+<li><span class="math inline">\(U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i\)</span> for column (species) scores</li>
+</ul>
+<p><strong>Correlations</strong></p>
+<p>Finally, we can compute correlations scores for different scalings for the explanatory variables:</p>
+<ul>
+<li><span class="math inline">\(BS_B^i = \left[ E_{center}'D(y_{i\cdot})E_{center} \right]^{1/2} P \Delta^{\alpha}\)</span> for the row (environmental variables)</li>
+<li><span class="math inline">\(BS_C^i = \left[ T_{center}'D(y_{i\cdot})T_{center} \right]^{1/2} Q \Delta^{1-\alpha}\)</span> for the columns (species traits)</li>
+</ul>
 </div>
 </div>
 <p>First, we need to center the traits and environment matrices (resp. <span class="math inline">\(T_{cent}\)</span> and <span class="math inline">\(E_{cent}\)</span>). To do that, we have to compute “inflated” versions of these matrices matching the occurrence counts in <span class="math inline">\(Y\)</span>.</p>
@@ -1479,16 +1502,21 @@ Note
 <p>In addition, we introduce the following constraint on the norm of the columns vectors of <span class="math inline">\(\hat{U}\)</span> and <span class="math inline">\(U\)</span>: <span class="math inline">\(\hat{u}' D(y_{i\cdot}) \hat{u} = 1\)</span> and <span class="math inline">\(u' D(y_{\cdot j})u = 1\)</span>. In fact, tjese constraints will be relaxed later depending on the scaling (see below).</p>
 <p>To find the coefficients <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span> defined above, we need to diagonalize the following matrices <span class="math inline">\(M\)</span> and <span class="math inline">\(M_2\)</span>:</p>
 <ul>
-<li><p>To find <span class="math inline">\(B\)</span>, we must diagonalize <span class="math inline">\(M\)</span>: <span class="math display">\[
+<li>To find <span class="math inline">\(B\)</span>, we must diagonalize <span class="math inline">\(M\)</span>: <span class="math display">\[
 M = \left[E_{center}' D(y_{i\cdot}) E_{center} \right]^{-1} E_{center}'YT_{center} \left[T_{center}' D(y_{\cdot j}) T_{center} \right]^{-1} T_{center}' Y' E_{center}
-\]</span> Where matrices <span class="math inline">\(D(y_{i \cdot})\)</span> and <span class="math inline">\(D(y_{\cdot j})\)</span> are the diagonal matrices with the column and row sums (respectively). They are analogous to matrices <span class="math inline">\(D(p_{i \cdot})\)</span> and <span class="math inline">\(D(p_{\cdot j})\)</span> defined for CA and CCA (but we use <span class="math inline">\(Y\)</span> instead of <span class="math inline">\(P\)</span> to define the margins). We can view <span class="math inline">\(M\)</span> as: <span class="math display">\[
+\]</span> Where matrices <span class="math inline">\(D(y_{i \cdot})\)</span> and <span class="math inline">\(D(y_{\cdot j})\)</span> are the diagonal matrices with the column and row sums (respectively). They are analogous to matrices <span class="math inline">\(D(p_{i \cdot})\)</span> and <span class="math inline">\(D(p_{\cdot j})\)</span> defined for CA and CCA (but we use <span class="math inline">\(Y\)</span> instead of <span class="math inline">\(P\)</span> to define the margins).</li>
+</ul>
+<p>We can view <span class="math inline">\(M\)</span> as: <span class="math display">\[
 M = \hat{E}_{center} \hat{T}_{center} = \beta T_{center} \gamma E_{center}
-\]</span> With <span class="math inline">\(\beta = \left[E_{center}' D(y_{i\cdot}) E_{center} \right]^{-1} E_{center}'Y\)</span> and <span class="math inline">\(\gamma = \left[T_{center}' D(y_{\cdot j}) T_{center} \right]^{-1} T_{center}' Y'\)</span>. Here, we predict the environment with traits so that <span class="math inline">\(\hat{E}_{center} = \beta T_{center}\)</span> and the traits with the environment so that <span class="math inline">\(\hat{T}_{center} = \gamma E_{center}\)</span>. So we maximize the correlation between <span class="math inline">\(\hat{E}_{center}\)</span> and <span class="math inline">\(\hat{T}_{center}\)</span>.</p></li>
-<li><p>Similarly, to find <span class="math inline">\(C\)</span>, we must diagonalize <span class="math inline">\(M_2\)</span>:</p></li>
+\]</span> With <span class="math inline">\(\beta = \left[E_{center}' D(y_{i\cdot}) E_{center} \right]^{-1} E_{center}'Y\)</span> and <span class="math inline">\(\gamma = \left[T_{center}' D(y_{\cdot j}) T_{center} \right]^{-1} T_{center}' Y'\)</span>. Here, we predict the environment with traits so that <span class="math inline">\(\hat{E}_{center} = \beta T_{center}\)</span> and the traits with the environment so that <span class="math inline">\(\hat{T}_{center} = \gamma E_{center}\)</span>. So we maximize the correlation between <span class="math inline">\(\hat{E}_{center}\)</span> and <span class="math inline">\(\hat{T}_{center}\)</span>.</p>
+<ul>
+<li>Similarly, to find <span class="math inline">\(C\)</span>, we must diagonalize <span class="math inline">\(M_2\)</span>:</li>
 </ul>
 <p><span class="math display">\[
 M_2 = \left[T_{center}' D(y_{\cdot j}) T_{center} \right]^{-1} T_{center}' Y' E_{center} \left[E_{center}' D(y_{i\cdot}) E_{center} \right]^{-1} E_{center}'YT_{center}
-\]</span> Here, we can view <span class="math inline">\(M_2\)</span> as: <span class="math display">\[$M_2 = \hat{T}_{center} \hat{E}_{center} = \gamma E_{center} \beta T_{center}\]</span></p>
+\]</span> Here, we can view <span class="math inline">\(M_2\)</span> as: <span class="math display">\[
+M_2 = \hat{T}_{center} \hat{E}_{center} = \gamma E_{center} \beta T_{center}
+\]</span></p>
 <p>The eigenvectors matrices of these diagonalizations give us <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span>:</p>
 <p><span class="math display">\[
 M = B \Lambda_b B^{-1} ~~ \text{and} ~~ M_2 = C \Lambda_c C^{-1}
@@ -1533,7 +1561,9 @@ M = B \Lambda_b B^{-1} ~~ \text{and} ~~ M_2 = C \Lambda_c C^{-1}
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
-<p>### SVD</p>
+</section>
+<section id="svd" class="level3">
+<h3 class="anchored" data-anchor-id="svd">SVD</h3>
 <p>Alternatively, we can compute the SVD of a matrix <span class="math inline">\(D\)</span> computed from <span class="math inline">\(M\)</span> and get a similar result. <span class="math inline">\(D\)</span> is defined as:</p>
 <p><span class="math display">\[
 D = M^{1/2} = [E_{center}' D(y_{i \cdot}) E_{center}]^{-1/2} E_{center}' Y T_{center} [T_{center}' D(y_{\cdot j}) T_{center}]^{-1/2}
@@ -1548,8 +1578,8 @@ D = M^{1/2} = [E_{center}' D(y_{i \cdot}) E_{center}]^{-1/2} E_{center}' Y T_{ce
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sv <span class="ot">&lt;-</span> <span class="fu">svd</span>(D)</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>lambda_svd <span class="ot">&lt;-</span> sv<span class="sc">$</span>d</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>Lambda_svd <span class="ot">&lt;-</span> <span class="fu">diag</span>(lambda_svd)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>delta <span class="ot">&lt;-</span> sv<span class="sc">$</span>d</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>Delta <span class="ot">&lt;-</span> <span class="fu">diag</span>(delta)</span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>P_svd <span class="ot">&lt;-</span> sv<span class="sc">$</span>u</span>
 <span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>Q_svd <span class="ot">&lt;-</span> sv<span class="sc">$</span>v</span>
@@ -1563,64 +1593,10 @@ D = M^{1/2} = [E_{center}' D(y_{i \cdot}) E_{center}]^{-1/2} E_{center}' Y T_{ce
 <pre><code>[1] 7 6</code></pre>
 </div>
 </div>
-<p>The eigenvalues of the SVD are the square roots of the final eigenvalues obtained by diagonalization: <span class="math inline">\(\Lambda_{dc-CA} = \Lambda_{SVD}^2\)</span></p>
+<p>The eigenvalues of the SVD are the square roots of the final eigenvalues obtained by diagonalization: <span class="math inline">\(\Lambda = \Delta^2\)</span></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> lambda_svd<span class="sc">^</span><span class="dv">2</span></span>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> delta<span class="sc">^</span><span class="dv">2</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>Lambda <span class="ot">&lt;-</span> <span class="fu">diag</span>(lambda)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Now, we can compute the regression coefficients of the sites environmental variables (<span class="math inline">\(B\)</span>) as:</p>
-<p><span class="math display">\[
-B = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P \Lambda_{SVD}
-\]</span></p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>B <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dyi_ <span class="sc">%*%</span> Ecenter)) <span class="sc">%*%</span>  P_svd <span class="sc">%*%</span> Lambda_svd</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Same for the coefficients of species traits <span class="math inline">\(C\)</span>:</p>
-<p><span class="math display">\[
-C = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q\Lambda_{SVD}
-\]</span></p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>C <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dy_j <span class="sc">%*%</span> Tcenter)) <span class="sc">%*%</span> Q_svd <span class="sc">%*%</span> Lambda_svd</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare both methods</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>B<span class="sc">/</span>vB <span class="co"># The eigenvectors are almost the same</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>           [,1]      [,2]      [,3]      [,4]      [,5]       [,6]
-[1,] -0.5259939 0.7780306 0.8097335 0.3580791 0.3630149 -0.1983442
-[2,] -0.5259939 0.7780306 0.8097335 0.3580791 0.3630149 -0.1983442
-[3,] -0.5259939 0.7780306 0.8097335 0.3580791 0.3630149 -0.1983442
-[4,] -0.5259939 0.7780306 0.8097335 0.3580791 0.3630149 -0.1983442
-[5,] -0.5259939 0.7780306 0.8097335 0.3580791 0.3630149 -0.1983442
-[6,] -0.5259939 0.7780306 0.8097335 0.3580791 0.3630149 -0.1983442</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(B, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="fu">sqrt</span>(<span class="fu">sum</span>(x<span class="sc">^</span><span class="dv">2</span>))) <span class="co"># column vectors of B have different norms</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.5259939 0.7780306 0.8097335 0.3580791 0.3630149 0.1983442</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(vB, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="fu">sqrt</span>(<span class="fu">sum</span>(x<span class="sc">^</span><span class="dv">2</span>))) <span class="co"># column vectors of vB are of norm 1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 1 1 1 1 1</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>C<span class="sc">/</span>vC[, <span class="dv">1</span><span class="sc">:</span>l] <span class="co"># The eigenvectors are almost the same</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>           [,1]        [,2]       [,3]        [,4]         [,5]        [,6]
-[1,] 0.03204444 -0.03641707 0.03393986 -0.02556497 -0.007219091 0.006079451
-[2,] 0.03204444 -0.03641707 0.03393986 -0.02556497 -0.007219091 0.006079451
-[3,] 0.03204444 -0.03641707 0.03393986 -0.02556497 -0.007219091 0.006079451
-[4,] 0.03204444 -0.03641707 0.03393986 -0.02556497 -0.007219091 0.006079451
-[5,] 0.03204444 -0.03641707 0.03393986 -0.02556497 -0.007219091 0.006079451
-[6,] 0.03204444 -0.03641707 0.03393986 -0.02556497 -0.007219091 0.006079451
-[7,] 0.03204444 -0.03641707 0.03393986 -0.02556497 -0.007219091 0.006079451</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(C, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="fu">sqrt</span>(<span class="fu">sum</span>(x<span class="sc">^</span><span class="dv">2</span>))) <span class="co"># column vectors of C have different norms</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.032044439 0.036417073 0.033939863 0.025564966 0.007219091 0.006079451</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(vC, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="fu">sqrt</span>(<span class="fu">sum</span>(x<span class="sc">^</span><span class="dv">2</span>))) <span class="co"># column vectors of vC are of norm 1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1 1 1 1 1 1 1</code></pre>
-</div>
 </div>
 </section>
 </section>
@@ -1637,392 +1613,297 @@ C = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q\Lambda_{SVD}
 </div>
 <div class="callout-body-container callout-body">
 <p>There are two types of coordinates: linear combination scores (LC scores) and weighted averages scores (WA scores).</p>
-<p>LC scores are computed from the regression coefficients and the predictor variable table associated with the same dimension.</p>
+<p><strong>The general formulas are:</strong></p>
 <ul>
-<li>Scaling type 1 (that preserve the rows distances): <span class="math inline">\(\hat{Z}_1 = E_{center}B\)</span> (for rows = sites) and <span class="math inline">\(Z_1 = T_{center}C\Lambda_{dc-CA}^{-1/2}\)</span> (for columns = species)</li>
-<li>Scaling type 2 (that preserve the columns distances) : <span class="math inline">\(\hat{Z}_2 = E_{center}B\Lambda_{dc-CA}^{-1/2}\)</span> (for rows = sites) and <span class="math inline">\(Z_2 = T_{center}C\)</span> (for columns = species)</li>
-<li>Scaling type 3 (symmetric scaling): <span class="math inline">\(\hat{Z}_3 = E_{center}B\Lambda_{dc-CA}^{-1/4}\)</span> (for rows = sites) and <span class="math inline">\(Z_3 = T_{center}C\Lambda_{dc-CA}^{-1/4}\)</span> (for columns = species)</li>
+<li>the regression coefficients for the rows (environmental variables) are <span class="math inline">\(B = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P\Delta^\alpha\)</span></li>
+<li>the regression coefficients for the columns (species traits) are <span class="math inline">\(C = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q\Delta^{1 - \alpha}\)</span></li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(Z_i = E_{center}B_i\)</span></li>
+<li>the LC scores for columns (species) are <span class="math inline">\(\hat{Z}_i = T_{center}C_i\)</span></li>
+<li>the WA scores for rows (sites) are <span class="math inline">\(\hat{U}_i = D(y_{\cdot i})^{-1} Y Z_i\)</span></li>
+<li>the WA scores for columns (species) are <span class="math inline">\(U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i\)</span></li>
+<li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_B^i = \left[ E_{center}'D(y_{i\cdot})E_{center} \right]^{1/2} P \Delta^{\alpha}\)</span></li>
+<li>the correlations with axes for the columns (species traits) are <span class="math inline">\(BS_C^i = \left[ T_{center}'D(y_{i\cdot})T_{center} \right]^{1/2} Q \Delta^{1-\alpha}\)</span></li>
 </ul>
-<p><strong><em>Note: these results are in disagreement with the article of <span class="citation" data-cites="terbraak2018">(<a href="#ref-terbraak2018" role="doc-biblioref">Braak, Šmilauer, and Dray 2018</a>)</span>, since the scalings of the columns should be times <span class="math inline">\(\Lambda^{-1}\)</span>, and there is a problem with the variance of <code>$co</code>. We find that there should be <span class="math inline">\(\Lambda^{1-\alpha}\)</span> in (17) instead of <span class="math inline">\(\Lambda^{\alpha-1}\)</span>.</em></strong></p>
-<p>WA scores are computed from the predicted coordinates of the other dimension:</p>
+<p><strong><em>Note: the formula for the regression coefficients <span class="math inline">\(C_i\)</span> are in disagreement with the article of <span class="citation" data-cites="terbraak2018">(<a href="#ref-terbraak2018" role="doc-biblioref">Braak, Šmilauer, and Dray 2018</a>)</span>. Here, we find that the scaling should include <span class="math inline">\(\Delta^{1-\alpha}\)</span> in the formula (17) instead of <span class="math inline">\(\Delta^{\alpha-1}\)</span>. However, when we try to prove transition formula (6), we find that it should be <span class="math inline">\(\Delta^{\alpha}\)</span>.</em></strong></p>
+<p>In these formulas, note that the WA scores for one dimension are computed from the predicted scores of the other dimension.</p>
+<p><strong>Scaling type 1 (<span class="math inline">\(\alpha = 1\)</span>)</strong></p>
 <ul>
-<li>The WA row (sites) scores are computed from the <span class="math inline">\(Z_i\)</span> column (species) scores as <span class="math inline">\(\hat{U}_i = D(y_{\cdot i})^{-1} Y Z_i\)</span></li>
-<li>The WA column (species) scores are computed from the <span class="math inline">\(\hat{Z}_i\)</span> row (sites) scores as <span class="math inline">\(U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i\)</span></li>
+<li>the regression coefficients for the rows (environmental variables) are <span class="math inline">\(B_1 = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P\Delta\)</span></li>
+<li>the regression coefficients for the columns (species traits) are <span class="math inline">\(C_1 = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q\)</span></li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(Z_1 = E_{center}B_1\)</span></li>
+<li>the LC scores for columns (species) are <span class="math inline">\(\hat{Z}_1 = T_{center}C_1\)</span></li>
+<li>the WA scores for rows (sites) are <span class="math inline">\(\hat{U}_1 = D(y_{\cdot i})^{-1} Y Z_1\)</span></li>
+<li>the WA scores for columns (species) are <span class="math inline">\(U_1 = D(y_{j \cdot})^{-1} Y' \hat{Z}_1\)</span></li>
+<li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_B^1 = \left[ E_{center}'D(y_{i\cdot})E_{center} \right]^{1/2} P \Delta\)</span></li>
+<li>the correlations with axes for the columns (species traits) are <span class="math inline">\(BS_C^1 = \left[ T_{center}'D(y_{i\cdot})T_{center} \right]^{1/2} Q \Delta\)</span></li>
 </ul>
+<p><strong>Scaling type 2 (<span class="math inline">\(\alpha = 0\)</span>)</strong></p>
+<ul>
+<li>the regression coefficients for the rows (environmental variables) are <span class="math inline">\(B_2 = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P\)</span></li>
+<li>the regression coefficients for the columns (species traits) are <span class="math inline">\(C_2 = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q \Delta\)</span></li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(Z_2 = E_{center}B_2\)</span></li>
+<li>the LC scores for columns (species) are <span class="math inline">\(\hat{Z}_2 = T_{center}C_2\)</span></li>
+<li>the WA scores for rows (sites) are <span class="math inline">\(\hat{U}_2 = D(y_{\cdot i})^{-1} Y Z_2\)</span></li>
+<li>the WA scores for columns (species) are <span class="math inline">\(U_2 = D(y_{j \cdot})^{-1} Y' \hat{Z}_2\)</span></li>
+<li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_B^2 = \left[ E_{center}'D(y_{i\cdot})E_{center} \right]^{1/2} P\)</span></li>
+<li>the correlations with axes for the columns (species traits) are <span class="math inline">\(BS_C^2 = \left[ T_{center}'D(y_{i\cdot})T_{center} \right]^{1/2} Q\)</span></li>
+</ul>
+<p><strong>Scaling type 3 (<span class="math inline">\(\alpha = 1/2\)</span>)</strong></p>
+<ul>
+<li>the regression coefficients for the rows (environmental variables) are <span class="math inline">\(B_3 = [E_{center}'D(y_{i\cdot})E_{center}]^{-1/2}P\Delta^{1/2}\)</span></li>
+<li>the regression coefficients for the columns (species traits) are <span class="math inline">\(C_3 = [T_{center}' D(y_{\cdot j})T_{center}]^{-1/2}Q\Delta^{1/2}\)</span></li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(Z_3 = E_{center}B_3\)</span></li>
+<li>the LC scores for columns (species) are <span class="math inline">\(\hat{Z}_3 = T_{center}C_3\)</span></li>
+<li>the WA scores for rows (sites) are <span class="math inline">\(\hat{U}_3 = D(y_{\cdot i})^{-1} Y Z_3\)</span></li>
+<li>the WA scores for columns (species) are <span class="math inline">\(U_3 = D(y_{j \cdot})^{-1} Y' \hat{Z}_3\)</span></li>
+<li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_B^3 = \left[ E_{center}'D(y_{i\cdot})E_{center} \right]^{1/2} P \Delta^{1/2}\)</span></li>
+<li>the correlations with axes for the columns (species traits) are <span class="math inline">\(BS_C^3 = \left[ T_{center}'D(y_{i\cdot})T_{center} \right]^{1/2} Q \Delta^{1/2}\)</span></li>
+</ul>
+<p><span class="math inline">\(\alpha\)</span> changes the interpretation of the correlations vectors:</p>
+<ul>
+<li>intra-set correlations: <span class="math inline">\(BS_B^2\)</span> (<span class="math inline">\(\alpha = 0\)</span>) approximates the correlations between the environmental variables (rows variables) and <span class="math inline">\(BS_C^1\)</span> (<span class="math inline">\(\alpha = 1\)</span>) approximates the correlations between the traits (columns variables)</li>
+<li>inter-set correlations (fourth-corner): <span class="math inline">\(BS_B^1\)</span> (<span class="math inline">\(\alpha = 1\)</span>) approximates the correlation between environmental variables (row variables) and species (columns) and <span class="math inline">\(BS_C^2\)</span> (<span class="math inline">\(\alpha = 0\)</span>) approximates the correlation between traits (columns variables) and sites (rows)</li>
+<li><span class="math inline">\(BS_B^3\)</span> and <span class="math inline">\(BS_C^3\)</span> (<span class="math inline">\(\alpha = 1/2\)</span>) is the geometric mean of scalings 1 and 2.</li>
+</ul>
+<p>When plotting the correlation circle, to look at the correlations between variables of the same set (traits or environmental variables), we should use <span class="math inline">\(BS_B^2\)</span> and <span class="math inline">\(BS_C^1\)</span>. There are the scores returned by <code>ade4</code>.</p>
 </div>
 </div>
-<section id="linear-combinations-lc-scores" class="level3">
-<h3 class="anchored" data-anchor-id="linear-combinations-lc-scores">Linear combinations (LC) scores</h3>
-<p>Using the coefficients <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span>, we can get the <em>predicted</em> species/sites scores as a linear combination of coefficients and traits/environment matrices.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>ca <span class="ot">&lt;-</span> <span class="fu">dudi.coa</span>(Y, </span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">nf =</span> c<span class="dv">-1</span>, </span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">scannf =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>dcca <span class="ot">&lt;-</span> <span class="fu">dpcaiv2</span>(<span class="at">dudi =</span> ca, </span>
-<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">dfR =</span> E,</span>
-<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">dfQ =</span> T_,</span>
-<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">scannf =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">nf =</span> <span class="fu">min</span>(k, l))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>ca <span class="ot">&lt;-</span> <span class="fu">dudi.coa</span>(Y, </span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">nf =</span> c<span class="dv">-1</span>, </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">scannf =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>dcca <span class="ot">&lt;-</span> <span class="fu">dpcaiv2</span>(<span class="at">dudi =</span> ca, </span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">dfR =</span> E,</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">dfQ =</span> T_,</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">scannf =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">nf =</span> <span class="fu">min</span>(k, l))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Coordinates computed with our method are equal to those computed by <code>ade4</code>, but we need to multiply them by a scaling factor <span class="math inline">\(\sqrt{y_{\cdot \cdot}}\)</span>.</p>
+<section id="pre-computations" class="level3">
+<h3 class="anchored" data-anchor-id="pre-computations">Pre-computations</h3>
+<p>Coefficients etc computed with our method are equal to those computed by <code>ade4</code>, but we need to multiply them by a scaling factor <span class="math inline">\(\sqrt{y_{\cdot \cdot}}\)</span>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>(scaling <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(Y)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>(scaling <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(Y)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 22.2036</code></pre>
 </div>
 </div>
+<p>We will need this function to normalize correlations vectors to compare results to those of <code>ade4</code>.</p>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>                    RS1 RS2 RS3 RS4 RS5 RS6
-location             -1   1   1  -1   1  -1
-elevation            -1   1   1  -1   1  -1
-patch_area           -1   1   1  -1   1  -1
-perc_forests         -1   1   1  -1   1  -1
-perc_grasslands      -1   1   1  -1   1  -1
-ShannonLandscapeDiv  -1   1   1  -1   1  -1</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      CS1 CS2 CS3 CS4 CS5 CS6
-biog   -1   1   1  -1   1  -1
-forag  -1   1   1  -1   1  -1
-mass   -1   1   1  -1   1  -1
-diet   -1   1   1  -1   1  -1
-move   -1   1   1  -1   1  -1
-nest   -1   1   1  -1   1  -1
-eggs   -1   1   1  -1   1  -1</code></pre>
-</div>
-</div>
-<ul>
-<li>Scaling type 1 (that preserve the rows distances): <span class="math inline">\(\hat{Z}_1 = E_{center}B\)</span> (for rows = sites) and <span class="math inline">\(Z_1 = T_{center}C \Lambda_{SVD}^{-1} = T_{center}C \Lambda_{dc-CA}^{-1/2}\)</span> (for columns = species).</li>
-</ul>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>Zhat1 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>Z1 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C <span class="sc">%*%</span> <span class="fu">diag</span>(lambda<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>Z1inv <span class="ot">&lt;-</span> Z1<span class="sc">*</span>scaling</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>Z1inv[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>Z1inv[, <span class="dv">1</span>]</span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>Zhat1inv <span class="ot">&lt;-</span> Zhat1<span class="sc">*</span>scaling</span>
-<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>Zhat1inv[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>Zhat1inv[, <span class="dv">1</span>]</span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> Z1inv[, <span class="dv">1</span>], <span class="at">y =</span> Z1inv[, <span class="dv">2</span>],</span>
-<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="cn">NULL</span>,</span>
-<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>,</span>
-<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"LC scores (scaling type 1: row-preserving)"</span>)</span>
-<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Z1inv[, <span class="dv">1</span>], <span class="at">y =</span> Z1inv[, <span class="dv">2</span>],</span>
-<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">colnames</span>(Y),</span>
-<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Zhat1inv[, <span class="dv">1</span>], <span class="at">y =</span> Zhat1inv[, <span class="dv">2</span>],</span>
-<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">rownames</span>(Y),</span>
-<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a><span class="co"># arrows(x0 = rep(0, nrow(BS1)),</span></span>
-<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a><span class="co">#        y0 = rep(0, nrow(BS1)),</span></span>
-<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a><span class="co">#        x1 = BS1[, 1], </span></span>
-<span id="cb48-22"><a href="#cb48-22" aria-hidden="true" tabindex="-1"></a><span class="co">#        y1 = BS1[, 2],</span></span>
-<span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a><span class="co">#        length = 0.1,</span></span>
-<span id="cb48-24"><a href="#cb48-24" aria-hidden="true" tabindex="-1"></a><span class="co">#        asp = 1)</span></span>
-<span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a><span class="co"># text(x = BS1[, 1], </span></span>
-<span id="cb48-26"><a href="#cb48-26" aria-hidden="true" tabindex="-1"></a><span class="co">#      y = BS1[, 2],</span></span>
-<span id="cb48-27"><a href="#cb48-27" aria-hidden="true" tabindex="-1"></a><span class="co">#      label = colnames(E),</span></span>
-<span id="cb48-28"><a href="#cb48-28" aria-hidden="true" tabindex="-1"></a><span class="co">#      asp = 1)</span></span>
-<span id="cb48-29"><a href="#cb48-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-30"><a href="#cb48-30" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>)</span>
-<span id="cb48-31"><a href="#cb48-31" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="576"></p>
-</div>
-</div>
-<ul>
-<li>Scaling type 2 (that preserve the columns distances) : <span class="math inline">\(\hat{Z}_2 = E_{center}B\Lambda_{SVD}^{-1} = E_{center}B\Lambda_{dc-CA}^{-1/2}\)</span> (for rows = sites) and <span class="math inline">\(Z_2 = T_{center}C\)</span> (for columns = species) (Here we use the formula that works, different from ter Braak, for Z2 agree)</li>
-</ul>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>Zhat2 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B <span class="sc">%*%</span> <span class="fu">diag</span>(lambda_svd<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span>))</span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>Z2 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C <span class="sc">%*%</span> <span class="fu">diag</span>(lambda_svd<span class="sc">^</span>(<span class="sc">-</span><span class="dv">2</span>))</span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>Z2_agree <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>Zhat2<span class="sc">*</span>scaling<span class="sc">/</span>dcca<span class="sc">$</span>l1 <span class="co"># Ok</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>    RS1 RS2 RS3 RS4 RS5 RS6
-X1   -1   1   1  -1   1  -1
-X2   -1   1   1  -1   1  -1
-X3   -1   1   1  -1   1  -1
-X4   -1   1   1  -1   1  -1
-X5   -1   1   1  -1   1  -1
-X6   -1   1   1  -1   1  -1
-X7   -1   1   1  -1   1  -1
-X8   -1   1   1  -1   1  -1
-X9   -1   1   1  -1   1  -1
-X10  -1   1   1  -1   1  -1
-X11  -1   1   1  -1   1  -1
-X12  -1   1   1  -1   1  -1
-X13  -1   1   1  -1   1  -1
-X14  -1   1   1  -1   1  -1
-X15  -1   1   1  -1   1  -1
-X16  -1   1   1  -1   1  -1
-X17  -1   1   1  -1   1  -1
-X18  -1   1   1  -1   1  -1
-X19  -1   1   1  -1   1  -1
-X20  -1   1   1  -1   1  -1
-X21  -1   1   1  -1   1  -1
-X22  -1   1   1  -1   1  -1
-X23  -1   1   1  -1   1  -1
-X24  -1   1   1  -1   1  -1
-X25  -1   1   1  -1   1  -1
-X26  -1   1   1  -1   1  -1</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>Z2<span class="sc">*</span>scaling<span class="sc">/</span>dcca<span class="sc">$</span>co <span class="co"># Not ok (but using tB formula)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>         Comp1   Comp2    Comp3     Comp4    Comp5     Comp6
-sp1  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp2  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp3  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp4  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp5  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp6  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp7  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp8  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp9  -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp10 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp11 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp12 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp13 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp14 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp15 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp16 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp17 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp18 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp19 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp21 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038
-sp22 -7.169104 11.2693 20.33197 -72.47675 114.4604 -402.3038</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>Z2_agree<span class="sc">*</span>scaling<span class="sc">/</span>dcca<span class="sc">$</span>co <span class="co"># Ok</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>     Comp1 Comp2 Comp3 Comp4 Comp5 Comp6
-sp1     -1     1     1    -1     1    -1
-sp2     -1     1     1    -1     1    -1
-sp3     -1     1     1    -1     1    -1
-sp4     -1     1     1    -1     1    -1
-sp5     -1     1     1    -1     1    -1
-sp6     -1     1     1    -1     1    -1
-sp7     -1     1     1    -1     1    -1
-sp8     -1     1     1    -1     1    -1
-sp9     -1     1     1    -1     1    -1
-sp10    -1     1     1    -1     1    -1
-sp11    -1     1     1    -1     1    -1
-sp12    -1     1     1    -1     1    -1
-sp13    -1     1     1    -1     1    -1
-sp14    -1     1     1    -1     1    -1
-sp15    -1     1     1    -1     1    -1
-sp16    -1     1     1    -1     1    -1
-sp17    -1     1     1    -1     1    -1
-sp18    -1     1     1    -1     1    -1
-sp19    -1     1     1    -1     1    -1
-sp21    -1     1     1    -1     1    -1
-sp22    -1     1     1    -1     1    -1</code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Since ter Braak and ade4 disagree, check the variance of co and Z2 or Z2_agree (it should be the eigenvalues of each axis)</span></span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' Get the variance of vector x</span></span>
-<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param x The vector</span></span>
-<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param w The weights</span></span>
-<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return The variance</span></span>
-<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>varvec <span class="ot">&lt;-</span> <span class="cf">function</span>(x, w) {</span>
-<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(w<span class="sc">*</span>(x<span class="sc">-</span><span class="fu">mean</span>(x))<span class="sc">^</span><span class="dv">2</span>)</span>
-<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a>res_ade4 <span class="ot">&lt;-</span> <span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>co), </span>
-<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a>                  <span class="dv">2</span>, </span>
-<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a>                  <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))</span>
-<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a>res_ade4<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   Comp1    Comp2    Comp3    Comp4    Comp5    Comp6 
-1.106286 1.151797 1.466209 1.038659 1.005454 1.000003 </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>res_tB <span class="ot">&lt;-</span> <span class="fu">apply</span>(Z2<span class="sc">*</span>scaling, </span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>                <span class="dv">2</span>, </span>
-<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>                <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))</span>
-<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>res_tB<span class="sc">/</span>dcca<span class="sc">$</span>eig </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1]     56.85872    146.27484    606.11487   5455.95087  13172.64370
-[6] 161848.88784</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>res_agree <span class="ot">&lt;-</span> <span class="fu">apply</span>(Z2_agree<span class="sc">*</span>scaling, </span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>                   <span class="dv">2</span>, </span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>                   <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))</span>
-<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>res_agree<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1.106286 1.151797 1.466209 1.038659 1.005454 1.000003</code></pre>
-</div>
-</div>
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>Z2inv <span class="ot">&lt;-</span> Z2_agree<span class="sc">*</span>scaling</span>
-<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>Z2inv[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>Z2inv[, <span class="dv">1</span>]</span>
-<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>Zhat2inv <span class="ot">&lt;-</span> Zhat2<span class="sc">*</span>scaling</span>
-<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>Zhat2inv[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>Zhat2inv[, <span class="dv">1</span>]</span>
-<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> Zhat2inv[, <span class="dv">1</span>], <span class="at">y =</span> Zhat2inv[, <span class="dv">2</span>],</span>
-<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="cn">NULL</span>,</span>
-<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>,</span>
-<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"LC scores (scaling type 2: column-preserving)"</span>)</span>
-<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Z2inv[, <span class="dv">1</span>], <span class="at">y =</span> Z2inv[, <span class="dv">2</span>],</span>
-<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">colnames</span>(Y),</span>
-<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>)</span>
-<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Zhat2inv[, <span class="dv">1</span>], <span class="at">y =</span> Zhat2inv[, <span class="dv">2</span>],</span>
-<span id="cb62-16"><a href="#cb62-16" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">rownames</span>(Y),</span>
-<span id="cb62-17"><a href="#cb62-17" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb62-18"><a href="#cb62-18" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>)</span>
-<span id="cb62-19"><a href="#cb62-19" aria-hidden="true" tabindex="-1"></a><span class="co"># arrows(x0 = rep(0, nrow(BS2)),</span></span>
-<span id="cb62-20"><a href="#cb62-20" aria-hidden="true" tabindex="-1"></a><span class="co">#        y0 = rep(0, nrow(BS2)),</span></span>
-<span id="cb62-21"><a href="#cb62-21" aria-hidden="true" tabindex="-1"></a><span class="co">#        x2 = BS2[, 1], </span></span>
-<span id="cb62-22"><a href="#cb62-22" aria-hidden="true" tabindex="-1"></a><span class="co">#        y2 = BS2[, 2],</span></span>
-<span id="cb62-23"><a href="#cb62-23" aria-hidden="true" tabindex="-1"></a><span class="co">#        length = 0.2,</span></span>
-<span id="cb62-24"><a href="#cb62-24" aria-hidden="true" tabindex="-1"></a><span class="co">#        asp = 2)</span></span>
-<span id="cb62-25"><a href="#cb62-25" aria-hidden="true" tabindex="-1"></a><span class="co"># text(x = BS2[, 1], </span></span>
-<span id="cb62-26"><a href="#cb62-26" aria-hidden="true" tabindex="-1"></a><span class="co">#      y = BS2[, 2],</span></span>
-<span id="cb62-27"><a href="#cb62-27" aria-hidden="true" tabindex="-1"></a><span class="co">#      label = colnames(E),</span></span>
-<span id="cb62-28"><a href="#cb62-28" aria-hidden="true" tabindex="-1"></a><span class="co">#      asp = 2)</span></span>
-<span id="cb62-29"><a href="#cb62-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb62-30"><a href="#cb62-30" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>)</span>
-<span id="cb62-31"><a href="#cb62-31" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="576"></p>
-</div>
-</div>
-<ul>
-<li>Scaling type 3 (symmetric scaling): <span class="math inline">\(\hat{Z}_3 = E_{center}B\Lambda_{SVD}^{-1/2} = E_{center}B\Lambda_{dc-CA}^{-1/4}\)</span> (for rows = sites) and <span class="math inline">\(Z_3 = T_{center}C\Lambda_{SVD}^{-1/2} = T_{center}C\Lambda_{dc-CA}^{-1/4}\)</span> (for columns = species) (we the heuristic formula)</li>
-</ul>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>Zhat3 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B <span class="sc">%*%</span> <span class="fu">diag</span>(lambda<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>))</span>
-<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>Z3 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C <span class="sc">%*%</span> <span class="fu">diag</span>(lambda<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>))</span>
-<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Should be</span></span>
-<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Z3 &lt;- Tcenter %*% C %*% diag(lambda^(-3/4))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>Z3inv <span class="ot">&lt;-</span> Z3<span class="sc">*</span>scaling</span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>Z3inv[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>Z3inv[, <span class="dv">1</span>]</span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>Zhat3inv <span class="ot">&lt;-</span> Zhat3<span class="sc">*</span>scaling</span>
-<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>Zhat3inv[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>Zhat3inv[, <span class="dv">1</span>]</span>
-<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> Zhat3inv[, <span class="dv">1</span>], <span class="at">y =</span> Zhat3inv[, <span class="dv">2</span>],</span>
-<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="cn">NULL</span>,</span>
-<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>,</span>
-<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>),</span>
-<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>),</span>
-<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"LC scores (scaling type 3: symmetric)"</span>)</span>
-<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Z3inv[, <span class="dv">1</span>], <span class="at">y =</span> Z3inv[, <span class="dv">2</span>],</span>
-<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">colnames</span>(Y),</span>
-<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>)</span>
-<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Zhat3inv[, <span class="dv">1</span>], <span class="at">y =</span> Zhat3inv[, <span class="dv">2</span>],</span>
-<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">rownames</span>(Y),</span>
-<span id="cb64-19"><a href="#cb64-19" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb64-20"><a href="#cb64-20" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>)</span>
-<span id="cb64-21"><a href="#cb64-21" aria-hidden="true" tabindex="-1"></a><span class="co"># arrows(x0 = rep(0, nrow(BS2)),</span></span>
-<span id="cb64-22"><a href="#cb64-22" aria-hidden="true" tabindex="-1"></a><span class="co">#        y0 = rep(0, nrow(BS2)),</span></span>
-<span id="cb64-23"><a href="#cb64-23" aria-hidden="true" tabindex="-1"></a><span class="co">#        x2 = BS2[, 1], </span></span>
-<span id="cb64-24"><a href="#cb64-24" aria-hidden="true" tabindex="-1"></a><span class="co">#        y2 = BS2[, 2],</span></span>
-<span id="cb64-25"><a href="#cb64-25" aria-hidden="true" tabindex="-1"></a><span class="co">#        length = 0.2,</span></span>
-<span id="cb64-26"><a href="#cb64-26" aria-hidden="true" tabindex="-1"></a><span class="co">#        asp = 2)</span></span>
-<span id="cb64-27"><a href="#cb64-27" aria-hidden="true" tabindex="-1"></a><span class="co"># text(x = BS2[, 1], </span></span>
-<span id="cb64-28"><a href="#cb64-28" aria-hidden="true" tabindex="-1"></a><span class="co">#      y = BS2[, 2],</span></span>
-<span id="cb64-29"><a href="#cb64-29" aria-hidden="true" tabindex="-1"></a><span class="co">#      label = colnames(E),</span></span>
-<span id="cb64-30"><a href="#cb64-30" aria-hidden="true" tabindex="-1"></a><span class="co">#      asp = 2)</span></span>
-<span id="cb64-31"><a href="#cb64-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-32"><a href="#cb64-32" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>)</span>
-<span id="cb64-33"><a href="#cb64-33" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid" width="576"></p>
-</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Normalize row or columns vectors of a matrix</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param M the matrix to normalize</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param margin the margin (1 = rows, 2 = columns)</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return The normalized matrix M</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>normalize <span class="ot">&lt;-</span> <span class="cf">function</span>(M, margin) {</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>  m_norm <span class="ot">&lt;-</span> <span class="fu">apply</span>(M,</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>                  margin, </span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>                  <span class="cf">function</span>(x) <span class="fu">sqrt</span>(<span class="fu">sum</span>(x<span class="sc">^</span><span class="dv">2</span>)))</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  M_norm <span class="ot">&lt;-</span> <span class="fu">sweep</span>(M, margin, m_norm, <span class="st">"/"</span>)</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(M_norm)</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="weighted-averages-wa-scores" class="level3">
-<h3 class="anchored" data-anchor-id="weighted-averages-wa-scores">Weighted averages (WA) scores</h3>
-<p>We can also get the weighted averages (WA) scores of the rows/columns. Indeed, rows scores are related to columns scores and conversely.</p>
+<section id="scaling-type-1" class="level3">
+<h3 class="anchored" data-anchor-id="scaling-type-1">Scaling type 1</h3>
+<p>This type of scaling preserves the distances between rows.</p>
 <ul>
-<li>The WA scores for the rows (sites) are <span class="math inline">\(\hat{U}\)</span> and are computed from the <strong><em>column (species)</em></strong> scores:</li>
+<li>the rows (sites) scores can be <span class="math inline">\(\hat{U}_1\)</span> (WA scores) or <span class="math inline">\(\hat{Z}_1\)</span> (LC scores)<br>
+</li>
+<li>the columns (species) scores can be <span class="math inline">\(U_1\)</span> (WA scores) or <span class="math inline">\(Z_1\)</span> (LC scores)</li>
+<li>rows variables (environmental variables) correlations are <span class="math inline">\(BS_{B1}\)</span>.</li>
+<li>columns variables (species traits) correlations are <span class="math inline">\(BS_{C1}\)</span></li>
 </ul>
-<p><span class="math display">\[
-\hat{U}_i = D(y_{\cdot i})^{-1} Y Z_i
-\]</span></p>
-<ul>
-<li>The WA scores for the column (species) are <span class="math inline">\(U\)</span> and are computed from the <strong><em>row (sites)</em></strong> scores:</li>
-</ul>
-<p><span class="math display">\[
-U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i
-\]</span></p>
+<p>With the scaling type 1, <span class="math inline">\(BS_{B1}\)</span> represents the correlation between environmental variables and species and <span class="math inline">\(BS_{C1}\)</span> represents the correlation between species traits and species.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Column (species) scores</span></span>
-<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>U1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dy_j) <span class="sc">%*%</span> <span class="fu">t</span>(Y) <span class="sc">%*%</span> Zhat1  </span>
-<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>U2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dy_j) <span class="sc">%*%</span> <span class="fu">t</span>(Y) <span class="sc">%*%</span> Zhat2</span>
-<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>U3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dy_j) <span class="sc">%*%</span> <span class="fu">t</span>(Y) <span class="sc">%*%</span> Zhat3</span>
-<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Rows (sites) scores</span></span>
-<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>Uhat1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dyi_) <span class="sc">%*%</span> Y <span class="sc">%*%</span> Z1</span>
-<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>Uhat2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dyi_) <span class="sc">%*%</span> Y <span class="sc">%*%</span> Z2</span>
-<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>Uhat3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dyi_) <span class="sc">%*%</span> Y <span class="sc">%*%</span> Z3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Coefficients</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>B_1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dyi_ <span class="sc">%*%</span> Ecenter)) <span class="sc">%*%</span>  P_svd <span class="sc">%*%</span> Delta</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>C_1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dy_j <span class="sc">%*%</span> Tcenter)) <span class="sc">%*%</span> Q_svd</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>Zhat1 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B_1 <span class="co"># rows</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>Z1 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C_1 <span class="co"># columns</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>Uhat1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dyi_) <span class="sc">%*%</span> Y <span class="sc">%*%</span> Z1 <span class="co"># rows</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>U1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dy_j) <span class="sc">%*%</span> <span class="fu">t</span>(Y) <span class="sc">%*%</span> Zhat1  <span class="co"># columns</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables scores</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>BS_B1 <span class="ot">&lt;-</span> <span class="fu">sqrtm</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dyi_ <span class="sc">%*%</span> Ecenter) <span class="sc">%*%</span> P_svd <span class="sc">%*%</span> Delta</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>BS_C1 <span class="ot">&lt;-</span> <span class="fu">sqrtm</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dy_j <span class="sc">%*%</span> Tcenter) <span class="sc">%*%</span> Q_svd</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>BS_B1norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_B1, <span class="dv">1</span>)</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>BS_C1norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_C1, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>U2inv <span class="ot">&lt;-</span> U2<span class="sc">*</span>scaling</span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>U2inv[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>U2inv[, <span class="dv">1</span>]</span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>Uhat1inv <span class="ot">&lt;-</span> Uhat1<span class="sc">*</span>scaling</span>
-<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>Uhat1inv[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="sc">-</span>Uhat1inv[, <span class="dv">1</span>]</span>
-<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> Uhat1inv[, <span class="dv">1</span>], <span class="at">y =</span> Uhat1inv[, <span class="dv">2</span>],</span>
-<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="cn">NULL</span>,</span>
-<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>,</span>
-<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>),</span>
-<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>),</span>
-<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"WA scores (with scaling type 1: row-preserving)"</span>)</span>
-<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> U2inv[, <span class="dv">1</span>], <span class="at">y =</span> U2inv[, <span class="dv">2</span>],</span>
-<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">colnames</span>(Y),</span>
-<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb66-16"><a href="#cb66-16" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>)</span>
-<span id="cb66-17"><a href="#cb66-17" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Uhat1inv[, <span class="dv">1</span>], <span class="at">y =</span> Uhat1inv[, <span class="dv">2</span>],</span>
-<span id="cb66-18"><a href="#cb66-18" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">rownames</span>(Y),</span>
-<span id="cb66-19"><a href="#cb66-19" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb66-20"><a href="#cb66-20" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">2</span>)</span>
-<span id="cb66-21"><a href="#cb66-21" aria-hidden="true" tabindex="-1"></a><span class="co"># arrows(x0 = rep(0, nrow(BS2)),</span></span>
-<span id="cb66-22"><a href="#cb66-22" aria-hidden="true" tabindex="-1"></a><span class="co">#        y0 = rep(0, nrow(BS2)),</span></span>
-<span id="cb66-23"><a href="#cb66-23" aria-hidden="true" tabindex="-1"></a><span class="co">#        x2 = BS2[, 1], </span></span>
-<span id="cb66-24"><a href="#cb66-24" aria-hidden="true" tabindex="-1"></a><span class="co">#        y2 = BS2[, 2],</span></span>
-<span id="cb66-25"><a href="#cb66-25" aria-hidden="true" tabindex="-1"></a><span class="co">#        length = 0.2,</span></span>
-<span id="cb66-26"><a href="#cb66-26" aria-hidden="true" tabindex="-1"></a><span class="co">#        asp = 2)</span></span>
-<span id="cb66-27"><a href="#cb66-27" aria-hidden="true" tabindex="-1"></a><span class="co"># text(x = BS2[, 1], </span></span>
-<span id="cb66-28"><a href="#cb66-28" aria-hidden="true" tabindex="-1"></a><span class="co">#      y = BS2[, 2],</span></span>
-<span id="cb66-29"><a href="#cb66-29" aria-hidden="true" tabindex="-1"></a><span class="co">#      label = colnames(E),</span></span>
-<span id="cb66-30"><a href="#cb66-30" aria-hidden="true" tabindex="-1"></a><span class="co">#      asp = 2)</span></span>
-<span id="cb66-31"><a href="#cb66-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-32"><a href="#cb66-32" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>)</span>
-<span id="cb66-33"><a href="#cb66-33" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Uhat1<span class="sc">*</span>scaling, <span class="at">indiv_col =</span> U1<span class="sc">*</span>scaling, </span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_row =</span> BS_B1norm, <span class="at">var_row_lab =</span> <span class="fu">colnames</span>(E),</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_col =</span> BS_C1norm, <span class="at">var_col_lab =</span> <span class="fu">colnames</span>(T_),</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"WA scores for sites"</span>)</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Zhat1<span class="sc">*</span>scaling, <span class="at">indiv_col =</span> Z1<span class="sc">*</span>scaling, </span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_row =</span> BS_B1norm, <span class="at">var_row_lab =</span> <span class="fu">colnames</span>(E),</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_col =</span> BS_C1norm, <span class="at">var_col_lab =</span> <span class="fu">colnames</span>(T_),</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"LC scores for sites"</span>)</span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> <span class="fu">list</span>(gwa, glc),</span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-34-1.png" class="img-fluid" width="576"></p>
+<p><img src="dcCA_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+<p>On this plot:</p>
+<ul>
+<li>row and columns variables (<span class="math inline">\(BS_B^1\)</span> - <span class="math inline">\(BS_C^1\)</span>): angles between arrows of rows and environmental variables represent their fourth-corner correlation. For instance, the correlation between <code>mass</code> and <code>perc_forests</code> is large (arrows size + direction).</li>
+<li>species traits (<span class="math inline">\(BS_C^1\)</span>): arrows indicate intra-set correlations.</li>
+<li>species and environmental variables (<span class="math inline">\(U\)</span> - <span class="math inline">\(BS_B^1\)</span>): species points on the right are located in sites with a high <code>location</code> variable.</li>
+<li>sites and species traits (<span class="math inline">\(\hat{U}\)</span> - <span class="math inline">\(BS_C^1\)</span>): we can understand sites using their community weighted mean (eg site 26 has birds with high mass).</li>
+<li>species and species traits (<span class="math inline">\(U\)</span> - <span class="math inline">\(BS_C^1\)</span>): for instance, species 12 has large eggs.</li>
+</ul>
+<p><strong>There is no interpretation for sites - environmental variables (<span class="math inline">\(\hat{U}\)</span> - <span class="math inline">\(BS_B^1\)</span>).</strong></p>
+</section>
+<section id="scaling-type-2" class="level3">
+<h3 class="anchored" data-anchor-id="scaling-type-2">Scaling type 2</h3>
+<p>This type of scaling preserves the distances between columns.</p>
+<ul>
+<li>the rows (sites) scores can be <span class="math inline">\(\hat{U}_2\)</span> (WA scores) or <span class="math inline">\(\hat{Z}_2\)</span> (LC scores)<br>
+</li>
+<li>the columns (species) scores can be <span class="math inline">\(U_2\)</span> (WA scores) or <span class="math inline">\(Z_2\)</span> (LC scores)</li>
+<li>rows variables (environmental variables) correlations are <span class="math inline">\(BS_{B2}\)</span>.</li>
+<li>columns variables (species traits) correlations are <span class="math inline">\(BS_{C2}\)</span></li>
+</ul>
+<p>With the scaling type 2, <span class="math inline">\(BS_{B2}\)</span> represents the correlation between environmental variables and sites and <span class="math inline">\(BS_{C2}\)</span> represents the correlation between species traits and sites.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Regression coefficients</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>B_2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dyi_ <span class="sc">%*%</span> Ecenter)) <span class="sc">%*%</span>  P_svd</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>C_2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dy_j <span class="sc">%*%</span> Tcenter)) <span class="sc">%*%</span> Q_svd <span class="sc">%*%</span> Delta</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>Zhat2 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B_2 <span class="co"># rows</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>Z2 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C_2 <span class="co"># columns</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>Uhat2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dyi_) <span class="sc">%*%</span> Y <span class="sc">%*%</span> Z2 <span class="co"># rows</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>U2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dy_j) <span class="sc">%*%</span> <span class="fu">t</span>(Y) <span class="sc">%*%</span> Zhat2 <span class="co"># columns</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables scores</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>BS_B2 <span class="ot">&lt;-</span> <span class="fu">sqrtm</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dyi_ <span class="sc">%*%</span> Ecenter) <span class="sc">%*%</span> P_svd</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>BS_C2 <span class="ot">&lt;-</span> <span class="fu">sqrtm</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dy_j <span class="sc">%*%</span> Tcenter) <span class="sc">%*%</span> Q_svd <span class="sc">%*%</span> Delta</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>BS_B2norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_B2, <span class="dv">1</span>)</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>BS_C2norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_C2, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Uhat2<span class="sc">*</span>scaling, <span class="at">indiv_col =</span> U2<span class="sc">*</span>scaling, </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_row =</span> BS_B2norm, <span class="at">var_row_lab =</span> <span class="fu">colnames</span>(E),</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_col =</span> BS_C2norm, <span class="at">var_col_lab =</span> <span class="fu">colnames</span>(T_),</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"WA scores for sites"</span>)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Zhat2<span class="sc">*</span>scaling, <span class="at">indiv_col =</span> Z2<span class="sc">*</span>scaling, </span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_row =</span> BS_B2norm, <span class="at">var_row_lab =</span> <span class="fu">colnames</span>(E),</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_col =</span> BS_C2norm, <span class="at">var_col_lab =</span> <span class="fu">colnames</span>(T_),</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"LC scores for sites"</span>)</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> <span class="fu">list</span>(gwa, glc),</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="dcCA_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+<p>On this plot:</p>
+<ul>
+<li>row and columns variables (<span class="math inline">\(BS_B^2\)</span> - <span class="math inline">\(BS_C^2\)</span>): angles between arrows of rows and environmental variables represent their fourth-corner correlation. For instance, the correlation between <code>mass</code> and <code>patch_forests</code> is large (arrows size + direction).</li>
+<li>environmental variables (<span class="math inline">\(BS_B^2\)</span>): arrows indicate intra-set correlations.</li>
+<li>species and environmental variables (<span class="math inline">\(U\)</span> - <span class="math inline">\(BS_B^1\)</span>)</li>
+<li>sites and species traits (<span class="math inline">\(\hat{U}\)</span> - <span class="math inline">\(BS_C^1\)</span>)</li>
+<li>sites and environmental variables (<span class="math inline">\(U\)</span> - <span class="math inline">\(BS_C^1\)</span>)</li>
+</ul>
+<p><strong>There is no interpretation for species - species traits (<span class="math inline">\(U\)</span> - <span class="math inline">\(BS_C^2\)</span>).</strong></p>
+</section>
+<section id="scaling-type-3" class="level3">
+<h3 class="anchored" data-anchor-id="scaling-type-3">Scaling type 3</h3>
+<p>This type of scaling is an intermediate between scalings 1 and 2.</p>
+<ul>
+<li>the rows (sites) scores can be <span class="math inline">\(\hat{U}_3\)</span> (WA scores) or <span class="math inline">\(\hat{Z}_3\)</span> (LC scores)<br>
+</li>
+<li>the columns (species) scores can be <span class="math inline">\(U_3\)</span> (WA scores) or <span class="math inline">\(Z_3\)</span> (LC scores)</li>
+<li>rows variables (environmental variables) correlations are <span class="math inline">\(BS_{B3}\)</span>.</li>
+<li>columns variables (species traits) correlations are <span class="math inline">\(BS_{C3}\)</span></li>
+</ul>
+<p>With the scaling type 3, <span class="math inline">\(BS_{B3}\)</span> and <span class="math inline">\(BS_{C3}\)</span> represent the geometric mean of their correlation with species and sites.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables coefficients</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>B_3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dyi_ <span class="sc">%*%</span> Ecenter)) <span class="sc">%*%</span>  P_svd <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>C_3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dy_j <span class="sc">%*%</span> Tcenter)) <span class="sc">%*%</span> Q_svd <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>Zhat3 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B_3 <span class="co"># rows</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>Z3 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C_3 <span class="co"># columns</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>Uhat3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dyi_) <span class="sc">%*%</span> Y <span class="sc">%*%</span> Tcenter <span class="sc">%*%</span> C_3 <span class="co"># rows</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>U3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dy_j) <span class="sc">%*%</span> <span class="fu">t</span>(Y) <span class="sc">%*%</span> Zhat3 <span class="co"># columns</span></span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables scores</span></span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>BS_B3 <span class="ot">&lt;-</span> <span class="fu">sqrtm</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dyi_ <span class="sc">%*%</span> Ecenter) <span class="sc">%*%</span> P_svd <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>BS_C3 <span class="ot">&lt;-</span> <span class="fu">sqrtm</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dy_j <span class="sc">%*%</span> Tcenter) <span class="sc">%*%</span> Q_svd <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>BS_B3norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_B3, <span class="dv">1</span>)</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>BS_C3norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_C3, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Uhat3<span class="sc">*</span>scaling, <span class="at">indiv_col =</span> U3<span class="sc">*</span>scaling, </span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_row =</span> BS_B3norm, <span class="at">var_row_lab =</span> <span class="fu">colnames</span>(E),</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_col =</span> BS_C3norm, <span class="at">var_col_lab =</span> <span class="fu">colnames</span>(T_),</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"WA scores for sites"</span>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Zhat3<span class="sc">*</span>scaling, <span class="at">indiv_col =</span> Z3<span class="sc">*</span>scaling, </span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_row =</span> BS_B3norm, <span class="at">var_row_lab =</span> <span class="fu">colnames</span>(E),</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>                 <span class="at">var_col =</span> BS_C3norm, <span class="at">var_col_lab =</span> <span class="fu">colnames</span>(T_),</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"LC scores for sites"</span>)</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> <span class="fu">list</span>(gwa, glc),</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="dcCA_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="576"></p>
 </div>
 </div>
 </section>
@@ -2030,22 +1911,58 @@ U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i
 <section id="more-tests" class="level2">
 <h2 class="anchored" data-anchor-id="more-tests">More tests</h2>
 <p>Below, we test the variances of various scores.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Since ter Braak and ade4 disagree, check the variance of co and Z2 or Z2 (it should be the eigenvalues of each axis)</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' Get the variance of vector x</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param x The vector</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param w The weights</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return The variance</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>varvec <span class="ot">&lt;-</span> <span class="cf">function</span>(x, w) {</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(w<span class="sc">*</span>(x<span class="sc">-</span><span class="fu">mean</span>(x))<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>res_ade4 <span class="ot">&lt;-</span> <span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>co), </span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>                  <span class="dv">2</span>, </span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>                  <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>res_ade4<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Comp1    Comp2    Comp3    Comp4    Comp5    Comp6 
+1.106286 1.151797 1.466209 1.038659 1.005454 1.000003 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>res_tB <span class="ot">&lt;-</span> <span class="fu">apply</span>(Z2<span class="sc">*</span>scaling, </span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>                <span class="dv">2</span>, </span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>                <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>res_tB<span class="sc">/</span>dcca<span class="sc">$</span>eig </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.106286 1.151797 1.466209 1.038659 1.005454 1.000003</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>res_agree <span class="ot">&lt;-</span> <span class="fu">apply</span>(Z2<span class="sc">*</span>scaling, </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>                   <span class="dv">2</span>, </span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>                   <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>res_agree<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.106286 1.151797 1.466209 1.038659 1.005454 1.000003</code></pre>
+</div>
+</div>
 <ul>
 <li>LC scores for rows:</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="co"># l1 variances should be 1</span></span>
-<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>l1), </span>
-<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>lw))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># l1 variances should be 1</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>l1), </span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>lw))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     RS1      RS2      RS3      RS4      RS5      RS6 
 1.014490 1.005249 1.002007 1.000012 1.000331 1.000000 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co"># li variances should be eigenvalues</span></span>
-<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>li), </span>
-<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
-<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>lw))<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># li variances should be eigenvalues</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>li), </span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>lw))<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   Axis1    Axis2    Axis3    Axis4    Axis5    Axis6 
 1.014490 1.005249 1.002007 1.000012 1.000331 1.000000 </code></pre>
@@ -2055,49 +1972,48 @@ U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i
 <li>LC scores for columns</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># c1 variances should be 1</span></span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>c1), </span>
-<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
-<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># c1 variances should be 1</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>c1), </span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     CS1      CS2      CS3      CS4      CS5      CS6 
 1.106286 1.151797 1.466209 1.038659 1.005454 1.000003 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="co"># co variances should be eigenvalues</span></span>
-<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>co), </span>
-<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
-<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))<span class="sc">/</span>dcca<span class="sc">$</span>eig </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># co variances should be eigenvalues</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>co), </span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))<span class="sc">/</span>dcca<span class="sc">$</span>eig </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   Comp1    Comp2    Comp3    Comp4    Comp5    Comp6 
 1.106286 1.151797 1.466209 1.038659 1.005454 1.000003 </code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Z2 variances should be the eigenvalues</span></span>
-<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(Z2<span class="sc">*</span>scaling, </span>
-<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
-<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Z2 variances should be the eigenvalues</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(Z2<span class="sc">*</span>scaling, </span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1]     56.85872    146.27484    606.11487   5455.95087  13172.64370
-[6] 161848.88784</code></pre>
+<pre><code>[1] 1.106286 1.151797 1.466209 1.038659 1.005454 1.000003</code></pre>
 </div>
 </div>
 <ul>
 <li>WA scores:</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Hypothesis: these scires shound be the eigenvalues</span></span>
-<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>lsR), </span>
-<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
-<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>lw))<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Hypothesis: these scires shound be the eigenvalues</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>lsR), </span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>lw))<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>    Axis1     Axis2     Axis3     Axis4     Axis5     Axis6 
  1.397739  1.490618  1.894509  3.367612  7.569186 16.600310 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># co variances should be eigenvalues</span></span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>lsQ), </span>
-<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
-<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="co"># co variances should be eigenvalues</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(<span class="fu">as.matrix</span>(dcca<span class="sc">$</span>lsQ), </span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>      <span class="dv">2</span>, </span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">function</span>(x) <span class="fu">varvec</span>(x, dcca<span class="sc">$</span>cw))<span class="sc">/</span>dcca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>    Comp1     Comp2     Comp3     Comp4     Comp5     Comp6 
  1.356947  1.416201  2.521861  7.980247  5.161038 13.632366 </code></pre>
@@ -2108,8 +2024,8 @@ U_i = D(y_{j \cdot})^{-1} Y' \hat{Z}_i
 <h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
 <p>This method finds the linear correlation of row explanatory variables (environmental variables) and the linear correlation of columns explanatory variables (species traits) that maximizes the fourth-corner correlation, i.e.&nbsp;the correlation between these linear combinations of row and columns-variables.</p>
 <p>There are other related methods, that have been better described and also more used in ecology: RLQ, community weighted means RDA (CMW-RDA).</p>
-<p>Contrary to RLQ, dc-CA takes into account the correlation between the row and column variables. Thus, while RLQ can analyze any number of row and column variables, it is not the case with dc-CA the number of row and column variables must not be large compared to the number of rows/columns in the tables.</p>
-<p>The eigenvaines of dc-CA are the squares of the fourth-corner correlations.</p>
+<p>Contrary to RLQ, dc-CA takes into account the correlation between the row and column variables. Thus, while RLQ can analyze any number of row and column variables, it is not the case with dc-CA the number of row and column variables must not be large compared to the number of rows/columns in the tables. Also, CCA maximizes correlation and RLQ maximizes covariance <span class="citation" data-cites="terbraak2018">(<a href="#ref-terbraak2018" role="doc-biblioref">Braak, Šmilauer, and Dray 2018</a>)</span>.</p>
+<p>The eigenvalues of dc-CA are the squares of the fourth-corner correlations.</p>
 
 
 

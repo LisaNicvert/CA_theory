@@ -1,0 +1,29 @@
+---
+title: "Reciprocal scaling"
+params:
+  colsite: "burlywood4"
+  colspp: "cornflowerblue"
+---
+
+
+
+```{r, results='hide', message=FALSE}
+#| code-fold: true
+
+# Paths
+library(here)
+
+# Multivariate analysis
+library(ade4)
+library(adegraphics)
+
+# dc-CA
+source(here("functions/dpcaiv2-ade4.R"))
+
+# Matrix algebra
+library(expm)
+
+# Plots
+library(ggplot2)
+source(here("functions/plot.R"))
+```

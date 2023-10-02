@@ -19,7 +19,7 @@ library(adegraphics)
 library(expm)
 
 # Plots
-library(ggplot2)
+library(gridExtra)
 source(here("functions/plot.R"))
 ```
 
@@ -101,22 +101,31 @@ sqrt( sum(1/(colSums(Y)/ytot)*(freq["1",] - freq["2", ])^2 ) )
 ::: {.callout-tip title="*TL;DR*"}
 Given a data matrix $Y$, we "center-scale" this matrix ($\bar{Q}$).
 
-We can diagonalize matrices $\bar{Q} \bar{Q'}$ and $\bar{Q}' \bar{Q}$.
+We can perform the SVD of $\bar{Q}$:
+
+$$
+\hat{Q} = \hat{U} \Delta U'
+$$
 
 $U$ ($c \times c$) contains the loadings of the columns (species) of the contingency table.
 
-$$
-\bar{Q}' \bar{Q} =  U \Lambda U^{-1}
-$$
-
 $\hat{U}$ ($r \times c$) contains the loadings of the rows (sites) of the contingency table.
 
+There are $\min(c-1, r-1)$ non-null eigenvalues. The CA eigenvalues are the squares of the SVD eigenvalues: $\Lambda = \Delta^2$.
+
+Also, there is a link between $\hat{U}$ and $U$: 
 $$
-\bar{Q} \bar{Q}' =  \hat{U} \Lambda \hat{U}^{-1}
+\hat{U} = \bar{Q}U\Lambda^{-1/2}
+$$ 
+
+and 
+
+$$
+U = \bar{Q}'\hat{U}\Lambda^{-1/2}
 $$
 :::
 
-1.  Transform the table
+### Transform the table
 
 We transform values of the contingency table $Y$ with counts $f_{ij}$ into proportions $p_{ij}$:
 
@@ -158,7 +167,58 @@ for(i in 1:nrow(Y)) { # For each row
 }
 ```
 
-2.  Singular value decomposition of $\bar{Q}$
+
+We could also do this by matrix multiplication: 
+
+$$
+\bar{Q} = D(p_{i\cdot})^{-1/2} P D(p_{\cdot j})^{-1/2}
+$$
+
+In [@carroll1986], the formula is:
+
+$$
+\bar{Q} = D(y_{i\cdot})^{-1/2} Y D(y_{\cdot j})^{-1/2}
+$$
+
+where matrices $D(p_{i \cdot})$ and $D(p_{\cdot j})$ are the diagonal matrices with the row and columns sums of $P$ (respectively) and $D(y_{i \cdot})$ and $D(y_{\cdot j})$ are he equivalent for matrix $Y$.
+
+*NB: I could not verify this result numerically, since here $\bar{Q}$ is not equal to $D(p_{i \cdot})^{-1/2} Q D(p_{\cdot j})^{-1/2}$, as in [@carroll1987].*
+
+```{r}
+# Define weights matrices
+Dpi_ <- diag(rowSums(P))
+Dp_j <- diag(colSums(P))
+
+# Also define a variable for just the sums for easier manipulation
+dpi_ <- rowSums(P)
+dp_j <- colSums(P)
+
+# Define weights matrices
+Dyi_ <- diag(rowSums(Y))
+Dy_j <- diag(colSums(Y))
+
+# Also define a variable for just the sums for easier manipulation
+dyi_ <- rowSums(Y)
+dy_j <- colSums(Y)
+```
+
+```{r, include=FALSE}
+# Compute Qbar with the formula from Caroll
+Qbar2 <- diag(dyi_^(-1/2)) %*% Y %*% diag(dy_j^(-1/2))
+
+Qbar2/Qbar # It is not equal: not centered? 
+# When performing CA on a non-centered matrix, there is one extra eigenvalue (Legendre & Legendre) of value 1. This is probably what Caroll et al do in their article.
+
+# Compute Qbar with the Ps
+Qbar3 <- diag(dpi_^(-1/2)) %*% Y %*% diag(dp_j^(-1/2))
+Qbar3/Qbar # It is not equal and also not equal to Qbar2
+
+# Compute Qbar with all Ps
+Qbar4 <- diag(dpi_^(-1/2)) %*% P %*% diag(dp_j^(-1/2))
+Qbar4/Qbar # It equal to Qbar2
+```
+
+### Singular value decomposition of $\bar{Q}$
 
 $$
 \bar{Q} = \hat{U}WU'
@@ -171,17 +231,17 @@ Note that the last eigenvalue of this SVD will always be null (due to the center
 ```{r}
 sv <- svd(Qbar)
 
+# Eigenvalues
+(delta <- sv$d) # Last eigenvalue is zero
+lambda <- delta^2
+Lambda <- diag(lambda)
+ 
+# Eigenvectors
 Uhat <- sv$u
-W <- diag(sv$d)
 U <- sv$v
-Uprime <- t(U)
-
-length(sv$d)
-
-sv$d # Last eigenvalue is zero
 ```
 
-With the SVD, we can rewrite $\bar{Q}' \bar{Q}$:
+This SVD is equivalent to a diagonalization: with the SVD, we can rewrite $\bar{Q}' \bar{Q}$:
 
 $$
 \bar{Q}' \bar{Q} = U W' \hat{U'} \hat{U} W U'
@@ -193,7 +253,7 @@ $$
 \bar{Q}' \bar{Q} =  U W' W U'
 $$
 
-If we rewrite $W' W$ as $\Lambda$, and since $U' = U^{-1}$ ($U$ is orthonormal), then we can write this as a diagonalization:
+If we rewrite $W' W$ as $\Lambda$ (so $W = \Lambda^{1/2}$), and since $U' = U^{-1}$ ($U$ is orthonormal), then we can write this as a diagonalization:
 
 $$
 \bar{Q}' \bar{Q} =  U \Lambda U^{-1}
@@ -205,123 +265,108 @@ $$
 \bar{Q} \bar{Q}' =  \hat{U} \Lambda \hat{U}^{-1}
 $$
 
-With that, we wouldn't even need the SVD in the first place (a classical diagonalization of $\bar{Q} \bar{Q}'$/$\bar{Q}' \bar{Q}$ works.)
-
 ```{r}
-Lambda <- W %*% t(W)
-lambda <- diag(Lambda)
-
 # Diagonalize Q'Q ---
 dg1 <- eigen(t(Qbar) %*% Qbar)
 
-# Check eigenvalues
-length(dg1$values)
-dg1$values # Last value is zero
-
-# Eigenvalues are equal to the SVD values
+# Eigenvalues are equal to the square roots of SVD eigenvalues
 all((dg1$values - lambda) < 10e-10)
 
 # Eigenvectors are equal to U
-# dg1$vectors
-# U
-
-# The vectors are in opposite directions so we use the absolute value
-all(abs(dg1$vectors[, 1:(c-1)]/U[, 1:(c-1)]) - 1 < 10e-10)
+all(abs(dg1$vectors/U) - 1 < 10e-10)
 ```
 
 ```{r}
 # Diagonalize QQ' ---
 dg2 <- eigen(Qbar %*% t(Qbar))
 
-# Check eigenvalues
-length(dg2$values) # r eigenvalues
-dg2$values # Last r - (c - 1) values are zero
+# Eigenvalues are equal to the square roots of SVD eigenvalues
+all((dg1$values - lambda) < 10e-10)
 
-# Eigenvalues are equal to the SVD values
-# We test only the first values, the rest are zero
-all((dg2$values[1:c] - lambda) < 10e-10)
-
-# Eigenvectors are equal to Uhat (we test only eigenvectors for non-null eigenvalues)
+# Eigenvectors are equal to Uhat
 all(abs(dg2$vectors[, 1:(c-1)]/Uhat[, 1:(c-1)]) - 1 < 10e-10)
 ```
 
 ## Scalings
 
 ::: {.callout-tip title="*TL;DR*"}
-Once we diagonalized the stuff, there is still a question of scaling to plot them in the multivariate plane.
+To plot rows and columns on separate plots, one can plot the eigenvectors $\hat{U}$ (rows = sites) and $U$ (columns = species).
 
-**Columns (species) can be represented with:**
+To plot columns and rows individuals on the same biplot, different scalings have been proposed. For sites (rows), these scalings are equal to $\hat{S}_i = D(p_{i \cdot})^{-1/2} \hat{U} \Delta^\alpha$ (with $\alpha =$ 1, 0 or 1/2).
 
--   $U$ (the matrix of eigenvectors : $\bar{Q}'Q = U \Lambda U^{-1}$) (unscaled)
--   $V = D(p_{\cdot j})^{-1/2} U$ (scaling type 1)
--   $\hat{F} = V \Lambda^{1/2}$ (scaling type 2)
--   $V \Lambda^{1/4}$ (scaling type 3).
+For species (columns), these scalings are equal to $\hat{S}_i = D(p_{\cdot j})^{-1/2} U \Delta^{1-\alpha}$.
 
-**Rows (sites) can be represented with:**
+-   Scaling type 1 ($\alpha = 1$): this scaling preserves the distances between rows. Rows (sites) are represented with $F = D(p_{i \cdot})^{-1/2} \hat{U} \Lambda^{1/2}$ and species (columns) with $V = D(p_{\cdot j})^{-1/2} U$.
+-   Scaling type 2  ($\alpha = 0$): this scaling preserves distances between columns. Rows (sites) are represented with $\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}$ and species (columns) with $\hat{F} = D(p_{\cdot j})^{-1/2} U \Lambda^{1/2}$.
+-   Scaling type 3  ($\alpha = 1/2$): this scaling is a compromise between scalings type 1 and 2. Rows (sites) are represented with $\hat{S}_3 = D(p_{i \cdot})^{-1/2} \hat{U} \Lambda^{1/4}$ and species (columns) with $S_3 = D(p_{\cdot j})^{-1/2} U \Lambda^{1/4}$.
 
--   $\hat{U}$ (the matrix of eigenvectors: $\bar{Q} \bar{Q}' = \hat{U} \Lambda \hat{U}^{-1}$) (unscaled)
--   $\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}$ (scaling type 2)
--   $F = \hat{V} \Lambda^{1/2}$ (scaling type 1)
--   $\hat{V} \Lambda^{1/4}$ (scaling type 3)
+As noted in [@carroll1987], if we plot distances of different scalings on the same biplot, we cannot interpret between-sets distances, but within-sets distances are still be interpretable. This is what the scaling type 4 described below does and this scaling is what [@carroll1987] refers to.
 :::
 
-There are several scalings used in CA, which are useful to plot both variables on the same plot (biplot).
-
-First, the original coordinates are scaled to the square root of the margins of the proportion matrix.
-
--   For the columns (species), we have $V = D(p_{\cdot j})^{-1/2} U$.
--   For the rows (sites), we have $\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}$.
-
-To get the position of these in the multivariate space, we have to use $\Lambda$:
-
--   Position of the columns (species) in the multivariate space ($U$): $\hat{F} = V \Lambda^{1/2}$
-
--   Position of the rows (sites) in the multivariate space ($\hat{U}$): $F = \hat{V} \Lambda^{1/2}$
-
-Since these examples do not take into account the null eigenvalues, one column (= multivariate axis) will be discarded as it is not interpretable.
-
-With our example, we have:
+Let's perform a CA with `ade4` to check results later.
 
 ```{r}
-# Scale species (columns)
-V <- diag(1/sqrt(colSums(P))) %*% U
-dim(V)
-
-# Get species coordinates in the multivariate space (columns)
-Fhat <- V %*% diag(sqrt(lambda))
-dim(Fhat)
-all(Fhat[, ncol(Fhat)] < 10e-10) # The last values will be discarded (all coordinates are zero)
-```
-
-```{r}
-# Scale sites (rows)
-Vhat <- diag(1/sqrt(rowSums(P))) %*% Uhat
-dim(Vhat)
-
-# Get sites coordinates in the multivariate space (rows)
-F_ <- Vhat %*% diag(sqrt(lambda))
-dim(F_)
-all(F_[, ncol(F_)] < 10e-10) # The last values discarded (all coordinates are zero)
-```
-
-**These transformed coordinates that are used in the outputs of `dudi.coa`.**
-
-```{r, results='hide'}
 ca <- dudi.coa(Y, 
-               nf = c-1, scannf = FALSE)
-
-# Species (columns)
-all(abs(ca$co/Fhat[, 1:(c-1)]) - 1 < 10e-10)
-
-# Sites (rows)
-all(abs(ca$li/F_[, 1:(c-1)]) - 1 < 10e-10)
+               scannf = FALSE, 
+               nf = min(r, c))
 ```
 
-Now, there are different types of scalings for biplots. Below, we assume a sites x species matrix:
+### No scaling
 
--   Type 1: use $F$ (sites) and and $V$ (species). This preserves $\chi^2$ distances between sites on the plot. Here, sites are positioned at the centroid of species.
+One can represent the eigenvectors directly without scaling to display them on separate plots.
 
-```{r, fig.show='hide', echo=FALSE}
+```{r, fig.height=4, fig.width=8, warning=FALSE}
+#| code-fold: true
+
+# Plot sites ---
+g1 <- multiplot(indiv_row = Uhat, 
+          indiv_row_lab = rownames(Y), 
+          row_color = params$colsite,
+          eig = lambda)
+
+# Plot species ---
+g2 <- multiplot(indiv_row = U, 
+          indiv_row_lab = colnames(Y), 
+          row_color = params$colspp,
+          eig = lambda)
+
+grid.arrange(grobs = list(g1, g2), nrow = 1)
+```
+
+### Scaling type 1
+
+This scaling preserves the row $\chi^2$ distances and is useful to interpret distances between row individuals (sites). In this scaling, the rows individuals are positioned at the barycentre of the corresponding column (species) individuals.
+
+For that, we use:
+
+-   $F = D(p_{\cdot j})^{-1/2} \hat{U} \Lambda^{1/2}$ (rows = sites)
+-   $V = D(p_{\cdot j})^{-1/2} U$ (columns = species)
+
+```{r}
+# Sites
+F_ <- diag(dpi_^(-1/2)) %*% Uhat %*% Lambda^(1/2)
+
+# Species
+V <- diag(dp_j^(-1/2)) %*% U
+```
+
+*NB: $F$ (sites scores) can also be computed from the* **species** *scores, since there is a correspondence between $U$ and $\hat{U}$. This shows better the relationship between sites and species scores (sites are at the barycentre of their species with this scaling).*
+
+*NB2: I could not find back the formula in [@legendre2012] for $F = D(p_{i\cdot})^{-1} Q V$ and $\hat{F} = D(p_{\cdot j})^{-1} Q' \hat{V}$ (p 479). Indeed, for these formulas to be valid, we need $\bar{Q} = D(p_{i \cdot})^{-1/2} Q D(p_{\cdot j})^{-1/2}$, as in [@carroll1987], but it is not the case here.*
+
+```{r}
+# Compute sites coordinates using species coordinates
+F2 <- diag(dpi_^(-1/2)) %*% Qbar %*% U
+
+# Check that this corresponds to F_ cmputed above
+all(F_[, 1:(c-1)]/F2[, 1:(c-1)] - 1 < 10e-10)
+```
+
+
+```{r, include=FALSE}
+F_/ca$li
+V/ca$c1
+
 scatter(ca, method = 2,
         posieig = 'none')
 
@@ -336,28 +381,49 @@ s.label(ca$li,
         add = TRUE) # Sites distances are preserved
 ```
 
-```{r, fig.height=6, fig.width=6}
+```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
 
-plot(x = V[, 1], y = V[, 2],
-     col = NULL,
-     asp = 1)
-text(x = V[, 1], y = V[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-text(x = F_[, 1], y = F_[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
+multiplot(indiv_row = F_, indiv_col = V, 
+          indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+          row_color = params$colsite, col_color = params$colspp,
+          eig = lambda)
 ```
 
--   Type 2: use $\hat{F}$ (species) and and $\hat{V}$ (sites). This preserves $\chi^2$ distances between species on the plot. Here, species are positioned at the centroid of sites.
 
-```{r, fig.show='hide', echo=FALSE}
+
+### Scaling type 2
+
+This preserves $\chi^2$ distances between species on the plot. Here, species are positioned at the centroid of sites.
+
+We use:
+
+-   $\hat{V} = D(p_{i\cdot})^{-1/2} \hat{U}$ (rows = sites)
+-   $\hat{F} = D(p_{\cdot j})^{-1/2} U \Lambda^{1/2}$ (columns = species)
+
+```{r}
+# Sites
+Vhat <- diag(dpi_^(-1/2)) %*% Uhat
+
+# Species
+Fhat <- diag(dp_j^(-1/2)) %*% U %*% Lambda^(1/2)
+```
+
+*NB: like $F$, $\hat{F}$ (species scores) can also be computed from the* **sites** *scores. This shows better the relationship between species and sites scores (species are at the barycentre of their sites with this scaling).*
+
+
+```{r}
+# Compute sites coordinates using species coordinates
+Fhat2 <- diag(dp_j^(-1/2)) %*% t(Qbar) %*% Uhat
+
+# Check that this corresponds to Fhat cmputed above
+all(Fhat[, 1:(c-1)]/Fhat2[, 1:(c-1)] - 1 < 10e-10)
+```
+
+```{r, include=FALSE}
+Fhat/ca$co
+Vhat/ca$l1
+
 scatter(ca, method = 3, 
         posieig = 'none')
 
@@ -370,31 +436,32 @@ s.label(ca$co,
         plabels.col = params$colspp,
         plabels.optim = TRUE,
         add = TRUE) # Spp distances are preserved
-
 ```
 
-```{r, fig.height=6, fig.width=6}
+```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
-
-plot(x = Vhat[, 1], y = Vhat[, 2],
-     col = NULL,
-     asp = 1)
-text(x = Vhat[, 1], y = Vhat[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-text(x = Fhat[, 1], y = Fhat[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
+multiplot(indiv_row = Vhat, indiv_col = Fhat, 
+          indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+          row_color = params$colsite, col_color = params$colspp,
+          eig = lambda)
 ```
 
--   Type 3: a compromise between scalings 1 and 2. It preserves none of the $\chi^2$ distances and is obtained with $\hat{V}\Lambda^{1/4}$ (for sites) and $V\Lambda^{1/4}$ (for species).
 
-```{r, fig.show='hide', echo=FALSE}
+### Scaling type 3
+
+It is a compromise between scalings 1 and 2. It preserves none of the $\chi^2$ distances.
+
+We use:
+
+-   $\hat{S}_3 = D(p_{i\cdot})^{-1/2} \hat{U} \Lambda^{1/4}$ (for sites)
+-   $S_3 = D(p_{\cdot j})^{-1/2} U \Lambda^{1/4}$ (for species).
+
+```{r}
+s3_r <- diag(dpi_^(-1/2)) %*% Uhat %*% Lambda^(1/4)
+s3_c <- diag(dp_j^(-1/2)) %*% U %*% Lambda^(1/4)
+```
+
+```{r, include=FALSE}
 # This is not exactly adequate
 scatter(ca, method = 1,
         posieig = 'none')
@@ -415,32 +482,19 @@ s.label(spp_ade4,
         add = TRUE)
 ```
 
-```{r, fig.height=6, fig.width=6}
+```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
-sites <- Vhat %*% diag(lambda^(1/4))
-spp <- V %*% diag(lambda^(1/4))
-
-plot(x = spp[, 1], y = spp[, 2],
-     col = NULL,
-     ylim = c(-5, 5),
-     xlim = c(-5, 5),
-     asp = 1)
-text(x = sites[, 1], y = sites[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-text(x = spp[, 1], y = spp[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
+multiplot(indiv_row = s3_r, indiv_col = s3_c, 
+          indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+          row_color = params$colsite, col_color = params$colspp,
+          eig = lambda)
 ```
 
--   Type 4: use $F$ (sites) and $\hat{F}$ (species). Then, both $\chi^2$ distances are preserved. It is useful for a table crossing two factors.
+### Scaling type 4
 
-```{r, fig.show='hide', echo=FALSE}
+Use $F$ (sites) and $\hat{F}$ (species). Then, both $\chi^2$ distances are preserved. It is useful for a table crossing two factors.
+
+```{r, include=FALSE}
 s.label(ca$li, 
         ylim = c(-2, 2),
         xlim = c(-3, 2),
@@ -454,29 +508,18 @@ s.label(ca$co,
         add = TRUE)
 ```
 
-```{r, fig.height=6, fig.width=6}
+```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
-plot(x = F_[, 1], y = F_[, 2],
-     col = NULL,
-     ylim = c(-2, 2),
-     xlim = c(-2.5, 1),
-     asp = 1)
-text(x = F_[, 1], y = F_[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-text(x = Fhat[, 1], y = Fhat[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
 
-abline(h = 0)
-abline(v = 0)
+multiplot(indiv_row = F_, indiv_col = Fhat, 
+          indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+          row_color = params$colsite, col_color = params$colspp,
+          eig = lambda)
 ```
 
 ## Interpretation
 
-$V$ and $\hat{V}$ are related with the following equation:
+Using the "transition formula" defined above ($\hat{U} = \bar{Q}U\Lambda^{-1/2}$), we can relate $V$ and $\hat{V}$ with the following equation:
 
 $$
 \hat{V} \Lambda^{1/2} = D(p_{i\cdot})^{-1/2}\bar{Q}D(p_{\cdot j})^{1/2}V

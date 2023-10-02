@@ -19,8 +19,8 @@ library(adegraphics)
 library(expm)
 
 # Plots
-library(ggplot2)
 source(here("functions/plot.R"))
+library(gridExtra)
 ```
 
 *The contents of this page relies heavily on [@legendre2012].*
@@ -33,8 +33,8 @@ CCA is an asymmetric method because the predictor variables and the response var
 
 CCA takes two matrices in input:
 
-+ A data matrix $Y$ ($r \times c$)
-+ A matrix of predictor variables $E$ ($r \times l$)
+-   A data matrix $Y$ ($r \times c$)
+-   A matrix of predictor variables $E$ ($r \times l$)
 
 ```{r, echo = FALSE, message = FALSE}
 dat <- readRDS(here("data/Barbaro2012.rds"))
@@ -67,14 +67,12 @@ knitr::kable(E)
 (l <- dim(E)[2])
 ```
 
-
-
 ## Computation
 
 ::: {.callout-tip title="*TL;DR*"}
 We have a data matrix $Y$ ($r \times c$) and a matrix $E$ ($r \times l$) of predictors variables.
 
-We regress $\bar{Q}$ ("centered" $Y$) on $E_{stand}$ (which is the centered and scaled $E$ matrix): 
+We regress $\bar{Q}$ ("centered" $Y$) on $E_{stand}$ (which is the centered and scaled $E$ matrix):
 
 $$
 \hat{\bar{Q}} = D(p_{i\cdot})^{1/2} E_{stand}B
@@ -84,10 +82,9 @@ Then, we diagonalize matrix $S_{\hat{\bar{Q}}'\hat{\bar{Q}}} = \hat{\bar{Q}}'\ha
 
 $$
 S_{\hat{\bar{Q}}'\hat{\bar{Q}}} =  U \Lambda U^{-1}
-$$ 
+$$
 
 The matrix $U$ ($c \times \text{mindim}$) contains the loadings of the columns (species) of the contingency table. There are $\text{mindim} = \min(r-1, c, l)$ non-null eigenvalues.
-
 
 Then, we can find the loadings rows (sites) $\hat{U}$ ($r \times \text{mindim}$) from the columns (species) loadings using the following formula:
 
@@ -95,7 +92,6 @@ $$
 \hat{U} = \bar{Q} U \Lambda^{-1/2}
 $$
 :::
-
 
 ### Transform matrix
 
@@ -130,9 +126,9 @@ knitr::kable(Qbar)
 
 ### Weights on $E$
 
-We standardize $E$ as $E_{stand}$, but we standardize so that the variables associated to the sites wihch have more observations have more weight.
+We standardize $E$ as $E_{stand}$, but we standardize so that the variables associated to the sites which have more observations have more weight.
 
-To do that, we use the inflated matrix $E_{infl}$ to compute its mean $\bar{E}_{infl}$  and standard deviation $\sigma(E_{infl})$ per column. In $E_{infl}$, the rows corresponding to each site are duplicates as many times as there are observations for this given site (so that $E_{infl}$ is of dimension $y_{\cdot \cdot} \times l$).
+To do that, we use the inflated matrix $E_{infl}$ to compute its mean $\bar{E}_{infl}$ and standard deviation $\sigma(E_{infl})$ per column. In $E_{infl}$, the rows corresponding to each site are duplicates as many times as there are observations for this given site (so that $E_{infl}$ is of dimension $y_{\cdot \cdot} \times l$).
 
 $$
 E_{stand} = \frac{E - \bar{E}_{infl}}{\sigma(E_{infl})}
@@ -303,28 +299,73 @@ rownames(Uhat) <- rownames(Qbar)
 dim(Uhat)
 ```
 
+*NB: this is not the same as diagonalizing S\_{*\hat{\bar{Q}} \hat{\bar{Q}}'} or performing the SVD of $\hat{\bar{Q}}$, because \$\hat{U} does not contain the loadings of $\hat{\bar{Q}}$ but the loadings of $\bar{Q}$.
 
+```{r, include = FALSE}
+# This is not the same as diagonalizing S_{Qbarhat Qbarhat'}
+Sqtq <- Qbarhat %*% t(Qbarhat)
+eig2 <- eigen(Sqtq)
+
+eig2$vectors[,1:l]/Uhat # Eigenvectors are different
+```
+
+```{r, include = FALSE}
+sv <- svd(Qbarhat)
+
+sv$u[, 1:l]/Uhat # Eigenvectors are different for Uhat
+sv$v[, 1:l]/U # But they are the same for U
+```
+
+```{r, include = FALSE}
+# If Uhat was computed as below (using the matrix of predicrted values), it would give the same results.
+Uhathat <- Qbarhat %*% U %*% diag(lambda^(-1/2))
+
+eig2$vectors[,1:l]/Uhathat # Eigenvectors are the same
+eig2$vectors[,1:l]/sv$u[, 1:l] # Eigenvectors are the same
+```
 
 ## Scaling
 
 ::: {.callout-tip title="*TL;DR*"}
-As with CA, we have the following scalings:
+As with CA, we have scalings type 1, 2 and 3. There are 2 differences with CA:
 
--   Columns (species) scores: $U$, $V = D(p_{\cdot j})^{-1/2}U$, $\hat{F} = V \Lambda^{1/2}$ and $V \Lambda^{1/4}$
--   Rows (sites) scores: $\hat{U}$, $\hat{V} = D(p_{\cdot j})^{-1/2}\hat{U}$, $F = \hat{V} \Lambda^{1/2}$ and $\hat{V} \Lambda^{1/4}$
++ For the sites, we have 2 types of scores: the predicted sites scores (LC scores), computed from the regression, and the weighted averages (WA scores), computed from the species.
++ There are also scalings for the correlations of the explanatory variables with the axes.
 
-There are also scores for the predicted values of the row (sites) scores:
+It seems that the general formulas for scalings are:
 
--   Scaling type 1: $Z_1 = D(p_{i\cdot})^{-1/2}\hat{Y}U$
--   Scaling type 2: $Z_2 = D(p_{i\cdot})^{-1/2}\hat{Y}U \Lambda^{-1/2}$
--   Scaling type 3: $Z_3 = D(p_{i\cdot})^{-1/2}\hat{Y}U \Lambda^{-1/4}$
+-   WA scores for rows (sites): $F = D(p_{\cdot j})^{-1/2}\hat{U} \Lambda^{\alpha/2}$
+-   LC scores for rows (sites): $Z_1 = D(p_{i\cdot})^{-1/2}\hat{\bar{Q}}U \Lambda^{?}$
+-   Columns (species) scores: $V = D(p_{\cdot j})^{-1/2}U \Lambda^{(1-\alpha)/2}$
+-   Variables scores: $BS_1 = E_{stand}' D(p_{i\cdot})Z_{stand} \Lambda^{\alpha/2}$
 
-There are also scalings for explanatory variables:
+with $\alpha =$ 1, 0 or 1/2.
 
--   Scaling type 1: $BS_1 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/2}$
--   Scaling type 2: $BS_2 = E_{stand}' D(p_{i\cdot})Z_{stand}$
--   Scaling type 3: $BS_3 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/4}$
+**Scaling type 1 ($\alpha = 1$)**
+
+-   WA scores for rows (sites): $F = D(p_{\cdot j})^{-1/2}\hat{U} \Lambda^{1/2}$
+-   LC scores for rows (sites): $Z_1 = D(p_{i\cdot})^{-1/2}\hat{\bar{Q}}U$
+-   Columns (species) scores: $V = D(p_{\cdot j})^{-1/2}U$
+-   Variables scores: $BS_1 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/2}$
+
+**Scaling type 2 ($\alpha = 0$)**
+
+-   WA scores for rows (sites): $\hat{V} = D(p_{\cdot j})^{-1/2}\hat{U}$
+-   LC scores for rows (sites): $Z_2 = D(p_{i\cdot})^{-1/2}\hat{\bar{Q}} U \Lambda^{-1/2}$
+-   Columns (species) scores: $\hat{F} = D(p_{\cdot j})^{-1/2}U \Lambda^{1/2}$
+-   Variables scores: $BS_2 = E_{stand}' D(p_{i\cdot})Z_{stand}$
+
+**Scaling type 3 ($\alpha = 1/2$)**
+
+-   WA scores for rows (sites): $\hat{S}_3 = D(p_{\cdot j})^{-1/2}\hat{U} \Lambda^{1/4}$
+-   LC scores for rows (sites): $Z_3 = D(p_{i\cdot})^{-1/2}\hat{\bar{Q}}U \Lambda^{-1/4}$
+-   Columns (species) scores: $S_3 = D(p_{\cdot j})^{-1/2} U \Lambda^{1/4}$
+-   Variables scores: $BS_3 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/4}$
+
+***How to find the fa (ie correlation coefficients for each environmental variable in the multivariate space)??***
 :::
+
+Let's compute CCA with `ade4` to compare results.
 
 ```{r}
 ca <- dudi.coa(Y, 
@@ -337,62 +378,27 @@ cca <- pcaiv(dudi = ca,
 
 lambda[1:neig]/cca$eig # Eigenvalues are the same as computed manually
 ```
+### Pre-computations
 
-### Compute scaling
-
-In CCA, just like with CA, there are different scalings (types 1, 2 and 3). So there are scalings for:
-
--   columns (species)
+We define the diagonal matrices with rows and columns weights (respectively $D(p_{i\cdot}$ and $D(p_{\cdot j}$).
 
 ```{r}
-# Scale species (columns)
-V <- diag(1/sqrt(colSums(P))) %*% U
-dim(V)
+# Define weights matrices
+Dpi_ <- diag(rowSums(P))
+Dp_j <- diag(colSums(P))
 
-# Get species coordinates in the multivariate space (columns)
-Fhat <- V %*% diag(sqrt(lambda))
-dim(Fhat)
+# Also define a variable for just the sums for easier manipulation
+dpi_ <- rowSums(P)
+dp_j <- colSums(P)
 ```
 
--   rows (sites)
-
-```{r}
-# Scale sites (rows)
-Vhat <- diag(1/sqrt(rowSums(P))) %*% Uhat
-dim(Vhat)
-
-# Get sites coordinates in the multivariate space (rows)
-F_ <- Vhat %*% diag(sqrt(lambda))
-dim(F_)
-```
-
--   predicted rows (sites scores that are a combination of explanatory variables).
-
-    -   Scaling type 1: $Z_1 = D(p_{i\cdot})^{-1/2}\hat{Y}U$
-
-    ```{r}
-    Z1 <- diag(diag(Dpi_)^(-1/2)) %*% Qbarhat %*% U
-    dim(Z1)
-    ```
-
-    -   Scaling type 2: $Z_2 = D(p_{i\cdot})^{-1/2}\hat{Y}U \Lambda^{-1/2}$
-
-    ```{r}
-    Z2 <- diag(diag(Dpi_)^(-1/2)) %*% Qbarhat %*% U %*% diag(lambda^(-1/2))
-    dim(Z2)
-    ```
-
-    -   Scaling type 3: $Z_3 = D(p_{i\cdot})^{-1/2}\hat{Y}U \Lambda^{-1/4}$
-
-    ```{r}
-    Z3 <- diag(diag(Dpi_)^(-1/2)) %*% Qbarhat %*% U %*% diag(lambda^(-1/4))
-    dim(Z3)
-    ```
-
--   explanatory variables (environmental factors). The scores for the explanatory variables are computed from matrix $Z_{stand}$: so we first need to standardize $Z$ into $Z_{stand}$ (the computation can involve $Z_1$, $Z_2$ or $Z_3$ and give the same result).
+The scores for the explanatory variables are computed from matrix $Z_{stand}$: so we first need to standardize $Z$ into $Z_{stand}$ (the computation can involve $Z_1$, $Z_2$ or $Z_3$ and give the same result).
 
 ```{r}
 #| code-fold: true
+
+# Compute Z1
+Z1 <- diag(dpi_^(-1/2)) %*% Qbarhat %*% U
 
 # Compute inflated matrix ------
 Zinfl <- matrix(data = 0,
@@ -443,25 +449,209 @@ paste("Dimension of Zstand:",
       paste(dim(Zstand), collapse = " "))
 ```
 
--   Scaling type 1: $BS_1 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/2}$
+
+
+### Scaling type 1
+
+Here, $\chi^2$ distances between rows (sites) are preserved they are positioned at the centroid of species. 
+
++ the rows (sites) scores can be $F = D(p_{i \cdot})^{-1/2} \hat{U} \Lambda^{1/2}$ or $Z_1 = D(p_{i\cdot})^{-1/2} \hat{\bar{Q}} U$ 
++ the columns (species) scores are $V = D(p_{\cdot j})^{-1/2} U$
++ the explanatory variable score are $BS_1 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/2}$
 
 ```{r}
+# Row scores
+F_ <- diag(dpi_^(-1/2)) %*% Uhat %*% Lambda^(1/2)
+Z1 <- diag(dpi_^(-1/2)) %*% Qbarhat %*% U
+
+# Columsn scores
+V <- diag(dp_j^(-1/2)) %*% U
+
+# Variables correlation
 BS1 <- t(Estand) %*% Dpi_ %*% Zstand %*% sqrt(Lambda)
-dim(BS1)
 ```
 
--   Scaling type 2: $BS_2 = E_{stand}' D(p_{i\cdot})Z_{stand}$
+```{r, include = FALSE}
+# This corresponds to the graph with predicted sites position (below, with Z1)
+Z1/cca$li
+V/cca$c1
+
+s.label(cca$c1, # Species constrained at variance 1
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp)
+s.label(cca$li, # Sites position by averaging
+        plabels.optim = TRUE,
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite,
+        add = TRUE)
+
+# How to find the fa??
+s.corcircle(cca$fa[-1, ])
+```
+
+
+```{r, , fig.height=4, fig.width=8, warning=FALSE}
+#| code-fold: true
+
+mult <- 10
+# WA scores
+gwa <- multiplot(indiv_row = F_, indiv_col = V, 
+                 indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+                 var_row = BS1, var_row_lab = colnames(E),
+                 row_color = params$colsite, col_color = params$colspp,
+                 mult = mult,
+                 eig = lambda) +
+  ggtitle("WA scores for sites")
+
+# LC scores
+glc <- multiplot(indiv_row = Z1, indiv_col = V, 
+                 indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+                 var_row = BS1, var_row_lab = colnames(E),
+                 row_color = params$colsite, col_color = params$colspp,
+                 mult = mult,
+                 eig = lambda) +
+  ggtitle("LC scores for sites")
+
+grid.arrange(grobs = list(gwa, glc),
+             nrow = 1)
+```
+
+The plot with the predicted sites scores has the same coordinates for sites as with `ade4`.
+
+### Scaling type 2
+
+Here, $\chi^2$ distances between columns (species) are preserved they are positioned at the centroid of sites.
+
+
++ the rows (sites) scores can be $\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}$ or $Z_2 = D(p_{i\cdot})^{-1/2} \hat{\bar{Q}} U \Lambda^{-1/2}$ 
++ the columns (species) scores are $\hat{F} = D(p_{\cdot j})^{-1/2} U \Lambda^{1/2}$
++ the explanatory variable score are $BS_2 = E_{stand}' D(p_{i\cdot})Z_{stand}$
+
 
 ```{r}
+# Row scores
+Vhat <- diag(dpi_^(-1/2)) %*% Uhat
+Z2 <- diag(dpi_^(-1/2)) %*% Qbarhat %*% U %*% diag(lambda^(-1/2))
+
+# Columsn scores
+Fhat <- diag(dp_j^(-1/2)) %*% U %*% Lambda^(1/2)
+
+# Variables correlation
 BS2 <- t(Estand) %*% Dpi_ %*% Zstand
-dim(BS2)
 ```
 
--   Scaling type 3: $BS_3 = E_{stand}' D(p_{i\cdot})Z_{stand}\Lambda^{1/4}$
+On these graphs, species are in the same position as with `ade4`.
+
+```{r, include=FALSE}
+# This corresponds to the graph with predicted sites position (below, with Z2)
+
+cca$l1/Z2
+cca$co/Fhat
+BS2/cca$cor # BS2 is equivalent to the ade4 $cor
+
+s.label(cca$l1, # Sites variance is 1
+        plabels.optim = TRUE,
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite)
+s.label(cca$co, # Spp positionned by averaging
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp,
+        add = TRUE)
+
+s.corcircle(cca$cor) # correlation
+```
+
+```{r, , fig.height=4, fig.width=8, warning=FALSE}
+#| code-fold: true
+
+mult <- 5
+# WA scores
+gwa <- multiplot(indiv_row = Vhat, indiv_col = Fhat, 
+                 indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+                 var_row = BS2, var_row_lab = colnames(E),
+                 row_color = params$colsite, col_color = params$colspp,
+                 mult = mult,
+                 eig = lambda) +
+  ggtitle("WA scores for sites")
+
+# LC scores
+glc <- multiplot(indiv_row = Z2, indiv_col = Fhat, 
+                 indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+                 var_row = BS2, var_row_lab = colnames(E),
+                 row_color = params$colsite, col_color = params$colspp,
+                 mult = mult,
+                 eig = lambda) +
+  ggtitle("LC scores for sites")
+
+grid.arrange(grobs = list(gwa, glc),
+             nrow = 1)
+```
+### Scaling type 3
+
+This type of scaling is a compromise between scalings type 1 and 2.
+
++ the rows (sites) scores can be $\hat{S}_3 = D(p_{i \cdot})^{-1/2} \hat{U} \Lambda^{1/4}$ or $Z_3 = D(p_{i\cdot})^{-1/2} \hat{\bar{Q}} U \Lambda^{-1/4}$ 
++ the columns (species) scores are $S_3 = D(p_{\cdot j})^{-1/2} U \Lambda^{1/4}$
++ the explanatory variable score are $BS_3 = E_{stand}' D(p_{i\cdot})Z_{stand} \Lambda^{1/4}$
 
 ```{r}
-BS3 <- t(Estand) %*% Dpi_ %*% Zstand %*% diag(lambda^(1/4))
-dim(BS3)
+# Row scores
+Shat3 <- diag(dpi_^(-1/2)) %*% Uhat %*% Lambda^(1/4)
+Z3 <- diag(dpi_^(-1/2)) %*% Qbarhat %*% U %*% diag(lambda^(-1/4))
+
+# Columns scores
+S3 <- diag(dp_j^(-1/2)) %*% U %*% Lambda^(1/4)
+
+# Variables correlation
+BS3 <- t(Estand) %*% Dpi_ %*% Zstand %*% Lambda^(1/4)
+```
+
+```{r, include=FALSE}
+# This corresponds to the graph with predicted sites position (below, with Z3)
+
+Shat3_ade4 <- as.matrix(cca$l1) %*% diag(cca$eig^(1/4))
+S3_ade4 <- as.matrix(cca$c1) %*% diag(cca$eig^(1/4))
+
+s.label(Shat3_ade4,
+        plabels.optim = TRUE,
+        xlim = c(-4, 4),
+        ylim = c(-4, 4),
+        plabels.col  = params$colsite,
+        ppoints.col = params$colsite)
+s.label(S3_ade4,
+        plabels.optim = TRUE,
+        plabels.col  = params$colspp,
+        ppoints.col = params$colspp,
+        add = TRUE)
+```
+
+
+```{r, , fig.height=4, fig.width=8, warning=FALSE}
+#| code-fold: true
+
+mult <- 5
+# WA scores
+gwa <- multiplot(indiv_row = Shat3, indiv_col = S3, 
+                 indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+                 var_row = BS3, var_row_lab = colnames(E),
+                 row_color = params$colsite, col_color = params$colspp,
+                 mult = mult,
+                 eig = lambda) +
+  ggtitle("WA scores for sites")
+
+# LC scores
+glc <- multiplot(indiv_row = Z3, indiv_col = S3, 
+                 indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+                 var_row = BS3, var_row_lab = colnames(E),
+                 row_color = params$colsite, col_color = params$colspp,
+                 mult = mult,
+                 eig = lambda) +
+  ggtitle("LC scores for sites")
+
+grid.arrange(grobs = list(gwa, glc),
+             nrow = 1)
 ```
 
 ::: callout-note
@@ -473,256 +663,6 @@ cca$li[, 1]/Z1[, 1]
 cca$cor[, 1]/BS2[, 1]
 ```
 :::
-
-### Plot scalings
-
-Let's plot graphs for different scalings.
-
--   Scaling type 1 (rows (sites): $F$ or $Z_1$, columns (species): $V$, explanatory variable: $BS_1$). Here, $\chi^2$ distances between rows (sites) are preserved they are positioned at the centroid of species.
-
-```{r, include = FALSE}
-# This corresponds to the graph with predicted sites position (below, with Z1)
-
-s.label(cca$c1, # Species constrained at variance 1
-        plabels.optim = TRUE,
-        plabels.col  = params$colspp,
-        ppoints.col = params$colspp)
-s.label(cca$li, # Sites position by averaging
-        plabels.optim = TRUE,
-        plabels.col  = params$colsite,
-        ppoints.col = params$colsite,
-        add = TRUE)
-```
-
-```{r, fig.height=6, fig.width=6}
-#| code-fold: true
-
-plot(x = V[, 1], y = V[, 2],
-     col = NULL,
-     asp = 1,
-     main = "Observed sites scores")
-text(x = V[, 1], y = V[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-text(x = F_[, 1], y = F_[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-arrows(x0 = rep(0, nrow(BS1)),
-       y0 = rep(0, nrow(BS1)),
-       x1 = BS1[, 1], 
-       y1 = BS1[, 2],
-       length = 0.1,
-       asp = 1)
-text(x = BS1[, 1], 
-     y = BS1[, 2],
-     label = colnames(E),
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
-```
-
-The plot with the predicted sites scores should show the same coordinates for sites as with `ade4`:
-
-```{r, fig.height=6, fig.width=6}
-#| code-fold: true
-
-plot(x = V[, 1], y = V[, 2],
-     col = NULL,
-     asp = 1,
-     main = "Predicted sites scores")
-text(x = V[, 1], y = V[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-text(x = Z1[, 1], y = Z1[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-arrows(x0 = rep(0, nrow(BS1)),
-       y0 = rep(0, nrow(BS1)),
-       x1 = BS1[, 1], 
-       y1 = BS1[, 2],
-       length = 0.1,
-       asp = 1)
-text(x = BS1[, 1], 
-     y = BS1[, 2],
-     label = colnames(E),
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
-```
-
--   Scaling type 2 (rows (sites): $\hat{V}$ or $Z_2$, columns (species): $\hat{F}$, explanatory variable: $BS_2$). Here, $\chi^2$ distances between columns (species) are preserved they are positioned at the centroid of sites.
-
-On these graphs, species are in the same position as with `ade4`.
-
-```{r, include=FALSE}
-# This corresponds to the graph with predicted sites position (below, with Z2)
-
-s.label(cca$l1, # Sites variance is 1
-        plabels.optim = TRUE,
-        plabels.col  = params$colsite,
-        ppoints.col = params$colsite)
-s.label(cca$co, # Spp positionned by averaging
-        plabels.optim = TRUE,
-        plabels.col  = params$colspp,
-        ppoints.col = params$colspp,
-        add = TRUE)
-```
-
-```{r, fig.height=6, fig.width=6}
-#| code-fold: true
-
-plot(x = Fhat[, 1], y = Fhat[, 2],
-     col = NULL,
-     asp = 1,
-     xlim = c(-3, 3),
-     ylim = c(-3, 3),
-     main = "Observed sites scores")
-text(x = Fhat[, 1], y = Fhat[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-text(x = Vhat[, 1], y = Vhat[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-arrows(x0 = rep(0, nrow(BS2)),
-       y0 = rep(0, nrow(BS2)),
-       x1 = BS2[, 1], 
-       y1 = BS2[, 2],
-       length = 0.1,
-       asp = 1)
-text(x = BS2[, 1], 
-     y = BS2[, 2],
-     label = colnames(E),
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
-```
-
-```{r, fig.height=6, fig.width=6}
-#| code-fold: true
-
-plot(x = Fhat[, 1], y = Fhat[, 2],
-     col = NULL,
-     asp = 1,
-     xlim = c(-4, 4),
-     ylim = c(-4, 4),
-     main = "Predicted sites scores")
-text(x = Fhat[, 1], y = Fhat[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-text(x = Z2[, 1], y = Z2[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-arrows(x0 = rep(0, nrow(BS2)),
-       y0 = rep(0, nrow(BS2)),
-       x1 = BS2[, 1], 
-       y1 = BS2[, 2],
-       length = 0.1,
-       asp = 1)
-text(x = BS2[, 1], 
-     y = BS2[, 2],
-     label = colnames(E),
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
-```
-
--   Scaling type 3 (rows (sites): $\hat{V} \Lambda^{1/4}$ or $Z_3$, columns (species): $V \Lambda^{1/4}$, explanatory variable: $BS_3$)
-
-```{r, include=FALSE}
-# This corresponds to the graph with predicted sites position (below, with Z3)
-
-sites_ade4 <- as.matrix(cca$l1) %*% diag(cca$eig^(1/4))
-spp_ade4 <- as.matrix(cca$c1) %*% diag(cca$eig^(1/4))
-
-s.label(sites_ade4,
-        plabels.optim = TRUE,
-        xlim = c(-4, 4),
-        ylim = c(-4, 4),
-        plabels.col  = params$colsite,
-        ppoints.col = params$colsite)
-s.label(spp_ade4,
-        plabels.optim = TRUE,
-        plabels.col  = params$colspp,
-        ppoints.col = params$colspp,
-        add = TRUE)
-```
-
-```{r, fig.height=6, fig.width=6}
-#| code-fold: true
-sites <- Vhat %*% diag(lambda^(1/4))
-spp <- V %*% diag(lambda^(1/4))
-
-plot(x = spp[, 1], y = spp[, 2],
-     col = NULL,
-     asp = 1,
-     xlim = c(-3, 3),
-     ylim = c(-3, 3),
-     main = "Observed sites scores")
-text(x = spp[, 1], y = spp[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-text(x = sites[, 1], y = sites[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-arrows(x0 = rep(0, nrow(BS3)),
-       y0 = rep(0, nrow(BS3)),
-       x1 = BS3[, 1], 
-       y1 = BS3[, 2],
-       length = 0.1,
-       asp = 1)
-text(x = BS3[, 1], 
-     y = BS3[, 2],
-     label = colnames(E),
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
-```
-
-```{r, fig.height=6, fig.width=6}
-#| code-fold: true
-plot(x = spp[, 1], y = spp[, 2],
-     col = NULL,
-     xlim = c(-3, 3),
-     ylim = c(-3, 3),
-     asp = 1,
-     main = "Predicted sites scores")
-text(x = spp[, 1], y = spp[, 2],
-     label = colnames(Y),
-     col = params$colspp,
-     asp = 1)
-text(x = Z3[, 1], y = Z3[, 2],
-     label = rownames(Y),
-     col = params$colsite,
-     asp = 1)
-arrows(x0 = rep(0, nrow(BS3)),
-       y0 = rep(0, nrow(BS3)),
-       x1 = BS3[, 1], 
-       y1 = BS3[, 2],
-       length = 0.1,
-       asp = 1)
-text(x = BS3[, 1], 
-     y = BS3[, 2],
-     label = colnames(E),
-     asp = 1)
-
-abline(h = 0)
-abline(v = 0)
-```
 
 ## Interpretation
 
@@ -736,8 +676,7 @@ Species can be ordered along environmental variables axes by projecting species 
 -   species distributions are indeed controlled by the environment
 -   the study gradient is long enough to capture the range of species abundance variation.
 
-The part of variation explained by the environmental variables can be computed as 
-$$
+The part of variation explained by the environmental variables can be computed as $$
 \frac{\sum_k \lambda_k(CCA)}{\sum_l \lambda_l(CA)}
 $$
 

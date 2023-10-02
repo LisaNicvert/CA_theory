@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.353">
+<meta name="generator" content="quarto-1.3.433">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -108,7 +108,8 @@ div.csl-indent {
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
     "search-detached-cancel-button-title": "Cancel",
-    "search-submit-button-title": "Submit"
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
   }
 }</script>
 
@@ -168,8 +169,19 @@ div.csl-indent {
    
   <ul>
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
-  <li><a href="#computation" id="toc-computation" class="nav-link" data-scroll-target="#computation">Computation</a></li>
-  <li><a href="#scalings" id="toc-scalings" class="nav-link" data-scroll-target="#scalings">Scalings</a></li>
+  <li><a href="#computation" id="toc-computation" class="nav-link" data-scroll-target="#computation">Computation</a>
+  <ul class="collapse">
+  <li><a href="#transform-the-table" id="toc-transform-the-table" class="nav-link" data-scroll-target="#transform-the-table">Transform the table</a></li>
+  <li><a href="#singular-value-decomposition-of-barq" id="toc-singular-value-decomposition-of-barq" class="nav-link" data-scroll-target="#singular-value-decomposition-of-barq">Singular value decomposition of <span class="math inline">\(\bar{Q}\)</span></a></li>
+  </ul></li>
+  <li><a href="#scalings" id="toc-scalings" class="nav-link" data-scroll-target="#scalings">Scalings</a>
+  <ul class="collapse">
+  <li><a href="#no-scaling" id="toc-no-scaling" class="nav-link" data-scroll-target="#no-scaling">No scaling</a></li>
+  <li><a href="#scaling-type-1" id="toc-scaling-type-1" class="nav-link" data-scroll-target="#scaling-type-1">Scaling type 1</a></li>
+  <li><a href="#scaling-type-2" id="toc-scaling-type-2" class="nav-link" data-scroll-target="#scaling-type-2">Scaling type 2</a></li>
+  <li><a href="#scaling-type-3" id="toc-scaling-type-3" class="nav-link" data-scroll-target="#scaling-type-3">Scaling type 3</a></li>
+  <li><a href="#scaling-type-4" id="toc-scaling-type-4" class="nav-link" data-scroll-target="#scaling-type-4">Scaling type 4</a></li>
+  </ul></li>
   <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
   </ul>
 </nav>
@@ -208,7 +220,7 @@ div.csl-indent {
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(expm)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"functions/plot.R"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
@@ -941,20 +953,24 @@ D(x_1, x_2) = \sqrt{\sum_{j = 1}^p \frac{1}{y_{\cdot j}/y_{\cdot \cdot}}\left(\f
 </div>
 <div class="callout-body-container callout-body">
 <p>Given a data matrix <span class="math inline">\(Y\)</span>, we “center-scale” this matrix (<span class="math inline">\(\bar{Q}\)</span>).</p>
-<p>We can diagonalize matrices <span class="math inline">\(\bar{Q} \bar{Q'}\)</span> and <span class="math inline">\(\bar{Q}' \bar{Q}\)</span>.</p>
+<p>We can perform the SVD of <span class="math inline">\(\bar{Q}\)</span>:</p>
+<p><span class="math display">\[
+\hat{Q} = \hat{U} \Delta U'
+\]</span></p>
 <p><span class="math inline">\(U\)</span> (<span class="math inline">\(c \times c\)</span>) contains the loadings of the columns (species) of the contingency table.</p>
-<p><span class="math display">\[
-\bar{Q}' \bar{Q} =  U \Lambda U^{-1}
-\]</span></p>
 <p><span class="math inline">\(\hat{U}\)</span> (<span class="math inline">\(r \times c\)</span>) contains the loadings of the rows (sites) of the contingency table.</p>
+<p>There are <span class="math inline">\(\min(c-1, r-1)\)</span> non-null eigenvalues. The CA eigenvalues are the squares of the SVD eigenvalues: <span class="math inline">\(\Lambda = \Delta^2\)</span>.</p>
+<p>Also, there is a link between <span class="math inline">\(\hat{U}\)</span> and <span class="math inline">\(U\)</span>: <span class="math display">\[
+\hat{U} = \bar{Q}U\Lambda^{-1/2}
+\]</span></p>
+<p>and</p>
 <p><span class="math display">\[
-\bar{Q} \bar{Q}' =  \hat{U} \Lambda \hat{U}^{-1}
+U = \bar{Q}'\hat{U}\Lambda^{-1/2}
 \]</span></p>
 </div>
 </div>
-<ol type="1">
-<li>Transform the table</li>
-</ol>
+<section id="transform-the-table" class="level3">
+<h3 class="anchored" data-anchor-id="transform-the-table">Transform the table</h3>
 <p>We transform values of the contingency table <span class="math inline">\(Y\)</span> with counts <span class="math inline">\(f_{ij}\)</span> into proportions <span class="math inline">\(p_{ij}\)</span>:</p>
 <p><span class="math display">\[
 P = Y/f_{\cdot \cdot}
@@ -986,27 +1002,46 @@ P = Y/f_{\cdot \cdot}
 <span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<ol start="2" type="1">
-<li>Singular value decomposition of <span class="math inline">\(\bar{Q}\)</span></li>
-</ol>
+<p>We could also do this by matrix multiplication:</p>
+<p><span class="math display">\[
+\bar{Q} = D(p_{i\cdot})^{-1/2} P D(p_{\cdot j})^{-1/2}
+\]</span></p>
+<p>In <span class="citation" data-cites="carroll1986">(<a href="#ref-carroll1986" role="doc-biblioref">Carroll, Green, and Schaffer 1986</a>)</span>, the formula is:</p>
+<p><span class="math display">\[
+\bar{Q} = D(y_{i\cdot})^{-1/2} Y D(y_{\cdot j})^{-1/2}
+\]</span></p>
+<p>where matrices <span class="math inline">\(D(p_{i \cdot})\)</span> and <span class="math inline">\(D(p_{\cdot j})\)</span> are the diagonal matrices with the row and columns sums of <span class="math inline">\(P\)</span> (respectively) and <span class="math inline">\(D(y_{i \cdot})\)</span> and <span class="math inline">\(D(y_{\cdot j})\)</span> are he equivalent for matrix <span class="math inline">\(Y\)</span>.</p>
+<p><em>NB: I could not verify this result numerically, since here <span class="math inline">\(\bar{Q}\)</span> is not equal to <span class="math inline">\(D(p_{i \cdot})^{-1/2} Q D(p_{\cdot j})^{-1/2}\)</span>, as in <span class="citation" data-cites="carroll1987">(<a href="#ref-carroll1987" role="doc-biblioref">Carroll, Green, and Schaffer 1987</a>)</span>.</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define weights matrices</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>Dpi_ <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">rowSums</span>(P))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>Dp_j <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">colSums</span>(P))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Also define a variable for just the sums for easier manipulation</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>dpi_ <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(P)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>dp_j <span class="ot">&lt;-</span> <span class="fu">colSums</span>(P)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Define weights matrices</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>Dyi_ <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">rowSums</span>(Y))</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>Dy_j <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">colSums</span>(Y))</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Also define a variable for just the sums for easier manipulation</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>dyi_ <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(Y)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>dy_j <span class="ot">&lt;-</span> <span class="fu">colSums</span>(Y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="singular-value-decomposition-of-barq" class="level3">
+<h3 class="anchored" data-anchor-id="singular-value-decomposition-of-barq">Singular value decomposition of <span class="math inline">\(\bar{Q}\)</span></h3>
 <p><span class="math display">\[
 \bar{Q} = \hat{U}WU'
 \]</span></p>
 <p>Where <span class="math inline">\(\bar{Q}\)</span> is <span class="math inline">\(r \times c\)</span>, <span class="math inline">\(\hat{U}\)</span> is <span class="math inline">\(r \times c\)</span>, <span class="math inline">\(W\)</span> is a <span class="math inline">\(c \times c\)</span> diagonal matrix (assuming <span class="math inline">\(r \geq c\)</span>; the table can be transposed to meet this condition) and <span class="math inline">\(U'\)</span> is <span class="math inline">\(c \times c\)</span>.</p>
 <p>Note that the last eigenvalue of this SVD will always be null (due to the centering).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sv <span class="ot">&lt;-</span> <span class="fu">svd</span>(Qbar)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>Uhat <span class="ot">&lt;-</span> sv<span class="sc">$</span>u</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> <span class="fu">diag</span>(sv<span class="sc">$</span>d)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>U <span class="ot">&lt;-</span> sv<span class="sc">$</span>v</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>Uprime <span class="ot">&lt;-</span> <span class="fu">t</span>(U)</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(sv<span class="sc">$</span>d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 21</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sv<span class="sc">$</span>d <span class="co"># Last eigenvalue is zero</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sv <span class="ot">&lt;-</span> <span class="fu">svd</span>(Qbar)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvalues</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>(delta <span class="ot">&lt;-</span> sv<span class="sc">$</span>d) <span class="co"># Last eigenvalue is zero</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> [1] 5.498025e-01 4.925288e-01 4.329553e-01 4.040318e-01 3.433964e-01
  [6] 3.150413e-01 2.883515e-01 2.863913e-01 2.408812e-01 2.195224e-01
@@ -1014,8 +1049,14 @@ P = Y/f_{\cdot \cdot}
 [16] 9.878630e-02 7.702202e-02 6.088389e-02 5.470965e-02 4.087652e-02
 [21] 6.653482e-17</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> delta<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>Lambda <span class="ot">&lt;-</span> <span class="fu">diag</span>(lambda)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvectors</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>Uhat <span class="ot">&lt;-</span> sv<span class="sc">$</span>u</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>U <span class="ot">&lt;-</span> sv<span class="sc">$</span>v</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>With the SVD, we can rewrite <span class="math inline">\(\bar{Q}' \bar{Q}\)</span>:</p>
+<p>This SVD is equivalent to a diagonalization: with the SVD, we can rewrite <span class="math inline">\(\bar{Q}' \bar{Q}\)</span>:</p>
 <p><span class="math display">\[
 \bar{Q}' \bar{Q} = U W' \hat{U'} \hat{U} W U'
 \]</span></p>
@@ -1023,7 +1064,7 @@ P = Y/f_{\cdot \cdot}
 <p><span class="math display">\[
 \bar{Q}' \bar{Q} =  U W' W U'
 \]</span></p>
-<p>If we rewrite <span class="math inline">\(W' W\)</span> as <span class="math inline">\(\Lambda\)</span>, and since <span class="math inline">\(U' = U^{-1}\)</span> (<span class="math inline">\(U\)</span> is orthonormal), then we can write this as a diagonalization:</p>
+<p>If we rewrite <span class="math inline">\(W' W\)</span> as <span class="math inline">\(\Lambda\)</span> (so <span class="math inline">\(W = \Lambda^{1/2}\)</span>), and since <span class="math inline">\(U' = U^{-1}\)</span> (<span class="math inline">\(U\)</span> is orthonormal), then we can write this as a diagonalization:</p>
 <p><span class="math display">\[
 \bar{Q}' \bar{Q} =  U \Lambda U^{-1}
 \]</span></p>
@@ -1031,72 +1072,37 @@ P = Y/f_{\cdot \cdot}
 <p><span class="math display">\[
 \bar{Q} \bar{Q}' =  \hat{U} \Lambda \hat{U}^{-1}
 \]</span></p>
-<p>With that, we wouldn’t even need the SVD in the first place (a classical diagonalization of <span class="math inline">\(\bar{Q} \bar{Q}'\)</span>/<span class="math inline">\(\bar{Q}' \bar{Q}\)</span> works.)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>Lambda <span class="ot">&lt;-</span> W <span class="sc">%*%</span> <span class="fu">t</span>(W)</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> <span class="fu">diag</span>(Lambda)</span>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagonalize Q'Q ---</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>dg1 <span class="ot">&lt;-</span> <span class="fu">eigen</span>(<span class="fu">t</span>(Qbar) <span class="sc">%*%</span> Qbar)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagonalize Q'Q ---</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>dg1 <span class="ot">&lt;-</span> <span class="fu">eigen</span>(<span class="fu">t</span>(Qbar) <span class="sc">%*%</span> Qbar)</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Check eigenvalues</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(dg1<span class="sc">$</span>values)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 21</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>dg1<span class="sc">$</span>values <span class="co"># Last value is zero</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code> [1]  3.022828e-01  2.425846e-01  1.874503e-01  1.632417e-01  1.179211e-01
- [6]  9.925099e-02  8.314661e-02  8.202000e-02  5.802375e-02  4.819010e-02
-[11]  3.850599e-02  2.519006e-02  2.042552e-02  1.543842e-02  1.201122e-02
-[16]  9.758733e-03  5.932391e-03  3.706847e-03  2.993146e-03  1.670890e-03
-[21] -9.451897e-18</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvalues are equal to the SVD values</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>((dg1<span class="sc">$</span>values <span class="sc">-</span> lambda) <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvalues are equal to the square roots of SVD eigenvalues</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>((dg1<span class="sc">$</span>values <span class="sc">-</span> lambda) <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvectors are equal to U</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># dg1$vectors</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># U</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co"># The vectors are in opposite directions so we use the absolute value</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(dg1<span class="sc">$</span>vectors[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]<span class="sc">/</span>U[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvectors are equal to U</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(dg1<span class="sc">$</span>vectors<span class="sc">/</span>U) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagonalize QQ' ---</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>dg2 <span class="ot">&lt;-</span> <span class="fu">eigen</span>(Qbar <span class="sc">%*%</span> <span class="fu">t</span>(Qbar))</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check eigenvalues</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(dg2<span class="sc">$</span>values) <span class="co"># r eigenvalues</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 26</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>dg2<span class="sc">$</span>values <span class="co"># Last r - (c - 1) values are zero</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code> [1]  3.022828e-01  2.425846e-01  1.874503e-01  1.632417e-01  1.179211e-01
- [6]  9.925099e-02  8.314661e-02  8.202000e-02  5.802375e-02  4.819010e-02
-[11]  3.850599e-02  2.519006e-02  2.042552e-02  1.543842e-02  1.201122e-02
-[16]  9.758733e-03  5.932391e-03  3.706847e-03  2.993146e-03  1.670890e-03
-[21]  2.247433e-18  1.741751e-18  1.252738e-18 -6.541642e-18 -6.962632e-18
-[26] -1.862602e-17</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvalues are equal to the SVD values</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># We test only the first values, the rest are zero</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>((dg2<span class="sc">$</span>values[<span class="dv">1</span><span class="sc">:</span>c] <span class="sc">-</span> lambda) <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagonalize QQ' ---</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>dg2 <span class="ot">&lt;-</span> <span class="fu">eigen</span>(Qbar <span class="sc">%*%</span> <span class="fu">t</span>(Qbar))</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvalues are equal to the square roots of SVD eigenvalues</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>((dg1<span class="sc">$</span>values <span class="sc">-</span> lambda) <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvectors are equal to Uhat (we test only eigenvectors for non-null eigenvalues)</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(dg2<span class="sc">$</span>vectors[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]<span class="sc">/</span>Uhat[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Eigenvectors are equal to Uhat</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(dg2<span class="sc">$</span>vectors[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]<span class="sc">/</span>Uhat[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
+</section>
 </section>
 <section id="scalings" class="level2">
 <h2 class="anchored" data-anchor-id="scalings">Scalings</h2>
@@ -1110,195 +1116,172 @@ P = Y/f_{\cdot \cdot}
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Once we diagonalized the stuff, there is still a question of scaling to plot them in the multivariate plane.</p>
-<p><strong>Columns (species) can be represented with:</strong></p>
+<p>To plot rows and columns on separate plots, one can plot the eigenvectors <span class="math inline">\(\hat{U}\)</span> (rows = sites) and <span class="math inline">\(U\)</span> (columns = species).</p>
+<p>To plot columns and rows individuals on the same biplot, different scalings have been proposed. For sites (rows), these scalings are equal to <span class="math inline">\(\hat{S}_i = D(p_{i \cdot})^{-1/2} \hat{U} \Delta^\alpha\)</span> (with <span class="math inline">\(\alpha =\)</span> 1, 0 or 1/2).</p>
+<p>For species (columns), these scalings are equal to <span class="math inline">\(\hat{S}_i = D(p_{\cdot j})^{-1/2} U \Delta^{1-\alpha}\)</span>.</p>
 <ul>
-<li><span class="math inline">\(U\)</span> (the matrix of eigenvectors : <span class="math inline">\(\bar{Q}'Q = U \Lambda U^{-1}\)</span>) (unscaled)</li>
-<li><span class="math inline">\(V = D(p_{\cdot j})^{-1/2} U\)</span> (scaling type 1)</li>
-<li><span class="math inline">\(\hat{F} = V \Lambda^{1/2}\)</span> (scaling type 2)</li>
-<li><span class="math inline">\(V \Lambda^{1/4}\)</span> (scaling type 3).</li>
+<li>Scaling type 1 (<span class="math inline">\(\alpha = 1\)</span>): this scaling preserves the distances between rows. Rows (sites) are represented with <span class="math inline">\(F = D(p_{i \cdot})^{-1/2} \hat{U} \Lambda^{1/2}\)</span> and species (columns) with <span class="math inline">\(V = D(p_{\cdot j})^{-1/2} U\)</span>.</li>
+<li>Scaling type 2 (<span class="math inline">\(\alpha = 0\)</span>): this scaling preserves distances between columns. Rows (sites) are represented with <span class="math inline">\(\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}\)</span> and species (columns) with <span class="math inline">\(\hat{F} = D(p_{\cdot j})^{-1/2} U \Lambda^{1/2}\)</span>.</li>
+<li>Scaling type 3 (<span class="math inline">\(\alpha = 1/2\)</span>): this scaling is a compromise between scalings type 1 and 2. Rows (sites) are represented with <span class="math inline">\(\hat{S}_3 = D(p_{i \cdot})^{-1/2} \hat{U} \Lambda^{1/4}\)</span> and species (columns) with <span class="math inline">\(S_3 = D(p_{\cdot j})^{-1/2} U \Lambda^{1/4}\)</span>.</li>
 </ul>
-<p><strong>Rows (sites) can be represented with:</strong></p>
-<ul>
-<li><span class="math inline">\(\hat{U}\)</span> (the matrix of eigenvectors: <span class="math inline">\(\bar{Q} \bar{Q}' = \hat{U} \Lambda \hat{U}^{-1}\)</span>) (unscaled)</li>
-<li><span class="math inline">\(\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}\)</span> (scaling type 2)</li>
-<li><span class="math inline">\(F = \hat{V} \Lambda^{1/2}\)</span> (scaling type 1)</li>
-<li><span class="math inline">\(\hat{V} \Lambda^{1/4}\)</span> (scaling type 3)</li>
-</ul>
+<p>As noted in <span class="citation" data-cites="carroll1987">(<a href="#ref-carroll1987" role="doc-biblioref">Carroll, Green, and Schaffer 1987</a>)</span>, if we plot distances of different scalings on the same biplot, we cannot interpret between-sets distances, but within-sets distances are still be interpretable. This is what the scaling type 4 described below does and this scaling is what <span class="citation" data-cites="carroll1987">(<a href="#ref-carroll1987" role="doc-biblioref">Carroll, Green, and Schaffer 1987</a>)</span> refers to.</p>
 </div>
 </div>
-<p>There are several scalings used in CA, which are useful to plot both variables on the same plot (biplot).</p>
-<p>First, the original coordinates are scaled to the square root of the margins of the proportion matrix.</p>
-<ul>
-<li>For the columns (species), we have <span class="math inline">\(V = D(p_{\cdot j})^{-1/2} U\)</span>.</li>
-<li>For the rows (sites), we have <span class="math inline">\(\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}\)</span>.</li>
-</ul>
-<p>To get the position of these in the multivariate space, we have to use <span class="math inline">\(\Lambda\)</span>:</p>
-<ul>
-<li><p>Position of the columns (species) in the multivariate space (<span class="math inline">\(U\)</span>): <span class="math inline">\(\hat{F} = V \Lambda^{1/2}\)</span></p></li>
-<li><p>Position of the rows (sites) in the multivariate space (<span class="math inline">\(\hat{U}\)</span>): <span class="math inline">\(F = \hat{V} \Lambda^{1/2}\)</span></p></li>
-</ul>
-<p>Since these examples do not take into account the null eigenvalues, one column (= multivariate axis) will be discarded as it is not interpretable.</p>
-<p>With our example, we have:</p>
+<p>Let’s perform a CA with <code>ade4</code> to check results later.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Scale species (columns)</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="dv">1</span><span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">colSums</span>(P))) <span class="sc">%*%</span> U</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(V)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 21 21</code></pre>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>ca <span class="ot">&lt;-</span> <span class="fu">dudi.coa</span>(Y, </span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">scannf =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">nf =</span> <span class="fu">min</span>(r, c))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get species coordinates in the multivariate space (columns)</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>Fhat <span class="ot">&lt;-</span> V <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">sqrt</span>(lambda))</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(Fhat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 21 21</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(Fhat[, <span class="fu">ncol</span>(Fhat)] <span class="sc">&lt;</span> <span class="fl">10e-10</span>) <span class="co"># The last values will be discarded (all coordinates are zero)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Scale sites (rows)</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>Vhat <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="dv">1</span><span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">rowSums</span>(P))) <span class="sc">%*%</span> Uhat</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(Vhat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 26 21</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get sites coordinates in the multivariate space (rows)</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>F_ <span class="ot">&lt;-</span> Vhat <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">sqrt</span>(lambda))</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(F_)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 26 21</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(F_[, <span class="fu">ncol</span>(F_)] <span class="sc">&lt;</span> <span class="fl">10e-10</span>) <span class="co"># The last values discarded (all coordinates are zero)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
-</div>
-</div>
-<p><strong>These transformed coordinates that are used in the outputs of <code>dudi.coa</code>.</strong></p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>ca <span class="ot">&lt;-</span> <span class="fu">dudi.coa</span>(Y, </span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">nf =</span> c<span class="dv">-1</span>, <span class="at">scannf =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Species (columns)</span></span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(ca<span class="sc">$</span>co<span class="sc">/</span>Fhat[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Sites (rows)</span></span>
-<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(ca<span class="sc">$</span>li<span class="sc">/</span>F_[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Now, there are different types of scalings for biplots. Below, we assume a sites x species matrix:</p>
-<ul>
-<li>Type 1: use <span class="math inline">\(F\)</span> (sites) and and <span class="math inline">\(V\)</span> (species). This preserves <span class="math inline">\(\chi^2\)</span> distances between sites on the plot. Here, sites are positioned at the centroid of species.</li>
-</ul>
+<section id="no-scaling" class="level3">
+<h3 class="anchored" data-anchor-id="no-scaling">No scaling</h3>
+<p>One can represent the eigenvectors directly without scaling to display them on separate plots.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> V[, <span class="dv">1</span>], <span class="at">y =</span> V[, <span class="dv">2</span>],</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="cn">NULL</span>,</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> V[, <span class="dv">1</span>], <span class="at">y =</span> V[, <span class="dv">2</span>],</span>
-<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">colnames</span>(Y),</span>
-<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> F_[, <span class="dv">1</span>], <span class="at">y =</span> F_[, <span class="dv">2</span>],</span>
-<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">rownames</span>(Y),</span>
-<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>)</span>
-<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot sites ---</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>g1 <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Uhat, </span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), </span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>          <span class="at">eig =</span> lambda)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot species ---</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>g2 <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U, </span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>          <span class="at">eig =</span> lambda)</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> <span class="fu">list</span>(g1, g2), <span class="at">nrow =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="CA_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="576"></p>
-</div>
-</div>
-<ul>
-<li>Type 2: use <span class="math inline">\(\hat{F}\)</span> (species) and and <span class="math inline">\(\hat{V}\)</span> (sites). This preserves <span class="math inline">\(\chi^2\)</span> distances between species on the plot. Here, species are positioned at the centroid of sites.</li>
-</ul>
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> Vhat[, <span class="dv">1</span>], <span class="at">y =</span> Vhat[, <span class="dv">2</span>],</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="cn">NULL</span>,</span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Vhat[, <span class="dv">1</span>], <span class="at">y =</span> Vhat[, <span class="dv">2</span>],</span>
-<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">rownames</span>(Y),</span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Fhat[, <span class="dv">1</span>], <span class="at">y =</span> Fhat[, <span class="dv">2</span>],</span>
-<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">colnames</span>(Y),</span>
-<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>)</span>
-<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="CA_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="576"></p>
-</div>
-</div>
-<ul>
-<li>Type 3: a compromise between scalings 1 and 2. It preserves none of the <span class="math inline">\(\chi^2\)</span> distances and is obtained with <span class="math inline">\(\hat{V}\Lambda^{1/4}\)</span> (for sites) and <span class="math inline">\(V\Lambda^{1/4}\)</span> (for species).</li>
-</ul>
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>sites <span class="ot">&lt;-</span> Vhat <span class="sc">%*%</span> <span class="fu">diag</span>(lambda<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>))</span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>spp <span class="ot">&lt;-</span> V <span class="sc">%*%</span> <span class="fu">diag</span>(lambda<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>))</span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> spp[, <span class="dv">1</span>], <span class="at">y =</span> spp[, <span class="dv">2</span>],</span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="cn">NULL</span>,</span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">5</span>),</span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">5</span>),</span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> sites[, <span class="dv">1</span>], <span class="at">y =</span> sites[, <span class="dv">2</span>],</span>
-<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">rownames</span>(Y),</span>
-<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> spp[, <span class="dv">1</span>], <span class="at">y =</span> spp[, <span class="dv">2</span>],</span>
-<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">colnames</span>(Y),</span>
-<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>)</span>
-<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="CA_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="576"></p>
-</div>
-</div>
-<ul>
-<li>Type 4: use <span class="math inline">\(F\)</span> (sites) and <span class="math inline">\(\hat{F}\)</span> (species). Then, both <span class="math inline">\(\chi^2\)</span> distances are preserved. It is useful for a table crossing two factors.</li>
-</ul>
-<div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">x =</span> F_[, <span class="dv">1</span>], <span class="at">y =</span> F_[, <span class="dv">2</span>],</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="cn">NULL</span>,</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="dv">2</span>),</span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">2.5</span>, <span class="dv">1</span>),</span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> F_[, <span class="dv">1</span>], <span class="at">y =</span> F_[, <span class="dv">2</span>],</span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">rownames</span>(Y),</span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="at">x =</span> Fhat[, <span class="dv">1</span>], <span class="at">y =</span> Fhat[, <span class="dv">2</span>],</span>
-<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>     <span class="at">label =</span> <span class="fu">colnames</span>(Y),</span>
-<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>     <span class="at">asp =</span> <span class="dv">1</span>)</span>
-<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>)</span>
-<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="CA_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="576"></p>
+<p><img src="CA_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="768"></p>
 </div>
 </div>
 </section>
+<section id="scaling-type-1" class="level3">
+<h3 class="anchored" data-anchor-id="scaling-type-1">Scaling type 1</h3>
+<p>This scaling preserves the row <span class="math inline">\(\chi^2\)</span> distances and is useful to interpret distances between row individuals (sites). In this scaling, the rows individuals are positioned at the barycentre of the corresponding column (species) individuals.</p>
+<p>For that, we use:</p>
+<ul>
+<li><span class="math inline">\(F = D(p_{\cdot j})^{-1/2} \hat{U} \Lambda^{1/2}\)</span> (rows = sites)</li>
+<li><span class="math inline">\(V = D(p_{\cdot j})^{-1/2} U\)</span> (columns = species)</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sites</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>F_ <span class="ot">&lt;-</span> <span class="fu">diag</span>(dpi_<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">%*%</span> Uhat <span class="sc">%*%</span> Lambda<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Species</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> <span class="fu">diag</span>(dp_j<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">%*%</span> U</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><em>NB: <span class="math inline">\(F\)</span> (sites scores) can also be computed from the</em> <strong>species</strong> <em>scores, since there is a correspondence between <span class="math inline">\(U\)</span> and <span class="math inline">\(\hat{U}\)</span>. This shows better the relationship between sites and species scores (sites are at the barycentre of their species with this scaling).</em></p>
+<p><em>NB2: I could not find back the formula in <span class="citation" data-cites="legendre2012">(<a href="#ref-legendre2012" role="doc-biblioref">Legendre and Legendre 2012</a>)</span> for <span class="math inline">\(F = D(p_{i\cdot})^{-1} Q V\)</span> and <span class="math inline">\(\hat{F} = D(p_{\cdot j})^{-1} Q' \hat{V}\)</span> (p 479). Indeed, for these formulas to be valid, we need <span class="math inline">\(\bar{Q} = D(p_{i \cdot})^{-1/2} Q D(p_{\cdot j})^{-1/2}\)</span>, as in <span class="citation" data-cites="carroll1987">(<a href="#ref-carroll1987" role="doc-biblioref">Carroll, Green, and Schaffer 1987</a>)</span>, but it is not the case here.</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute sites coordinates using species coordinates</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>F2 <span class="ot">&lt;-</span> <span class="fu">diag</span>(dpi_<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">%*%</span> Qbar <span class="sc">%*%</span> U</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that this corresponds to F_ cmputed above</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(F_[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]<span class="sc">/</span>F2[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)] <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> F_, <span class="at">indiv_col =</span> V, </span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">eig =</span> lambda)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="CA_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+</section>
+<section id="scaling-type-2" class="level3">
+<h3 class="anchored" data-anchor-id="scaling-type-2">Scaling type 2</h3>
+<p>This preserves <span class="math inline">\(\chi^2\)</span> distances between species on the plot. Here, species are positioned at the centroid of sites.</p>
+<p>We use:</p>
+<ul>
+<li><span class="math inline">\(\hat{V} = D(p_{i\cdot})^{-1/2} \hat{U}\)</span> (rows = sites)</li>
+<li><span class="math inline">\(\hat{F} = D(p_{\cdot j})^{-1/2} U \Lambda^{1/2}\)</span> (columns = species)</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sites</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>Vhat <span class="ot">&lt;-</span> <span class="fu">diag</span>(dpi_<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">%*%</span> Uhat</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Species</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>Fhat <span class="ot">&lt;-</span> <span class="fu">diag</span>(dp_j<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">%*%</span> U <span class="sc">%*%</span> Lambda<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><em>NB: like <span class="math inline">\(F\)</span>, <span class="math inline">\(\hat{F}\)</span> (species scores) can also be computed from the</em> <strong>sites</strong> <em>scores. This shows better the relationship between species and sites scores (species are at the barycentre of their sites with this scaling).</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute sites coordinates using species coordinates</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>Fhat2 <span class="ot">&lt;-</span> <span class="fu">diag</span>(dp_j<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">%*%</span> <span class="fu">t</span>(Qbar) <span class="sc">%*%</span> Uhat</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that this corresponds to Fhat cmputed above</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(Fhat[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)]<span class="sc">/</span>Fhat2[, <span class="dv">1</span><span class="sc">:</span>(c<span class="dv">-1</span>)] <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> <span class="fl">10e-10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Vhat, <span class="at">indiv_col =</span> Fhat, </span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">eig =</span> lambda)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="CA_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+</section>
+<section id="scaling-type-3" class="level3">
+<h3 class="anchored" data-anchor-id="scaling-type-3">Scaling type 3</h3>
+<p>It is a compromise between scalings 1 and 2. It preserves none of the <span class="math inline">\(\chi^2\)</span> distances.</p>
+<p>We use:</p>
+<ul>
+<li><span class="math inline">\(\hat{S}_3 = D(p_{i\cdot})^{-1/2} \hat{U} \Lambda^{1/4}\)</span> (for sites)</li>
+<li><span class="math inline">\(S_3 = D(p_{\cdot j})^{-1/2} U \Lambda^{1/4}\)</span> (for species).</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>s3_r <span class="ot">&lt;-</span> <span class="fu">diag</span>(dpi_<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">%*%</span> Uhat <span class="sc">%*%</span> Lambda<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>s3_c <span class="ot">&lt;-</span> <span class="fu">diag</span>(dp_j<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)) <span class="sc">%*%</span> U <span class="sc">%*%</span> Lambda<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> s3_r, <span class="at">indiv_col =</span> s3_c, </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">eig =</span> lambda)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="CA_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+</section>
+<section id="scaling-type-4" class="level3">
+<h3 class="anchored" data-anchor-id="scaling-type-4">Scaling type 4</h3>
+<p>Use <span class="math inline">\(F\)</span> (sites) and <span class="math inline">\(\hat{F}\)</span> (species). Then, both <span class="math inline">\(\chi^2\)</span> distances are preserved. It is useful for a table crossing two factors.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> F_, <span class="at">indiv_col =</span> Fhat, </span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">eig =</span> lambda)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="CA_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
+</section>
+</section>
 <section id="interpretation" class="level2">
 <h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
-<p><span class="math inline">\(V\)</span> and <span class="math inline">\(\hat{V}\)</span> are related with the following equation:</p>
+<p>Using the “transition formula” defined above (<span class="math inline">\(\hat{U} = \bar{Q}U\Lambda^{-1/2}\)</span>), we can relate <span class="math inline">\(V\)</span> and <span class="math inline">\(\hat{V}\)</span> with the following equation:</p>
 <p><span class="math display">\[
 \hat{V} \Lambda^{1/2} = D(p_{i\cdot})^{-1/2}\bar{Q}D(p_{\cdot j})^{1/2}V
 \]</span></p>
@@ -1343,6 +1326,12 @@ Note
 </section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-carroll1986" class="csl-entry" role="listitem">
+Carroll, J. Douglas, Paul E. Green, and Catherine M. Schaffer. 1986. <span>“Interpoint Distance Comparisons in Correspondence Analysis.”</span> <em>Journal of Marketing Research</em> 23 (3): 271–80.
+</div>
+<div id="ref-carroll1987" class="csl-entry" role="listitem">
+———. 1987. <span>“Comparing Interpoint Distances in Correspondence Analysis: A Clarification.”</span> <em>Journal of Marketing Research</em> 24 (4).
+</div>
 <div id="ref-legendre2012" class="csl-entry" role="listitem">
 Legendre, P., and Louis Legendre. 2012. <em>Numerical Ecology</em>. Elsevier.
 </div>
