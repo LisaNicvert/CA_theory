@@ -5,8 +5,6 @@ params:
   colspp: "cornflowerblue"
 ---
 
-
-
 ```{r, results='hide', message=FALSE}
 #| code-fold: true
 
@@ -20,10 +18,916 @@ library(adegraphics)
 # dc-CA
 source(here("functions/dpcaiv2-ade4.R"))
 
+# Reciprocal scaling
+source(here("functions/reciprocal.R"))
+
 # Matrix algebra
 library(expm)
 
 # Plots
-library(ggplot2)
 source(here("functions/plot.R"))
+library(gridExtra)
 ```
+
+## Introduction
+
+Reciprocal scaling was introduced by @thioulouse1992. It is a technique allowing to compute the coordinates of each row/column cell in the multivariate space, which then allows to get the conditional mean and variance per row or column.
+
+This technique was initially defined in the frame of correspondence analysis, but it is extended to canonical CA in [reciprocal scaling (CCA)](recscal_cca.qmd) and double-constrained CA in in [reciprocal scaling (dcCA)](recscal_dcca.qmd).
+
+Here, we will analyze matrix $Y$:
+
+
+```{r, echo = FALSE, message = FALSE}
+dat <- readRDS(here("data/Barbaro2012.rds"))
+Y <- dat$comm
+
+r <- dim(Y)[1]
+c <- dim(Y)[2]
+
+plotmat(r = r, c = c)
+```
+
+```{r}
+(r <- dim(Y)[1])
+(c <- dim(Y)[2])
+```
+
+
+## Computation
+
+::: {.callout-tip title="*TL;DR*"}
+Reciprocal scaling gives a score per correspondence (row/column pair) on each ordination axis (instead of a score per row and per column in CA).
+
+These scores can be presented in a matrix $H$ ($\omega \times K$). Here, $\omega = \sum_Y y_i \neq 0$ (number of nonzero cells in $Y$, also called correspondences) and $K$ is the number of eigenvalues (axes) of the CA. Each row of $H$ corresponds to a row/column pair.
+
+**From CA scores**
+
+$H$ can be computed from the scores of the correspondence analysis of $Y$. The score $H_k(i, j)$ for row $i$, column $j$ and axis $k$ is:
+
+$$
+H_k(i, j) = \frac{L_k(i) + C_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+$$
+
+if $y_{ij} = 0$ then the score $H_k(i, j)$ is not defined.
+
+**From canonical correlation analysis**
+
+We transform the table $Y$ in two tables:
+
+-   $R$ ($\omega \times r$)
+-   $C$ ($\omega \times c$)
+
+Each row of $R$ and $C$ contains an indicator vector. The 1 is in the column corresponding to the row (for $R$) or column (for $C$) of the nonzero cell in $Y$.
+
+Additionally, we have a weights vector $w = y_{ij}$ (the same for $R$ and $C$).
+
+Then, we perform a (weighted) canonical correlation analysis of $R_{scaled}$ and $C_{scaled}$. $X_{scaled}$ corresponds to $X$ center and scaled (here, with the weights $w$).
+
+Canonical correlation analysis gives the vectors of canonical coefficients $\rho$ and $\gamma$ (resp. for $R_{scaled}$ and $C_{scaled}$). The scores of the matrices are then $S_R = R_{scaled} \rho$ and $S_C = C_{scaled} \gamma$.
+
+Finally, $H$ is computed as:
+
+$$
+H = (S_R + S_C)_{scaled}
+$$
+:::
+
+The coordinates of row (site) $i$ and column (species) $j$ in the multivariate space on axis $k$ $H_k(i, j)$ can be computed in 2 ways:
+
+-   from the coordinates of the CA
+-   from the canonical correlation analysis
+
+### From CA
+
+We perform the CA of table $Y$ ($r \times c$).
+
+```{r}
+Ydf <- as.data.frame(Y)
+ca <- dudi.coa(Ydf, 
+               scannf = FALSE,
+               nf = min(r - 1, c - 1))
+
+L <- ca$li
+C <- ca$co
+
+lambda <- ca$eig
+```
+
+We compute the reciprocal scaling score for comparison:
+
+```{r}
+rec_ca <- reciprocal.coa(ca)
+```
+
+We can get the coordinates of row-column pairs (ie each cell in the original table $Y$) with:
+
+$$
+H_k(i, j) = \frac{L_k(i) + C_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+$$
+
+where $L_k(i)$ is the coordinate of row (site) $i$ on axis $k$ and $C_k(j)$ is the same for column (species) $j$ and $\mu_k = 1 + \sqrt{\lambda_k}$.
+
+```{r}
+mu <- 1 + sqrt(lambda)
+```
+
+The result is a matrix $H$ with $\omega = \sum_Y y_{ij} \neq 0$ rows (one row for each nonzero cell in $Y$, called correspondences) and $K$ columns (one column per principal axis of the CA):
+
+```{r, fig.height=10, fig.width=4, echo=FALSE}
+plotmat(r = sum(Y != 0), c = length(lambda),
+        Yname = "italic(H)",
+        rname = "italic(omega)",
+        cname = "italic(K)",
+        plot.margin.x = 10)
+```
+
+Let's compute $H$ from the CA scores with our example dataset.
+
+```{r}
+# Transform matrix to count table
+Yfreq <- as.data.frame(as.table(Y))
+colnames(Yfreq) <- c("row", "col", "Freq")
+
+# Remove the cells with no observation
+Yfreq0 <- Yfreq[-which(Yfreq$Freq == 0),]
+Yfreq0$colind <- match(Yfreq0$col, colnames(Y)) # match index and species names
+
+# Initialize results matrix
+H <- matrix(nrow = nrow(Yfreq0), 
+            ncol = length(lambda))
+
+for (k in 1:length(lambda)) { # For each axis
+  ind <- 1 # initialize row index
+  for (obs in 1:nrow(Yfreq0)) { # For each observation
+    i <- Yfreq0$row[obs]
+    j <- Yfreq0$col[obs]
+    H[ind, k] <- (L[i, k] + C[j, k])/sqrt(2*lambda[k]*mu[k])
+    ind <- ind + 1
+  }
+}
+```
+
+```{r, include=FALSE}
+# Compare results ----
+
+# Get one observation from the coordinates computed above
+i <- 1
+j <- 3
+jtxt <- colnames(Y)[j]
+k <- 2
+
+Htest <- H[Yfreq0$row == i & Yfreq0$col == jtxt, k]
+
+# Compute one value with the formula
+Hkij <- (L[i, k] + C[j, k])/sqrt(2*lambda[k]*mu[k])
+Htest/Hkij
+
+# Compare to scores computed with reciprocal.coa
+H/rec_ca[, 1:(c-1)] # ade4
+```
+
+### From canonical correlation analysis
+
+Canonical correlation analysis is the extension of correlation to multidimensional analysis and allows to find the coefficients to maximize the correlation between the columns of two matrices.
+
+First, we compute the inflated tables $R$ ($\omega \times r$) and $C$ ($\omega \times c$) from $Y$ ($r \times c$).
+
+We take the frequency table defined before and use it to compute the inflated tables (with weights):
+
+```{r}
+# Create indicator tables
+tabR <- acm.disjonctif(as.data.frame(Yfreq0$row))
+colnames(tabR) <- rownames(Y)
+tabC <- acm.disjonctif(as.data.frame(Yfreq0$col))
+colnames(tabC) <- colnames(Y)
+
+# Get weights
+wt <- Yfreq0$Freq
+```
+
+Below are the first lines of tables $R$ and $C$:
+
+```{r, echo=FALSE}
+knitr::kable(head(tabR, 30))
+knitr::kable(head(tabC, 30))
+```
+
+Then, we perform a canonical correlation on the scaled tables $R_{scaled}$ and $C_{scaled}$. We find the coefficients $\rho$ and $\gamma$ maximizing the correlation between the scores $S_R = R_{scaled} \rho$ and $S_C = C_{scaled} \gamma$.
+
+```{r}
+# Center scale tables
+tabR_scaled <- scalewt(tabR, wt)
+tabC_scaled <- scalewt(tabC, wt)
+
+res <- cancor(diag(sqrt(wt)) %*% tabR_scaled, 
+              diag(sqrt(wt)) %*% tabC_scaled, 
+              xcenter = FALSE, ycenter = FALSE)
+# res gives the coefficients of the linear combinations that maximizes the correlation between the 2 dimensions
+ncol(res$xcoef) # r-1 columns -> R_scaled is not of full rank
+ncol(res$ycoef) # c-1 columns -> C_scaled is not of full rank
+
+# Compute these scores from this coef
+scoreR <- tabR_scaled[, 1:(r-1)]  %*% res$xcoef
+scoreC <- tabC_scaled[, 1:(c-1)]  %*% res$ycoef
+```
+
+We have $H = (S_R + S_C)_{scaled}$.
+
+```{r}
+# Get H
+scoreRC <- scoreR[, 1:(c-1)] + scoreC[, 1:(c-1)] # here c-1 < r so c-1 axes
+scoreRC_scaled <- scalewt(scoreRC, wt = wt)
+```
+
+```{r, include=FALSE}
+# Check result
+all(abs(scoreRC_scaled/H) - 1 < 10e-10)
+```
+
+### Plot
+
+The scores $H$ are displayed below on the first two axes:
+
+```{r, warning=FALSE}
+#| code-fold: true
+multiplot(indiv_row = H, 
+          indiv_row_lab = paste0("site ", Yfreq0$row, "/", Yfreq0$col),
+          row_color = "black", eig = lambda)
+```
+
+## Conditional means and variances
+
+::: {.callout-tip title="*TL;DR*"}
+
+Once we have the correspondences scores, we can group them by row (site) or column (species) to compute conditional summary statistics:
+
++ conditional mean for site $i$ or species $j$ (for each axis $k$)
++ conditional variance for site $i$ or species $j$ (for each axis $k$)
++ conditional covariance for site $i$ or species $j$ (between axes $k$ and $l$)
+
+These conditional statistics can be computed using $H_k(i,j)$ or using the CA scores:
+
+**Formulas using $H_k(i,j)$** 
+
+|                                  | Rows (sites)                                                                               | Columns (species)                                                                           |
+|------------------|------------------------------|------------------------|
+| Mean for axis $k$                | $$m_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} H_k(i,j)$$                           | $$m_k(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} H_k(i,j)$$                           |
+| Variance for axis $k$            | $$s_k^2(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \left(H_k(i,j) - m_k(i)\right)^2$$ | $$s_k^2(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} \left(H_k(i,j) - m_k(j)\right)^2$$ |
+| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}H_k(i, j)H_l(i, j) - m_k(i)m_l(i)$$  | $$c_{kl}(j) = \frac{1}{y_{\cdot j}}\sum_{i=1}^r y_{ij}H_k(i, j)H_l(i, j) - m_k(j)m_l(j)$$   |
+
+**Formulas using CA scores**
+
+|                                  | Rows (sites)                                                                                                                                                                                | Columns (species)                                                                                                                                                                           |
+|------------------|------------------------------|------------------------|
+| Mean for axis $k$                | $$m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} L_k(i)$$                                                                                                                                  | $$m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} C_k(j)$$                                                                                                                                  |
+| Variance for axis $k$            | $$s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k L_k^2(i) \right)$$                                      | $$s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} L_k^2(i) \right) - \lambda_k C_k^2(j) \right)$$                                      |
+| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} C_k(j) C_l(j) - \sqrt{\lambda_k \lambda_l} L_k(i)L_l(i) \right)$$ | $$c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} L_k(i) L_l(i) - \sqrt{\lambda_k \lambda_l} C_k(j)C_l(j) \right)$$ |
+
+***Note: formulas for the variances $s^2_k(i)$ and $s^2_k(j)$ are different from formula (15) in @thioulouse1992 (no square root at the denominator $2\lambda_k\mu_k$).***
+
+:::
+
+We can compute the conditional means, variances and covariances using reciprocal scaling scores. There are 2 equivalent formulas for that:
+
++ using the $H_k(i,j)$ scores
++ using the CA coordinates
+
+
+### Using $H_k(i,j)$
+
+#### For rows = sites
+
+We compute the weighted mean of $H_k(i,j)$ per row = site $i$.
+
+$$
+m_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} H_k(i,j)
+$$
+
+```{r}
+# Get marginal counts
+yi_ <- rowSums(Y)
+y_j <- colSums(Y)
+```
+
+```{r}
+# Initialize mean vector
+mrows <- matrix(nrow = r, 
+                ncol = c-1) 
+
+for (i in 1:r) {
+  # Get nonzero cells for site i
+  rows <- which(Yfreq0$row == i)
+  
+  # Get scores for site i
+  Hi <- H[rows, ]
+  
+  # Get counts for site i
+  yij <- Yfreq0$Freq[rows]
+  
+  # Fill i-th row with site i mean score along each axis
+  # (colSums sums all species j in site i)
+  if (is.matrix(Hi)) { # There are several species in site i
+    mrows[i, ] <- 1/yi_[i]*colSums(diag(yij) %*% Hi)
+  } else { # Only one species in that site
+    mrows[i, ] <- 1/yi_[i]*colSums(yij %*% Hi)
+  }
+  
+}
+```
+
+```{r, include = FALSE}
+# Check agreement with ade4 method
+recscal_mean <- meanfacwt(rec_ca[, 1:(c-1)], 
+                          rec_ca$Row, 
+                          wt = rec_ca$Weight)
+
+all(abs(recscal_mean/mrows) - 1 < 10e-10)
+```
+
+We compute the (weighted) variance of $H_k(i,j)$ per row = site $i$.
+
+$$
+s_k^2(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \left(H_k(i,j) - m_k(i)\right)^2
+$$ *NB: in the original article [@thioulouse1992] they use the compact variance formula* $s_k^2(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c \left(y_{ij} H_k(i,j)^2\right) - m_k(i)^2$ but I prefer the other formula.
+
+```{r}
+# Initialize mean vector
+varrows <- matrix(nrow = r, 
+                  ncol = c-1) 
+
+for (i in 1:r) {
+  # Get nonzero cells for site i
+  rows <- which(Yfreq0$row == i)
+  
+  # Get scores for site i
+  Hi <- H[rows, ]
+  
+  # Get counts for site i
+  yij <- Yfreq0$Freq[rows]
+  
+  # Fill i-th row with site i variance along each axis
+  varrows[i, ] <- 1/yi_[i]*colSums(diag(yij) %*% sweep(Hi, 2, mrows[i, ], "-")^2)
+}
+```
+
+```{r, include = FALSE}
+# Check agreement with ade4 method
+li_rescsal <- s.class(rec_ca[,  1:2], 
+                      wt = rec_ca$Weight, 
+                      fac = rec_ca$Row,
+                      plot = FALSE)
+varrows_ax1 <- sapply(li_rescsal@stats$covvar, function(x) x[1,1])
+varrows_ax1/varrows[, 1]
+```
+
+Finally, we can compute the covariance between scores on the several axes per row = site $i$. The covariance between two axes $k$ and $l$ of the multivariate space for site = row $i$ is defined as:
+
+$$
+c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}H_k(i, j)H_l(i, j) - m_k(i)m_l(i)
+$$
+
+```{r}
+k <- 1
+l <- 2
+```
+
+Below, we compute the covariance between axes $k =$ `r k` and $l =$ `r l`.
+
+```{r, include=FALSE}
+# Compute covariance for site 3 only
+i <- 3
+rows <- which(Yfreq0$row == i)
+
+covrow1 <- (1/yi_[i])*sum(Yfreq0$Freq[rows] * H[rows, k] * H[rows, l]) - mrows[i, k]*mrows[i, l]
+```
+
+```{r}
+# Compute covariances for all sites
+
+# Create a df containing intermediate computation and row = site identifier
+df <- data.frame(var = Yfreq0$Freq*H[, k]*H[, l], 
+                 by = Yfreq0$row)
+# Get the sum over the different species for each site
+sum_per_site <- aggregate(df$var, list(df$by), sum)$x
+
+# Then vector-compute covariances
+covrows <- (1/yi_)*sum_per_site - mrows[, k]*mrows[, l]
+```
+
+```{r, include=FALSE}
+# Check agreement with ade4 method
+li_rescsal <- s.class(rec_ca[,  1:2], 
+                      wt = rec_ca$Weight, 
+                      fac = rec_ca$Row,
+                      plot = FALSE)
+covrow_ade4 <- sapply(li_rescsal@stats$covvar, function(x) x[1,2])
+
+# Check with simple computation method
+covrow_ade4[i]/covrow1
+
+# Check with vector method
+covrow_ade4/covrows
+```
+
+#### For columns = species
+
+Symetrically, we can compute the means, variances and covariances per columns = species $j$.
+
+$$
+m_k(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} H_k(i,j)
+$$
+
+$$
+s_k^2(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} \left(H_k(i,j) - m_k(j)\right)^2
+$$
+
+$$c_{kl}(j) = \frac{1}{y_{\cdot j}}\sum_{i=1}^r y_{ij}H_k(i, j)H_l(i, j) - m_k(j)m_l(j)$$
+
+```{r}
+#| code-fold: true
+
+# Compute means and variances ---
+# Initialize mean vector
+mcols <- matrix(nrow = c, 
+                ncol = c-1) 
+varcols <- matrix(nrow = c, 
+                  ncol = c-1) 
+
+for (j in 1:c) {
+  # Get nonzero cells for species j
+  cols <- which(Yfreq0$colind == j)
+  
+  # Get scores for species j
+  Hj <- H[cols, ]
+  
+  # Get counts for species j
+  yij <- Yfreq0$Freq[cols]
+  
+  # Fill j-th row with species j mean score/variance along each axis
+  if (is.matrix(Hj)) { # There are several sites with this species
+    mcols[j, ] <- 1/y_j[j]*colSums(diag(yij) %*% Hj)
+    varcols[j, ] <- 1/y_j[j]*colSums(diag(yij) %*% sweep(Hj, 2, mcols[j, ], "-")^2)
+  } else { # Only one site with that species
+    mcols[j, ] <- 1/y_j[j]*colSums(yij %*% Hj)
+    varcols[j, ] <- 1/y_j[j]*colSums(yij %*% (Hj - mcols[j, ])^2)
+  }
+  
+}
+```
+
+```{r, include = FALSE}
+# Compute covariance for species 3 only
+j <- 4
+cols <- which(Yfreq0$colind == j)
+
+covcol1 <- (1/y_j[j])*sum(Yfreq0$Freq[cols] * H[cols, k] * H[cols, l]) - mcols[j, k]*mcols[j, l]
+```
+
+```{r}
+#| code-fold: true
+
+# Compute covariances ---
+
+# Create a df containing intermediate computation and col = species identifier
+df <- data.frame(var = Yfreq0$Freq*H[, k]*H[, l], 
+                 by = Yfreq0$colind)
+# Get the sum over the different sites for each species
+sum_per_spp <- aggregate(df$var, list(df$by), sum)$x
+
+# Then vector-compute covariances
+covcols <- (1/y_j)*sum_per_spp - mcols[, k]*mcols[, l]
+```
+
+```{r, include = FALSE}
+# Check agreement with ade4 method
+
+# Mean
+recscal_mean <- meanfacwt(rec_ca[, 1:(c-1)], 
+                          rec_ca$Col, 
+                          wt = rec_ca$Weight)
+
+all(abs(recscal_mean/mcols) - 1 < 10e-10)
+
+# Variance
+col_rescsal <- s.class(rec_ca[,  1:2], 
+                       wt = rec_ca$Weight, 
+                       fac = rec_ca$Col)
+varcols_ax1 <- sapply(col_rescsal@stats$covvar, function(x) x[1,1])
+varcols_ax1/varcols[, 1]
+# sp7 and 13 are Nan but it is because their variance is zero
+varcols_ax1[7]
+varcols[7, 1]
+
+varcols_ax1[13]
+varcols[13, 1]
+
+# Both species are only present in one site
+Y[, 7]
+Y[, 13]
+```
+
+```{r, include=FALSE}
+# Check agreement with ade4 method
+co_rescsal <- s.class(rec_ca[,  1:2], 
+                      wt = rec_ca$Weight, 
+                      fac = rec_ca$Col,
+                      plot = FALSE)
+covcol_ade4 <- sapply(co_rescsal@stats$covvar, function(x) x[1,2])
+
+# Check with simple computation method
+covcol_ade4[j]/covcol1
+
+# Check with vector method
+covcol_ade4/covcols
+# Species 7 and 13 are Nan because the variances are zero -> covariance too
+```
+
+### Using CA scores
+
+#### For rows = sites
+
+The conditional means and variances of rows scores on axis $k$ for row $i$ can also be computed as:
+
+$$
+m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} L_k(i)
+$$
+
+$$
+s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k L_k^2(i) \right)
+$$
+***Note: this formula is different from formula (15) in @thioulouse1992 (no square root at the denominator $2\lambda_k\mu_k$. Numerical computations suggest this is the correct formula.***
+
+```{r}
+mrows2 <- sweep(ca$li, 2, sqrt(mu)/sqrt(2*lambda), "*")
+```
+
+```{r}
+varrows2 <- matrix(nrow = r, 
+                   ncol = c-1)
+
+for (i in 1:r) {
+  # Get CA scores for site i
+  Li <- L[i, ]
+  
+  # Compute the part with the sum on Cj
+  # we add all coordinates Cj^2 weighted by the number of observations on site i
+  sumCj <- t(Y[i, ]) %*% as.matrix(C)^2
+
+  # Fill i-th row with site i variance along each axis
+  varrows2[i, ] <- 1/(2*lambda*mu)*((1/yi_[i])*sumCj - lambda*as.numeric(Li)^2)
+}
+```
+
+```{r, include = FALSE}
+mrows2/mrows
+varrows2/varrows
+```
+
+We can also compute the covariance using CA coordinates:
+
+$$
+c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} C_k(j) C_l(j) - \sqrt{\lambda_k \lambda_l} L_k(i)L_l(i) \right)
+$$
+
+We will use the same values as above for $k$ and $l$: $k =$ `r k` and $l =$ `r l`.
+
+```{r}
+# Each site is multiplied by its score (Y*C[, k] by column) and then summed per site
+sum_per_site <- rowSums(Y %*% diag(C[, k]) %*% diag(C[, l]))
+
+covrows2 <- 1/(2*sqrt(lambda[k]*lambda[l])*sqrt(mu[k]*mu[l]))*(1/yi_*sum_per_site - sqrt(lambda[k]*lambda[l])*L[, k]*L[, l])
+```
+
+```{r, include = FALSE}
+# Check result
+covrows2/covrows
+```
+
+#### For columns = species
+
+Same for the columns:
+
+$$
+m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} C_k(j)
+$$
+
+$$
+s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} L_k^2(i) \right) - \lambda_k C_k^2(j) \right)
+$$
+
+$$
+c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} L_k(i) L_l(i) - \sqrt{\lambda_k \lambda_l} C_k(j)C_l(j) \right)
+$$
+
+```{r}
+mcols2 <- sweep(ca$co, 2, sqrt(mu)/sqrt(2*lambda), "*")
+```
+
+```{r}
+varcols2 <- matrix(nrow = c, 
+                   ncol = c-1)
+
+for (j in 1:c) {
+  # Get CA scores for species j
+  Cj <- C[j, ]
+  
+  # Compute the part with the sum on Li
+  sumLi <- t(Y[, j]) %*% as.matrix(L)^2
+
+  # Fill i-th row with site i variance along each axis
+  varcols2[j, ] <- 1/(2*lambda*mu)*((1/y_j[j])*sumLi - lambda*as.numeric(Cj)^2)
+}
+```
+
+```{r}
+# Each spp is multiplied by its score (Y*L[, k] by row) and then summed per spp
+sum_per_spp <- colSums(diag(L[, k]) %*% diag(L[, l]) %*% Y)
+
+covcols2 <- 1/(2*sqrt(lambda[k]*lambda[l])*sqrt(mu[k]*mu[l]))*(1/y_j*sum_per_spp - sqrt(lambda[k]*lambda[l])*C[, k]*C[, l])
+```
+
+```{r, include = FALSE}
+mcols2/mcols
+varcols2/varcols
+
+# One inf column but it is because variance is zero
+varcols[7, ]
+varcols2[7, ]
+```
+
+```{r, include = FALSE}
+# Check result
+covcols2/covcols
+```
+
+### Plots
+
+Let's plot these means and variances along the first axis for rows and columns:
+
+```{r}
+#| code-fold: true
+# Define plotting function
+plot_meanvar <- function(mean, var, groupnames, x = 1, col = "black")  {
+  ggplot() +
+  geom_point(aes(x = mean[, x], 
+                 y = reorder(groupnames, -mean[, x])),
+             colour = col, shape = 1) +
+  geom_linerange(aes(x = mean[, x], 
+                     y = reorder(groupnames, -mean[, x]),
+                     xmin = mean[, x] - var[, x],
+                     xmax = mean[, x] + var[, x]),
+                 colour = col) +
+  xlab(paste("Axis", x)) +
+  theme_linedraw() +
+  theme(axis.title.y = element_blank())
+}
+```
+
+```{r, fig.width=9, fig.height=4}
+#| code-fold: true
+gr <- plot_meanvar(mrows, 3*sqrt(varrows), groupnames = rownames(Y),
+                   col = params$colsite) +
+  ggtitle("Rows (sites) mean and variance")
+gc <- plot_meanvar(mcols, 3*sqrt(varcols), groupnames = colnames(Y),
+                   col = params$colspp) +
+  ggtitle("Columns (species) mean and variance")
+
+grid.arrange(grobs = list(gr, gc), 
+             nrow = 1)
+```
+
+```{r, include=FALSE}
+# Same result with ade4 function
+s1d.distri(score = ca$li[, 1], 
+           dfdistri = as.data.frame(Y),
+           ppoints.col = params$colspp,
+           plabels.col = params$colspp)
+
+s1d.distri(score = ca$co[, 1], 
+           dfdistri = as.data.frame(t(Y)),
+           ppoints.col = params$colsite,
+           plabels.col = params$colsite)
+```
+
+```{r, fig.width=9, fig.height=4}
+#| code-fold: true
+gr <- ggplot() +
+  geom_point(aes(x = covrows, y = reorder(rownames(Y), -covrows)),
+             col = params$colsite) +
+  xlab(paste("Covariances between axes", k, "and", l)) +
+  theme_linedraw() +
+  theme(axis.title.y = element_blank()) + 
+  ggtitle("Rows (sites) covariances")
+
+gc <- ggplot() +
+  geom_point(aes(x = covcols, y = reorder(colnames(Y), -covcols)),
+             col = params$colspp) +
+  xlab(paste("Covariances between axes", k, "and", l)) +
+  theme_linedraw() +
+  theme(axis.title.y = element_blank()) + 
+  ggtitle("Columns (species) covariances")
+
+grid.arrange(grobs = list(gr, gc), nrow = 1)
+```
+
+Finally, we can plot these ellipses in 2 dimensions and summarize:
+
+-   the conditional mean along axes $k$ and $l$
+-   the conditional variance along axes $k$ and $l$
+-   the conditional covariances between axes $k$ and $l$
+
+For that, we need to plot the ellipse summarizing the Gaussian bivariate law for each group. For example, for site $i$ on axes $k$ and $l$ [reference blog post](https://www.xarg.org/2018/04/how-to-plot-a-covariance-error-ellipse/):
+
++ the mean vector is $\mu(i) = (m_k(i), m_l(i))$
++ the variance-covariance matrix is $\Sigma(i) = \begin{pmatrix} \sigma_k^2 ~ \sigma_{kl}\\ \sigma_{kl} ~ \sigma_{l}^2 \end{pmatrix}$
+
+
+The simplest equation (coraviance zero, centered on the origin) is:
+
+$$\left( \frac{x}{\sigma_k} \right)^2 + \left( \frac{y}{\sigma_l} \right)^2 = s$$
+The semi-axes are of length $\sigma_k \sqrt{s}$ and $\sigma_l \sqrt{s}$. $s$ is the scaling factor allowing the ellipsis to encompass all data with a level of confidence $p$. We have $s = -2 \ln(1-p)$.
+
+We can show that this equation is equivalent to
+
+$$\begin{cases} x = \sigma_k \sqrt{s} \cos(t)\\ y = \sigma_l \sqrt{s} \sin(t)  \end{cases}$$
+With $t$ being an angle between 0 and $2\pi$.
+
+We write $a$ the length of the semi-major axis and $b$ the length of the semi-minor axis.
+
+Now in case the values $H_k(i,j)$ and $H_l(i,j)$ are correlated, the covariance is not zero. Then, the semi-axes lengths are the square root of the eigenvaluesof $\Sigma(i)$. 
+Geometrically, we have an angle $\theta$ between axis $k$ and the semi-major axis. $\theta$ can be computed as the direction of the first eigenvector $v_1$: $\theta = \arctan(v_1(2)/v_1(1))$.
+
+The equation of the ellipsis is:
+$$\begin{cases} x = m_k(i) +  a  \cos(\theta) \cos(t) - b \sin(\theta) \sin(t) \\ y = m_l(i) + a \sin(\theta) \cos(t) + b \cos(\theta) \sin(t) \end{cases}$$
+With $a = \sqrt{\lambda_1} \sqrt{s}$ and $b = \sqrt{\lambda_2} \sqrt{s}$. (Here we assumed the origin could be different from zero and shifted the center with $m_k(i)$ and $m_l(i)$.)
+
+```{r}
+#| code-fold: true
+gaussian_ellipses <- function(vars, covars, means, x = 1, y = 2,
+                              t = seq(0, 2*pi, 0.01), s = 1.5, ind = 1:nrow(vars)) {
+  # Length of angles
+  nt <- length(t)
+  
+  # Initialize matrix
+  ellipses_mat <- matrix(nrow = length(t)*nrow(vars), 
+                         ncol = 3)
+  
+  for (i in ind) {
+    # Define variance covariance matrix
+    covar <- covars[i]
+    varx <- vars[i, x]
+    vary <- vars[i, y]
+    mat <- matrix(data = c(varx, covar,
+                           covar, vary),
+                  nrow = 2)
+    
+    # Eigenvalues
+    vp <- eigen(mat)$values
+    
+    a <- s*sqrt(max(vp)) # semi major axis
+    b <- s*sqrt(min(vp)) # semi minor axis
+    
+    # angle (inclination of ellipse from axe x)
+    if(covar == 0 & varx >= vary){ # covariance is zero and varx is big
+      theta <- 0
+    }else if(covar == 0 & varx < vary){ # covariance is zero and varx is small
+      theta <- pi/2
+    }else{ # "normal" cases
+      # get eigenvector associated to largest eigenvalue
+      v1 <- eigen(mat)$vectors[,1]
+      # theta is the angle of the eigenvector with x -> ie
+      # arctan of the slope given by the first eigenvector
+      theta <- atan(v1[2]/v1[1])
+    }
+    
+    # x and y coordinates of ellipse
+    xellipse <- means[i, x] + a*cos(theta)*cos(t) - b*sin(theta)*sin(t)
+    yellipse <- means[i, y] + a*sin(theta)*cos(t) + b*cos(theta)*sin(t)
+    
+    indmin <- (i-1)*nt + 1
+    indmax <- i*nt
+    ellipses_mat[indmin:indmax, ] <- matrix(c(xellipse, yellipse, rep(i,nt)),
+                                           ncol = 3)
+  }
+  res <- as.data.frame(ellipses_mat)
+  colnames(res) <- c("xell", "yell", "group")
+  return(res)
+}
+```
+
+
+```{r}
+#| code-fold: true
+
+plot_ellipses <- function(var, covar, mean, groupnames, 
+                          H, Yfreq0, col = "black", ellipses = 1:nrow(var), s = 1.5, x = 1, y = 2) {
+  
+  if (all(groupnames %in% Yfreq0$row)) {
+    indivtype <- "row"
+  } else {
+    indivtype <- "colind"
+  }
+  
+  rows <- which(Yfreq0[[indivtype]] %in% ellipses)
+  
+  # Get gaussian ellipses for the required groups
+  ell <- gaussian_ellipses(var, covar, mean, s = s, x = k, y = l, ind = ellipses)
+  
+  # Plot ellipses from variance and covariance
+  ggplot() +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 0) +
+    geom_point(aes(x = H[, x], y = H[, y], alpha = Yfreq0[[indivtype]] %in% ellipses),
+               col = col,
+               show.legend = FALSE) +
+    scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = 0.2)) +
+    # Label ellipse points only
+    geom_text_repel(aes(x = H[rows, x], y = H[rows, y], 
+                        label = paste(Yfreq0$row[rows], Yfreq0$col[rows])),
+                    col = col) +
+    geom_polygon(data = ell, 
+                 aes(x = xell, y = yell, group = group),
+                 fill = col, col = col, alpha = 0.5) +
+    theme_linedraw() +
+    geom_label(aes(x = mean[, x], y = mean[, y], label = groupnames),
+               colour = col) +
+    xlab(paste("Axis", x)) +
+    ylab(paste("Axis", y)) 
+}
+```
+
+```{r, fig.width=6, fig.height=10}
+#| code-fold: true
+
+gr <- plot_ellipses(varrows, covrows, mrows, groupnames = rownames(Y), H = H, Yfreq0 = Yfreq0,
+                    col = params$colsite) + ggtitle("Rows (sites)")
+
+gc <- plot_ellipses(varcols, covcols, mcols, groupnames = colnames(Y), H = H, Yfreq0 = Yfreq0, 
+                    col = params$colspp) + ggtitle("Columns (species)")
+
+grid.arrange(grobs = list(gr, gc))
+```
+
+```{r, fig.width=6, fig.height=10}
+#| code-fold: true
+
+i <- c(2, 13, 18)
+gr <- plot_ellipses(varrows, covrows, mrows, groupnames = rownames(Y), H = H, Yfreq0 = Yfreq0,
+                    ellipses = i, col = params$colsite) + ggtitle("Rows (sites)")
+
+j <- c(16, 12, 20) # sp21 is index 20
+gc <- plot_ellipses(varcols, covcols, mcols, groupnames = colnames(Y), H = H, Yfreq0 = Yfreq0, 
+                    ellipses = j, col = params$colspp) + ggtitle("Columns (species)")
+
+grid.arrange(grobs = list(gr, gc))
+```
+
+```{r, include=FALSE}
+# Check with ade4
+s.class(rec_ca[,1:2],
+        wt = rec_ca$Weight, 
+        fac = rec_ca$Row,
+        col = params$colsite)
+s.class(rec_ca[,1:2], 
+        wt = rec_ca$Weight, 
+        fac = rec_ca$Col,
+        col = params$colspp)
+```
+
+:::{.callout-note}
+
+Lets test formula (3) in @thioulouse1992 relating species and samples scores in CA.
+
+The article says $L_k(i) = \sum_{j=1}^c p_{j|i} C_k(j)$ with $p_{j|i} = \frac{y_{ij}}{y_{i \cdot}}$.
+
+
+
+```{r}
+# Test formula for a given k
+k <- 2
+
+# compute pj|i
+pjcondi <- sweep(Y, 1, yi_, "/")
+
+# Compute the formula that should be equal th Lk(i)
+res <- vector(mode="numeric", length=nrow(Y))
+for (i in 1:nrow(Y)) {
+  res[i] <- sum(pjcondi[i, ]*ca$co[, k])
+}
+
+res/ca$li[ ,k] # not equal to Lk(i)
+
+res_lambda <- res*ca$eig[k]^(-1/2) # scale with 1/sqrt(lambda)
+
+res_lambda/ca$li[ ,k] # Now it is equal to Lk(i)
+```
+
+We find that in fact the correct formula is
+
+$$L_k(i) = \frac{1}{\sqrt{\lambda_k}}\sum_{j=1}^c p_{j|i} C_k(j)$$
+
+With this equality we can indeed prove numerically the equivalence between mean computation using $H_k(i,j)$ (Equations (12) and (14) in @thioulouse1992) and using CA coordinates (computation in notebook not shown here).
+:::
+
+

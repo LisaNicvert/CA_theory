@@ -3,7 +3,12 @@ library(ggplot2)
 
 plotmat <- function(mar = 2, marl = 1.2,
                     E = FALSE, T_ = FALSE,
-                    r, c, l = NULL, k = NULL) {
+                    r, c, l = NULL, k = NULL,
+                    Yname = "italic(Y)", 
+                    rname = "italic(r)", cname = "italic(c)",
+                    horizr = TRUE,
+                    plot.margin.x = 1,
+                    plot.margin.y = 1) {
   
   xmin <- 0
   xmax <- c
@@ -15,14 +20,14 @@ plotmat <- function(mar = 2, marl = 1.2,
   
   xcol <- c(-marl, c/2)
   ycol <- c(r/2, r+marl)
-  vjust <- c(0.5, 0)
-  hjust <- c(1, 0.5)
+  vjust <- c(ifelse(horizr, 0.5, 0), 0)
+  hjust <- c(ifelse(horizr, 1, 0.5), 0.5)
   
-  labmat <- 'italic(Y)'
-  labcol <- c('italic(r)', 'italic(c)')
+  labmat <- Yname
+  labcol <- c(rname, cname)
   
-  xlim <- c(-2*marl, c+marl)
-  ylim <- c(-marl, r + 2*marl)
+  xlim <- c(0, c)
+  ylim <- c(0, r)
   
   if (E) {
     xmin <- c(xmin, c+mar)
@@ -41,7 +46,7 @@ plotmat <- function(mar = 2, marl = 1.2,
     labmat <- c(labmat, 'italic(E)')
     labcol <- c(labcol, 'italic(l)')
     
-    xlim[2] <- xlim[2] +mar+l
+    xlim[2] <- xlim[2] + mar + l
   }
   if (T_) {
     xmin <- c(xmin, 0)
@@ -53,15 +58,33 @@ plotmat <- function(mar = 2, marl = 1.2,
     ymat <- c(ymat, -mar-k/2)
     
     xcol <- c(xcol, -marl)
-    ycol <- c(ycol,  -mar-l/2)
-    vjust <- c(vjust, 0.5)
-    hjust <- c(hjust, 1)
+    ycol <- c(ycol, -mar-k/2)
+    vjust <- c(vjust, ifelse(horizr, 0.5, 0))
+    hjust <- c(hjust, ifelse(horizr, 1, 0.5))
     
     labmat <- c(labmat, 'italic(T)')
     labcol <- c(labcol, 'italic(k)')
     
-    ylim[1] <- ylim[1] - mar-k
+    ylim[1] <- ylim[1] - mar - k
   }
+  
+  if (horizr) {
+    angle <- 0
+  } else {
+    angle <- c(90, 0) 
+    if (E) {
+      angle <- c(angle, 0)
+    }
+    if (T_) {
+      angle <- c(angle, 90)
+    }
+  }
+  
+  xlim[1] <- xlim[1] - plot.margin.x*marl
+  xlim[2] <- xlim[2] + plot.margin.x*marl
+  
+  ylim[1] <- ylim[1] - plot.margin.x*marl
+  ylim[2] <- ylim[2] + plot.margin.x*marl
   
   ggplot() +
     annotate("rect", 
@@ -80,11 +103,12 @@ plotmat <- function(mar = 2, marl = 1.2,
              y = ycol,
              vjust = vjust,
              hjust = hjust,
-             label = labcol, 
+             label = labcol,
+             angle = angle,
              parse = TRUE, size = 8, family = "serif") +
     xlim(xlim) +
     ylim(ylim) +
-    coord_fixed() + 
+    coord_fixed() +
     theme_void()
   
 }

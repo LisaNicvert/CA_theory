@@ -5,6 +5,9 @@ project:
     - CA.qmd
     - CCA.qmd
     - dcCA.qmd
+    - recscal.qmd
+    - recscal_cca.qmd
+    - recscal_dcca.qmd
 
 website:
   title: "The theory of multivariate analyses"
@@ -18,6 +21,12 @@ website:
         text: Canonical CA (CCA)
       - href: dcCA.qmd
         text: Double-constrained CA (dc-CA)
+      - href: recscal.qmd
+        text: Reciprocal scaling (CA)
+      - href: recscal_cca.qmd
+        text: Reciprocal scaling (CCA)
+      - href: recscal_dcca.qmd
+        text: Reciprocal scaling (dcCA)
 
 format:
   html:

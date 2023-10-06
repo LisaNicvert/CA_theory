@@ -1,0 +1,189 @@
+---
+title: "Reciprocal scaling with CCA"
+editor: visual
+params:
+  colsite: "burlywood4"
+  colspp: "cornflowerblue"
+---
+
+```{r, results='hide', message=FALSE}
+#| code-fold: true
+
+# Paths
+library(here)
+
+# Multivariate analysis
+library(ade4)
+library(adegraphics)
+
+# dc-CA
+source(here("functions/dpcaiv2-ade4.R"))
+
+# Reciprocal scaling
+source(here("functions/reciprocal.R"))
+
+# Matrix algebra
+library(expm)
+
+# Plots
+source(here("functions/plot.R"))
+library(gridExtra)
+```
+
+## Introduction
+
+This is an extension of reciprocal scaling defined for correspondence analysis by @thioulouse1992 to canonical correspondence analysis.
+
+Here, we start from two matrices:
+
+-   A data matrix $Y$ ($r \times c$)
+-   A matrix of predictor variables (environmental variabnes) $E$ ($r \times l$)
+
+```{r, echo=FALSE}
+dat <- readRDS(here("data/Barbaro2012.rds"))
+
+Y <- dat$comm
+E <- dat$envir
+
+l <- ncol(E)
+r <- dim(Y)[1]
+c <- dim(Y)[2]
+
+plotmat(r = r, c = c, l = l, 
+        E = TRUE)
+```
+
+```{r}
+(r <- dim(Y)[1])
+(c <- dim(Y)[2])
+(l <- ncol(E))
+```
+
+## Computation
+
+### From CCA scores
+
+We compute the $H^{CCA}_k(i, j)$ from the WA (for columns = species) and LC (for rows = sites) scores computed with CCA (noted $L^{CCA}$ and $C^{CCA}$). This formula is a direct extension of formula (11) in @thioulouse1992 but we replace the CA ordination scores with the CCA ordination scores.
+
+$$
+H_k^{CCA}(i, j) = \frac{L^{CCA}_k(i) + C^{CCA}_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+$$
+
+```{r}
+Ydf <- as.data.frame(Y)
+ca <- dudi.coa(Ydf, 
+               scannf = FALSE,
+               nf = min(r - 1, c - 1))
+
+neig <- min(c(r-1, c, l))
+cca <- pcaiv(dudi = ca, 
+             df = E,
+             scannf = FALSE,
+             nf = neig)
+
+L_CCA <- cca$li
+C_CCA <- cca$co
+
+lambda_CCA <- cca$eig
+mu_CCA <- 1 + sqrt(lambda_CCA)
+```
+
+We also compute reciprocal scaling for comparison:
+
+```{r}
+rec_cca <- reciprocal.caiv(cca)
+```
+
+```{r}
+# Transform matrix to count table
+Yfreq <- as.data.frame(as.table(Y))
+colnames(Yfreq) <- c("row", "col", "Freq")
+
+# Remove the cells with no observation
+Yfreq0 <- Yfreq[-which(Yfreq$Freq == 0),]
+Yfreq0$colind <- match(Yfreq0$col, colnames(Y)) # match index and species names
+
+
+# Initialize results matrix
+H_CCA <- matrix(nrow = nrow(Yfreq0), 
+                ncol = length(lambda_CCA))
+
+for (k in 1:length(lambda_CCA)) { # For each axis
+  ind <- 1 # initialize row index
+  for (obs in 1:nrow(Yfreq0)) { # For each observation
+    i <- Yfreq0$row[obs]
+    j <- Yfreq0$col[obs]
+    H_CCA[ind, k] <- (L_CCA[i, k] + C_CCA[j, k])/sqrt(2*lambda_CCA[k]*mu_CCA[k])
+    ind <- ind + 1
+  }
+}
+```
+
+```{r, include = FALSE}
+# Check result
+rec_cca[,1:neig]/H_CCA
+```
+
+### From canonical correlation analysis
+
+To perform the cancor, we compute the inflated tables $R$ ($\omega \times l$) and $C$ ($\omega \times c$) from $Y$ ($r \times c$) and $E$ ($r \times l$). The difference with CA is that we use $E$ instead of $Y$ to compute the inflated table $R$. $R$ is equivalent to $E$ where rows of $E$ are duplicated as many times as there are correspondences in $Y$.
+
+We take the frequency table defined before and use it to compute the inflated tables (with weights):
+
+```{r}
+# Create indicator tables
+tabR <- acm.disjonctif(as.data.frame(Yfreq0$row))
+tabR <- as.matrix(tabR) %*% as.matrix(E) # duplicate rows of E according th the correspondences of Y
+tabC <- acm.disjonctif(as.data.frame(Yfreq0$col))
+colnames(tabC) <- colnames(Y)
+
+# Get weights
+wt <- Yfreq0$Freq
+```
+
+Below are the first lines of tables $R$ and $C$:
+
+```{r, echo=FALSE}
+knitr::kable(head(tabR, 30))
+knitr::kable(head(tabC, 30))
+```
+Then, we perform a canonical correlation on the scaled tables $R_{scaled}$ and $C_{scaled}$. We find the coefficients $\rho$ and $\gamma$ maximizing the correlation between the scores $S_R = R_{scaled} \rho$ and $S_C = C_{scaled} \gamma$.
+
+```{r}
+# Center scale tables
+tabR_scaled <- scalewt(tabR, wt)
+tabC_scaled <- scalewt(tabC, wt)
+
+res <- cancor(diag(sqrt(wt)) %*% tabR_scaled, 
+              diag(sqrt(wt)) %*% tabC_scaled, 
+              xcenter = FALSE, ycenter = FALSE)
+# res gives the coefficients of the linear combinations that maximizes the correlation between the 2 dimensions
+dim(res$xcoef) # l columns -> R_scaled is of full rank
+dim(res$ycoef) # c-1 columns -> C_scaled is not of full rank
+
+# Compute these scores from this coef
+scoreR <- tabR_scaled[, 1:l]  %*% res$xcoef
+scoreC <- tabC_scaled[, 1:(c-1)]  %*% res$ycoef
+```
+
+We have $H = (S_R + S_C)_{scaled}$.
+
+```{r}
+# Get H
+scoreRC <- scoreR[, 1:l] + scoreC[, 1:l] # here l < c-1 so l axes
+scoreRC_scaled <- scalewt(scoreRC, wt = wt)
+```
+
+```{r, include=FALSE}
+# Check result
+all(abs(scoreRC_scaled/H_CCA) - 1 < 10e-10)
+```
+
+### Plot
+
+```{r, warning=FALSE}
+#| code-fold: true
+multiplot(indiv_row = H_CCA, 
+          indiv_row_lab = paste0("site ", Yfreq0$row, "/", Yfreq0$col),
+          row_color = "black", eig = lambda_CCA)
+```
