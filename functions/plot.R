@@ -149,7 +149,7 @@ multiplot <- function(indiv_row = NULL, indiv_col = NULL,
   g <- ggplot() +
     geom_vline(xintercept = 0) + 
     geom_hline(yintercept = 0) +
-    coord_cartesian() +
+    coord_fixed() +
     theme_linedraw() +
     xlab(xlab) +
     ylab(ylab)

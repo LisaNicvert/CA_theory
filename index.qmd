@@ -9,7 +9,7 @@ This website aims at summarizing the theory behind different methods to analyze 
 -   canonical CA (CCA)
 -   double-constrained CA (dc-CA)
 
-It also describers reciprocal scaling [@thioulouse1992], which is a method to compute and visualize the dispersion among count tables analyzed with multivariate methods.
+It also describes reciprocal scaling [@thioulouse1992] (and its extensions with CCA and dcCA). Reciprocal scaling is a method to compute and visualize the dispersion among count tables analyzed with multivariate methods.
 
 ## Dataset
 

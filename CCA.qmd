@@ -486,6 +486,9 @@ s.label(cca$li, # Sites position by averaging
         ppoints.col = params$colsite,
         add = TRUE)
 
+# WA sites scores
+F_/cca$ls
+
 # How to find the fa??
 s.corcircle(cca$fa[-1, ])
 ```

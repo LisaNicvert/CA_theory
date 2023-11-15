@@ -36,9 +36,9 @@ This is an extension of reciprocal scaling defined for correspondence analysis b
 
 Here, we have 3 matrices:
 
-+ A data matrix $Y$ ($r \times c$)
-+ A matrix of predictor variables $E$ ($r \times l$)
-+ A matrix of predictor variables $T$ ($c \times k$)
+-   A data matrix $Y$ ($r \times c$)
+-   A matrix of predictor variables $E$ ($r \times l$)
+-   A matrix of predictor variables $T$ ($c \times k$)
 
 ```{r, echo=FALSE}
 dat <- readRDS(here("data/Barbaro2012.rds"))
@@ -132,8 +132,7 @@ rec_dcca[,1:neig]/H_dcca
 
 ### From canonical correlation analysis
 
-To perform the cancor, we compute the inflated tables $R$ ($\omega \times l$) and $C$ ($\omega \times k$) from $E$ ($r \times l$) and $T$ ($r \times k$).
-$R$ and $C$ are respectively equivalents to $E$ and $T$ where rows of are duplicated as many times as there are correspondences in $Y$.
+To perform the cancor, we compute the inflated tables $R$ ($\omega \times l$) and $C$ ($\omega \times k$) from $E$ ($r \times l$) and $T$ ($r \times k$). $R$ and $C$ are respectively equivalents to $E$ and $T$ where rows of are duplicated as many times as there are correspondences in $Y$.
 
 We take the frequency table defined before and use it to compute the inflated tables (with weights):
 
@@ -158,9 +157,11 @@ knitr::kable(head(tabC, 30))
 Then, we perform a canonical correlation on the scaled tables $R_{scaled}$ and $C_{scaled}$. We find the coefficients $\rho$ and $\gamma$ maximizing the correlation between the scores $S_R = R_{scaled} \rho$ and $S_C = C_{scaled} \gamma$.
 
 ```{r}
-# Center scale tables
-tabR_scaled <- scalewt(tabR, wt)
-tabC_scaled <- scalewt(tabC, wt)
+# Center tables
+tabR_scaled <- scalewt(tabR, wt, 
+                       scale = FALSE)
+tabC_scaled <- scalewt(tabC, wt, 
+                       scale = FALSE)
 
 res <- cancor(diag(sqrt(wt)) %*% tabR_scaled, 
               diag(sqrt(wt)) %*% tabC_scaled, 
@@ -195,3 +196,241 @@ multiplot(indiv_row = H_dcca,
           indiv_row_lab = paste0("site ", Yfreq0$row, "/", Yfreq0$col),
           row_color = "black", eig = lambda_dcca)
 ```
+
+## Conditional means and variances
+
+
+::: {.callout-tip title="*TL;DR*"}
+|                      | Mean per species                              | Mean per site                                       |
+|----------------------|-----------------------------------------------|-----------------------------------------------------|
+| ScoreR               | WA score (`$lsQ`) $\times \frac{1}{\sqrt{n}}$ | Normed LC score (`$l1`) $\times \frac{1}{\sqrt{n}}$ |
+| ScoreC               | Normed LC score (`$c1`) $\times \frac{1}{\sqrt{n}}$ | WA score (`$lsR`) $\times \frac{1}{\sqrt{n}}$ |
+| scoreRC (not scaled) | (`$c1` + `$lsQ`) $\times \frac{1}{\sqrt{n}}$  | `$l1` + `$lsR` ($\times \frac{1}{\sqrt{n}}$)  |
+:::
+
+
+Let's compare the means obtained from canonical correlations scores and the dcCA scores.
+
+### For rows = sites
+
+```{r, include=FALSE}
+fac <- sqrt(mu_dcca)/sqrt(2*lambda_dcca)
+```
+
+```{r}
+n <- sum(Y)
+```
+
+We compute the mean per **row** (site) from:
+
+-   the **row** (sites) scores
+
+```{r}
+mrowsR <- meanfacwt(scoreR, fac = Yfreq0$row, wt = Yfreq0$Freq)
+
+mrowsR*sqrt(n)/dcca$l1
+```
+
+-   the **column** (species) scores
+
+```{r}
+mrowsC <- meanfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq)
+
+mrowsC*sqrt(n)/dcca$lsR
+```
+
+-   the mixed (RC) scores
+
+```{r}
+mrowsRC <- meanfacwt(scoreRC_scaled, fac = Yfreq0$row, wt = Yfreq0$Freq)
+mrowsRC/(dcca$lsR + dcca$l1)
+```
+
+```{r}
+mrowsRC_ns <- meanfacwt(scoreRC, fac = Yfreq0$row, wt = Yfreq0$Freq)
+mrowsRC_ns*sqrt(n)/(dcca$lsR + dcca$l1)
+```
+
+### For columns = species
+
+
+We compute the mean per **column** (species) from:
+
+-   the **row** (sites) scores
+
+```{r}
+mcolsR <- meanfacwt(scoreR, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+
+mcolsR * sqrt(n)/dcca$lsQ
+```
+
+-   the **column** (species) scores
+
+```{r}
+mcolsC <- meanfacwt(scoreC, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+
+mcolsC * sqrt(n)/dcca$c1
+```
+
+-   the mixed (RC) scores
+```{r}
+mcolsRC <- meanfacwt(scoreRC_scaled, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+
+mcolsRC * sqrt(n)/(as.matrix(dcca$c1 + dcca$lsQ) %*% diag(fac))
+```
+
+```{r}
+mcolsRC_ns <- meanfacwt(scoreRC, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+
+mcolsRC_ns * sqrt(n)/(dcca$c1 + dcca$lsQ)
+```
+
+
+### Plots
+
+From the scores above, we can have a variance for the WA sites scores (`$lsR`): from
+
+```{r}
+#| code-fold: true
+s.label(dcca$lsR, plabels.col = params$colsite)
+```
+
+to
+
+```{r}
+#| code-fold: true
+s.class(scoreC*sqrt(n), 
+        wt = Yfreq0$Freq,
+        fac = as.factor(Yfreq0$row),
+        ppoints.col = params$colspp,
+        plabels.col = params$colsite)
+```
+
+There is a parallel with the classical dcCA plot `$c1` (species LC score) /`$lsR` (sites WA score) (scaling type 1: preserves species distances)
+
+```{r}
+s.label(dcca$c1, plabels.col = params$colspp)
+s.label(dcca$lsR, add = TRUE, plabels.col = params$colsite)
+```
+
+The RC scores have no direct equivalent, sadly:
+
+```{r}
+#| code-fold: true
+s.class(scoreRC*sqrt(n), 
+        wt = Yfreq0$Freq,
+        fac = as.factor(Yfreq0$row),
+        ppoints.col = params$colspp,
+        plabels.col = params$colsite)
+```
+
+
+```{r}
+#| code-fold: true
+
+# Create a long df with $lsR and $l1
+bindlsR <- dcca$lsR
+colnames(bindlsR) <- colnames(dcca$l1)
+lscores <- rbind(dcca$l1, bindlsR)
+# Invert first column
+mrowsRC_ns_inv <- mrowsRC_ns
+mrowsRC_ns_inv[, 1] <- -mrowsRC_ns_inv[, 1]
+```
+
+RC scores means by row (site) are equal to `$lsR`+`$l1` (surimposed on this graph:)
+
+```{r}
+#| code-fold: true
+
+# What is exactly superposed to RC scores is $lsR+$l1
+s.label((dcca$lsR+dcca$l1), 
+        plabels.col = params$colsite)
+s.label(mrowsRC_ns_inv*sqrt(n),
+        add = TRUE)
+# mrowsRC_ns_inv*sqrt(n)/(dcca$l1+dcca$lsR)
+```
+
+
+However, perhaps it is more intuitive to see RC scores as the mean between `$lsR` and `$l1`: for that, we divide RC scores by 2 (shown surimposed to the mean between `$lsR` and `$l1` on the graph below)
+
+```{r}
+#| code-fold: true
+
+# What is more intuitive is to superpose RC scores/2 to the centroid if lsQ and l1 scores 
+s.class(lscores,
+        fac = as.factor(rep(rownames(Y), 2)),
+        ppoints.col = params$colsite,
+        wt = rep(dcca$lw, 2),
+        plabels.col = params$colsite)
+s.label(mrowsRC_ns_inv*sqrt(n)/2,
+        add = TRUE)
+```
+We can't get a variance for the sites LC scores (`$l1`) because sites correspondences are duplicated.
+
+```{r}
+#| code-fold: true
+s.label(dcca$l1, 
+        plabels.col = params$colsite)
+```
+
+and
+
+```{r}
+#| code-fold: true
+s.class(scoreR*sqrt(n), 
+        wt = Yfreq0$Freq,
+        fac = as.factor(Yfreq0$row),
+        ppoints.col = params$colsite,
+        plabels.col = params$colsite)
+```
+
+are identical.
+
+However we can have a variance for the species WA scores (`$lsQ`): from
+
+```{r}
+#| code-fold: true
+s.label(dcca$lsQ,
+        plabels.col = params$colspp)
+```
+
+to
+
+```{r}
+#| code-fold: true
+s.class(scoreR*sqrt(n), 
+        labels = colnames(Y),
+        plabels.col = params$colspp,
+        ppoints.col = params$colsite,
+        wt = Yfreq0$Freq,
+        fac = as.factor(Yfreq0$colind))
+```
+
+Here too there is a parallel with the "classical" dcCA plot: `$l1` (sites LC score) /`$lsQ` (species WA score) (scaling type 2: preserves species distances)
+
+```{r}
+s.label(dcca$l1, plabels.col = params$colsite)
+s.label(dcca$lsQ, add = TRUE, plabels.col = params$colspp)
+```
+
+But we can't get a variance for species LC scores (`$c1`):
+
+```{r}
+#| code-fold: true
+s.label(dcca$c1,
+        plabels.col = params$colspp)
+```
+
+and
+
+```{r}
+#| code-fold: true
+s.class(scoreC*sqrt(n), 
+        labels = colnames(Y),
+        plabels.col = params$colspp,
+        ppoints.col = params$colsite,
+        wt = Yfreq0$Freq,
+        fac = as.factor(Yfreq0$colind))
+```
+
+are identical.
