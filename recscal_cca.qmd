@@ -1,6 +1,6 @@
 ---
 title: "Reciprocal scaling with CCA"
-editor: visual
+editor: source
 params:
   colsite: "burlywood4"
   colspp: "cornflowerblue"
@@ -195,7 +195,6 @@ multiplot(indiv_row = H,
 
 ## Conditional means and variances from RC scores
 
-
 ::: {.callout-tip title="*TL;DR*"}
 Once we have the correspondences scores, we can group them by row (site) or column (species) to compute conditional summary statistics:
 
@@ -209,22 +208,21 @@ These conditional statistics can be computed using $H_k(i,j)$ or using the CA sc
 
 The means and variances are simply the weighted means/variances of the $H_k(i, j)$ for a fixed $i$ or $j$.
 
-
-|                   | Rows (sites)  | Columns (species)                                                                           |
-|-------------------|------------------------------|------------------------|
+|                                  | Rows (sites)                                                                               | Columns (species)                                                                           |
+|-------------------|-----------------------------|------------------------|
 | Mean for axis $k$                | $$m_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} H_k(i,j)$$                           | $$m_k(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} H_k(i,j)$$                           |
 | Variance for axis $k$            | $$s_k^2(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \left(H_k(i,j) - m_k(i)\right)^2$$ | $$s_k^2(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} \left(H_k(i,j) - m_k(j)\right)^2$$ |
 | Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}H_k(i, j)H_l(i, j) - m_k(i)m_l(i)$$  | $$c_{kl}(j) = \frac{1}{y_{\cdot j}}\sum_{i=1}^r y_{ij}H_k(i, j)H_l(i, j) - m_k(j)m_l(j)$$   |
 
-**Formulas using CA scores**
+**Formulas using CCA scores**
 
-***Note that the LC score (notation: $LC$) is used for the species variance and the WA score (notation: $L$) for the sites variance.***
+***Note that the LC score (notation:*** $LC$) is used for the species variance and the WA score (notation: $L$) for the sites variance.
 
-|                       | Rows (sites)                 | Columns (species)      |
-|-----------------------|------------------------------|------------------------|
-| Mean for axis $k$     | $$m_k(i) =  \frac{1}{\sqrt{2 \mu_k}} \times (LC1_k(i) + L_k(i))$$ | $$m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} C_k(j)$$ |
-| Variance for axis $k$ | $$s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k L_k^2(i) \right)$$ | $$s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} LC_k^2(i) \right) - \lambda_k C_k^2(j) \right)$$                                             |
-| Covariance between axes $k$, $l$ |  |  |
+|                                  | Rows (sites)                                                                                                                                    | Columns (species)                                                                                                                                |
+|----------------------|----------------------------|-----------------------|
+| Mean for axis $k$                | $$m_k(i) =  \frac{1}{\sqrt{2 \mu_k}} \times (LC1_k(i) + L_k(i))$$                                                                               | $$m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} C_k(j)$$                                                                                       |
+| Variance for axis $k$            | $$s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k L_k^2(i) \right)$$ | $$s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} LC_k^2(i) \right) - \lambda_k C_k^2(j) \right)$$ |
+| Covariance between axes $k$, $l$ |                                                                                                                                                 |                                                                                                                                                  |
 :::
 
 Let's start from the means/variances computed from the RC scores ($H$).
@@ -245,6 +243,8 @@ s.class(scoreRC,
         plabels.col = params$colsite, 
         main = "With RC score (points = correspondences)")
 ```
+
+#### Formula with RC scores (definition)
 
 We compute the groupwise mean and variance.
 
@@ -270,8 +270,7 @@ varrowsRC <- varfacwt(scoreRC_scaled, fac = Yfreq0$row, wt = Yfreq0$Freq)
 varrowsRC_ns <- varfacwt(scoreRC, fac = Yfreq0$row, wt = Yfreq0$Freq)
 ```
 
-
-So we know that the variances per site of the scoreC (scoreC = `c1` $\times \frac{1}{\sqrt{n}}$) is equal to the non-scaled variance of the RC scores. The mean per site of the scoreC is `ls` (WA score) $\times \frac{1}{\sqrt{n}}$.
+#### Variance formula with CCA scores
 
 ```{r}
 # Get marginal counts
@@ -298,12 +297,10 @@ for (i in 1:r) {
 varrowsRC/varrowsCCA
 ```
 
-
 ```{r, include=FALSE}
 # We can also check the non-scaled RC value
 varrowsRC_ns/(varrowsCCA %*% diag(2*mu_CCA/n))
 ```
-
 
 ### For columns = species
 
@@ -317,6 +314,8 @@ s.class(scoreRC,
         plabels.col = params$colspp, 
         main = "With RC score (points = correspondences)")
 ```
+
+#### Formula with RC scores (definition)
 
 ```{r}
 mcolsRC <- meanfacwt(scoreRC_scaled, fac = Yfreq0$colind, wt = Yfreq0$Freq)
@@ -338,8 +337,7 @@ varcolsRC <- varfacwt(scoreRC_scaled, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 varcolsRC_ns <- varfacwt(scoreRC, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 ```
 
-
-So we know that the variances per species of the scoreR (scoreR = `l1` $\times \frac{1}{\sqrt{n}}$) is equal to the non-scaled variance of the RC scores. The mean per species of the scoreR is `co` $\times \frac{1}{\sqrt{n}}$.
+#### Variance formula with CCA scores
 
 ```{r}
 varcolsCCA <- matrix(nrow = c, 
@@ -364,33 +362,57 @@ varcolsRC/varcolsCCA
 varcolsRC_ns/(varcolsCCA %*% diag(2*mu_CCA/n))
 ```
 
-
-# BEFORE
-
-## Conditional means and variances
+## Conditional means and variances from R scores and C scores
 
 ::: {.callout-tip title="*TL;DR*"}
-|                | Mean per species                                         | Mean per site                                       |
-|----------------|--------------------------------------|------------------|
-| ScoreR         | Species score (`$co`) $\times \frac{1}{\sqrt{n}}$        | Normed LC score (`$l1`) $\times \frac{1}{\sqrt{n}}$ |
-| ScoreC         | Normed species score (`$c1`) $\times \frac{1}{\sqrt{n}}$ | WA score (`$ls`) $\times \frac{1}{\sqrt{n}}$        |
-| scoreRC        | `$co` $\times \alpha_k$ (unknown)                        | (`$l1` + `$ls`) $\times \frac{1}{\sqrt{n}}$         |
-| scoreRC scaled | `$co` $\times \frac{\sqrt{\mu}}{\sqrt{2\lambda}}$        | (`$l1` + `$ls`) $\times \beta_k$ (unknown)          |
+For the scores computed with R scores and C scores, we have 3 types of formulas:
 
-|                | Variances per species              | Variances per site                 |
-|----------------|------------------------------------|------------------------------------|
-| ScoreR         | $s^2_k(j) \times \frac{2\mu_k}{n}$ | None                               |
-| ScoreC         | None                               | $s^2_k(i) \times \frac{2\mu_k}{n}$ |
-| scoreRC        | $s^2_k(j) \times \frac{2\mu_k}{n}$ | $s^2_k(i) \times \frac{2\mu_k}{n}$ |
-| scoreRC scaled | $$s^2_k(j) = \frac{1}{2 \lambda_k \mu_k} \left( \frac{1}{y_{\cdot} j} \sum_{i = 1}^r \left(y_{ij} L_k^2(i) \right) - C_k^2(i) \right)$$ ($L$ = sites `li` (LC scores) and $C$ = species `co`) | $$s^2_k(i) = \frac{1}{2 \lambda_k \mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k LS_k^2(i) \right)$$ ($C$ = species `co` and $LS$ = sites `ls` (WA scores))  |
+-   definition (weighted mean/variance/covariance)
+-   formulas using the CCA scores
+-   relation with the RC scores
+
+Here, we don't show the definition.
+
+**Formulas using CCA scores**
+
+-   using R score
+
+|                                  | Rows (sites)                                                                       | Columns (species)                                                                                                                            |
+|------------------------|---------------------------|----------------------|
+| Mean for axis $k$                | $$mR_k(i) = \frac{1}{\sqrt{n}} LC1_k(i)$$ ($LC1 =$ normed LC score (`$l1`)) | $$mR_k(j) =   \frac{1}{\sqrt{n}} C_k(j)$$                                                                                              |
+| Variance for axis $k$            | None                                                                               | $$sR_k^2(j) = \frac{1}{n\lambda_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} LC_k^2(i) \right) - \lambda_k C_k^2(j) \right)$$ |
+| Covariance between axes $k$, $l$ |                                                                                    |                                                                                                                                              |
+
+-   using C score
+
+|                                  | Rows (sites)                                                                                                                                | Columns (species)                                                                |
+|------------------------|---------------------------|----------------------|
+| Mean for axis $k$                | $$\frac{1}{\sqrt{n}} L_k(i)$$ ($L_k(i) =$ WA score (`$ls`))                                                                          | $$\frac{1}{\sqrt{n}} C1_k(j)$$ ($C1_k(j) =$ normed species score (`$c1`)) |
+| Variance for axis $k$            | $$sC_k^2(i) = \frac{1}{n\lambda_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k L_k^2(i) \right)$$ | None                                                                             |
+| Covariance between axes $k$, $l$ |                                                                                                                                             |                                                                                  |
+
+**Relation between RC scores and R score / C score**
+
+-   using R score
+
+|                                  | Rows (sites)                                                                     | Columns (species)                                              |
+|------------------------|---------------------------|----------------------|
+| Mean for axis $k$                | $$mR_k(i) = \frac{\sqrt{2 \mu_k}}{\sqrt{n}} m_k(i) - \frac{1}{\sqrt{n}} L_k(i)$$ | $$mR_k(j) = \frac{\sqrt{2 \lambda_k}}{\sqrt{n \mu_k}} m_k(j)$$ |
+| Variance for axis $k$            | None                                                                             | $sR^2_k(j) =  \frac{2\mu_k}{n} s^2_k(j)$                 |
+| Covariance between axes $k$, $l$ |                                                                                  |                                                                |
+
+-   using C score
+
+|                                  | Rows (sites)                                                                       | Columns (species)                                    |
+|------------------------|--------------------------|----------------------|
+| Mean for axis $k$                | $$mC_k(i) = \frac{\sqrt{2 \mu_k}}{\sqrt{n}} m_k(i) - \frac{1}{\sqrt{n}} LC1_k(i)$$ | $$mC_k(j) = \frac{\sqrt{2}}{\sqrt{n \mu_k}} m_k(j)$$ |
+| Variance for axis $k$            | $sC^2_k(i) = \frac{2\mu_k}{n} s^2_k(i)$                                     | None                                                 |
+| Covariance between axes $k$, $l$ |                                                                                    |                                                      |
 :::
-
-Let's compare the means obtained from canonical correlations scores (RC scores, R scores or C scores) to the CCA scores.
-
-
 
 #### For rows = sites (group per row)
 
+In this section, we compute means and variances per row (for sites).
 
 ##### scoreC
 
@@ -405,17 +427,23 @@ s.class(scoreC,
         main = "With C score (points = species scores)")
 ```
 
-We compute the following mean: $m(\text{scoreC})_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \text{scoreC}_k(i,j)$. To compute these conditional means, we use the `meanfacwt` function from the `ade4` package.
-
-We group column scores (scoreC) by row:
+We compute the following mean: $mC_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \text{scoreC}_k(i,j)$. To compute these conditional means, we use the `meanfacwt` function from the `ade4` package.
 
 ```{r}
 mrowsC <- meanfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq)
+```
 
+Then we compare this to a score obtained from CCA.
+
+```{r}
 mrowsC/(cca$ls * 1/sqrt(n))
 ```
 
-This corresponds to the `$ls` score of the CCA (ie the WA score for sites).
+??????? axis 4 ?????
+
+```{r}
+mrowsC[, 1:k]/(mrowsRC %*% diag(sqrt(2*mu_CCA/n)) - 1/sqrt(n)*cca$l1)
+```
 
 Now let's compute the variance of scoreC per row:
 
@@ -423,16 +451,39 @@ Now let's compute the variance of scoreC per row:
 varrowsC <- varfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq)
 ```
 
-```{r}
-varrowsC[, 1:ncol(varrowsRC)]/varrowsRC
+Compare it to the variance of the RC score:
 
+```{r}
+varrowsC[, 1:ncol(varrowsRC)]/(varrowsRC %*% diag(2*mu_CCA/n))
+```
+
+```{r, include=FALSE}
+# This is the same as
 varrowsC[, 1:ncol(varrowsRC)]/varrowsRC_ns
 ```
 
+We can use this relationship to find the formula using CCA scores:
+
 ```{r}
-varrowsC[, 1:ncol(varrowsRC)]/(varrowsCCA %*% diag(2*mu_CCA/n))
+varrowsC_CCA <- matrix(nrow = r, 
+                       ncol = k)
+
+for (i in 1:r) {
+  # Get CA scores for site i
+  Li <- cca$ls[i, ]
+  
+  # Compute the part with the sum on Cj
+  # we add all coordinates Cj^2 weighted by the number of observations on site i
+  sumCj <- t(Y[i, ]) %*% as.matrix(cca$co)^2
+
+  # Fill i-th row with site i variance along each axis
+  varrowsC_CCA[i, ] <- 1/(n*lambda_CCA)*((1/yi_[i])*sumCj - lambda_CCA*as.numeric(Li)^2)
+}
 ```
 
+```{r}
+varrowsC[, 1:ncol(varrowsRC)]/varrowsC_CCA
+```
 
 ##### scoreR
 
@@ -454,13 +505,12 @@ All points of the same site ares superimposed.
 ```{r}
 mrowsR <- meanfacwt(scoreR, fac = Yfreq0$row, wt = Yfreq0$Freq)
 
-mrowsR*sqrt(n)/cca$l1
+mrowsR/(cca$l1*1/sqrt(n))
 ```
 
 The variance is null.
 
 ### For columns = species (group per column)
-
 
 ##### scoreC
 
@@ -479,7 +529,7 @@ s.class(scoreC,
 ```{r}
 mcolsC <- meanfacwt(scoreC, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 
-mcolsC * sqrt(n)/cca$c1
+mcolsC/(cca$c1*1/sqrt(n))
 ```
 
 The variance is null.
@@ -501,271 +551,89 @@ s.class(scoreR,
 ```{r}
 mcolsR <- meanfacwt(scoreR, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 
-# Colinearity but different factor
-mcolsR * sqrt(n)/cca$co
+mcolsR/(cca$co*1/sqrt(n))
 ```
 
 ```{r}
 varcolsR <- varfacwt(scoreR, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+```
 
+```{r}
+varcolsR/(varcolsRC %*% diag(2*mu_CCA/n))
+```
+
+```{r, include=FALSE}
+# Same as
 varcolsR/varcolsRC_ns
 ```
 
-```{r}
-varcolsR/(varcolsCCA %*% diag(2*mu_CCA/n))
+Similarly we can use this relationship to compute the variance directly from the CCA scores (see in table).
 
+
+
+## Tests
+
+### For rows = sites
+
+We define the "new" RC score $H2$ in which we replace $LC_k(i)$ with $L_k(i)$. Then, this should help to get the mean for the rows (which are at the mean of the $CC1_k(j)$).
+
+$$
+H2_k(i, j) = \frac{L_k(i) + CC_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+$$
+
+```{r}
+# Initialize results matrix
+H2 <- matrix(nrow = nrow(Yfreq0), 
+             ncol = length(lambda_CCA))
+
+for (kl in 1:length(lambda_CCA)) { # For each axis
+  ind <- 1 # initialize row index
+  for (obs in 1:nrow(Yfreq0)) { # For each observation
+    i <- Yfreq0$row[obs]
+    j <- Yfreq0$col[obs]
+    H2[ind, kl] <- (cca$ls[i, kl] + cca$co[j, kl])/sqrt(2*lambda_CCA[kl]*mu_CCA[kl])
+    ind <- ind + 1
+  }
+}
 ```
 
-### Test to get variance for sites LC scores
-
-We want to add ellipses for sites on this plot:
-
 ```{r}
-#| code-fold: true
-s.label(cca$c1,
-        plabels.col = params$colspp)
-s.label(cca$li, 
-        plabels.col = params$colsite,
-        add = TRUE)
+multiplot(indiv_row = H2, 
+          indiv_row_lab = paste0("site ", Yfreq0$row, "/", Yfreq0$col),
+          row_color = "black", eig = lambda_CCA)
 ```
 
-To do that it seems logical to link sites (`li`) with species present in these sites (`c1`) to get ellipses.
-
-We know that the means of `scoreR` are equal to `l1` (LC score):
-
-```{r, include=FALSE}
-#| code-fold: true
-s.class(scoreR*sqrt(n), 
+```{r}
+s.class(H2,
         wt = Yfreq0$Freq,
         fac = as.factor(Yfreq0$row),
-        ppoints.col = params$colsite,
-        plabels.col = params$colsite)
-s.label(cca$l1,
-        plabels.col = "red",
-        add = TRUE)
-
-s.label(mrowsR,
-        plabels.col = params$colsite)
-s.label(cca$l1,
-        plabels.col = "red",
-        add = TRUE)
+        ppoints.col = "black",
+        plabels.col = params$colsite, 
+        main = "With H2 score (points = correspondences)")
 ```
 
-But we want the `$li` so we multiply by $\sqrt{\lambda}$:
 
-```{r, include=FALSE}
-#| code-fold: true
-s.class(as.matrix(scoreR*sqrt(n)) %*% diag(sqrt(lambda_CCA)), 
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$row),
-        ppoints.col = params$colsite,
-        plabels.col = params$colsite)
-s.label(cca$li,
-        plabels.col = "red",
-        add = TRUE)
-```
-
-We also know that the `$c1` scores can be obtained from the mean C scores:
-
-```{r, include=FALSE}
-#| code-fold: true
-s.class(scoreC*sqrt(n),
-        fac = as.factor(Yfreq0$colind), 
-        wt = Yfreq0$Freq,
-        labels = colnames(Y),
-        plabels.col = params$colspp)
-s.label(cca$c1,
-        plabels.col = "red",
-        add = TRUE)
-```
-
-Let's get the mean of the `$c1` scores:
-
-```{r, include=FALSE}
-#| code-fold: true
-
-# get the relative abundance in each site
-Yrelsite <- sweep(Y, 1, FUN = "/", rowSums(Y))
-
-litest <- as.matrix(Yrelsite) %*% as.matrix(cca$c1)
-
-litest/cca$li
-
-
-s.label(cca$li, plabels.col = params$colsite)
-s.label(litest, add = TRUE, plabels.col = "red")
-```
-
-Let's plot site 1 with the mean of its species.
+We compute the mean and variance per site and compare them to the scores of CCA:
 
 ```{r}
-#| code-fold: true
+mrowsH2 <- meanfacwt(H2, fac = Yfreq0$row, wt = Yfreq0$Freq)
 
-# Get species that are present in site 1
-sp <- which(Y[1, ] != 0)
-
-# Get $c1 corresponding to those species
-c1 <- cca$c1[sp, ]
-
-# Plot the $c1 and the $li of the site
-s.class(c1, 
-        fac = as.factor(rep(1, nrow(c1))), 
-        wt = cca$cw[sp],
-        ppoints.col = params$colspp,
-        plabels.col = params$colspp)
-s.label(cca$li[1, ],
-        plabels.col = "red",
-        add = TRUE)
-
-# With relative weights
-s.class(c1, 
-        fac = as.factor(rep(1, nrow(c1))), 
-        wt = Yrelsite[1, sp],
-        ppoints.col = params$colspp,
-        plabels.col = params$colspp)
-s.label(cca$li[1, ],
-        plabels.col = "red",
-        add = TRUE)
+varrowsH2 <- varfacwt(H2, fac = Yfreq0$row, wt = Yfreq0$Freq)
 ```
 
-Conclusion: the `c1` means and the `li` are not the same.
-
-We try something else: we place the `l1` for the sites and compute the species mean positions from the `l1` (species niches as predicted by the sites environmental variables). And we use those species back to compute the `l1` (or rather the `li`), but this time we have a variance.
 
 ```{r}
-# get the relative abundance in each spp
-Yrelspp <- sweep(Y, 2, FUN = "/", colSums(Y))
+mrowsH2/(as.matrix(cca$ls) %*% diag(sqrt(mu_CCA/(2*lambda_CCA))))
 
-ctest <- t(Yrelspp) %*% as.matrix(cca$l1)
-
-# It is equal to the $co
-ctest/cca$co
-
-# Transform to the c1
-c1test <- ctest %*% diag(1/sqrt(lambda_CCA))
-c1test/cca$c1
-
-# Compute back the site means from ctest/co
-litest <- Yrelsite %*% c1test
-litest/cca$li # not equal to li
-
-s.label(cca$li, plabels.col = params$colsite)
-s.label(litest, add = TRUE, plabels.col = "red")
+varrowsH2/varrowsRC
 ```
 
-Let's plot site 1 with the mean of its species.
+However, the mean/variance per species is meaningless here.
 
 ```{r}
-#| code-fold: true
+mcolsH2 <- meanfacwt(H2, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+varcolsH2 <- varfacwt(H2, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 
-# Get species that are present in site 1
-sp <- which(Y[1, ] != 0)
-
-# Get ctest corresponding to those species
-c1 <- c1test[sp, ]
-
-# Plot the $c1 and the $li of the site
-s.class(c1, 
-        fac = as.factor(rep(1, nrow(c1))), 
-        wt = cca$cw[sp],
-        ppoints.col = params$colspp,
-        plabels.col = params$colspp)
-s.label(cca$li[1, ],
-        plabels.col = "red",
-        add = TRUE)
-```
-
-This doesn't work either.
-
-```{r}
-# We use the coefficients of the columns (species) from the R coefficients 
-scoreCtest <- as.matrix(tabC[, 1:l]) %*% res$xcoef
-
-s.label(scoreR)
-```
-
-### Plots
-
-From the scores above, we can have a variance for the WA sites scores (`$ls`): from
-
-```{r}
-#| code-fold: true
-s.label(cca$ls, plabels.col = params$colsite)
-```
-
-to
-
-```{r}
-#| code-fold: true
-s.class(scoreC*sqrt(n), 
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$row),
-        ppoints.col = params$colspp,
-        plabels.col = params$colsite)
-
-```
-
-There is a parallel with the classical CCA plot `$c1` (species scaled score) /`$ls` (sites WA score) (scaling type 1: preserves species distances)
-
-```{r}
-s.label(cca$c1, plabels.col = params$colspp)
-s.label(cca$ls, add = TRUE, plabels.col = params$colsite)
-```
-
-We can't get a variance for the sites LC scores (`$l1`) because sites correspondences are duplicated.
-
-```{r}
-#| code-fold: true
-s.label(cca$l1, plabels.col = params$colsite)
-```
-
-and
-
-```{r}
-#| code-fold: true
-s.class(scoreR*sqrt(n), 
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$row),
-        ppoints.col = params$colsite,
-        plabels.col = params$colsite)
-```
-
-are identical.
-
-However we can have a variance for the species scores (`$co`): from
-
-```{r}
-#| code-fold: true
-s.label(cca$co,
-        plabels.col = params$colspp)
-```
-
-to
-
-```{r}
-#| code-fold: true
-s.class(scoreR*sqrt(n), 
-        labels = colnames(Y),
-        plabels.col = params$colspp,
-        ppoints.col = params$colsite,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$colind))
-```
-
-Here, too, there is a parallel with the classical CCA plot `$l1` (sites scaled WA scores) /`$co` (species scores) (scaling type 2: preserves sites distances)
-
-```{r}
-s.label(cca$l1, plabels.col = params$colsite)
-s.label(cca$co, add = TRUE, plabels.col = params$colspp)
-```
-
-We can also use RC scores for species:
-
-```{r}
-#| code-fold: true
-s.class(scoreRC_scaled, 
-        labels = colnames(Y),
-        plabels.col = params$colspp,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$colind))
+mcolsH2/cca$co
+varcolsH2/varcolsRC
 ```
