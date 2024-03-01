@@ -23,15 +23,23 @@ library(gridExtra)
 source(here("functions/plot.R"))
 ```
 
-*The contents of this page relies heavily on [@legendre2012].*
+```{r}
+#| code-fold: true
+
+# Define bound for comparison to zero
+zero <- 10e-10
+```
+
+*The contents of this page relies heavily on @legendre2012.*
 
 ## Introduction
 
-Correspondence analysis (CA) was developed independently by several authors between the 1930s and 1960s. It has been mainly applied to analysis of *ecological data tables* (species $\times$ environment) such as the bat data we will analyze here.
+Correspondence analysis (CA) was developed independently by several authors between the 1930s and 1960s. It has been mainly applied to analysis of *ecological data tables* (species $\times$ environment) such as the data we will analyze here.
 
 Notably, Hill discovered it in 1973 with an iterative method that he called reciprocal averaging. It involves ordering species with sites initially positioned randomly, reciprocally order sites with species, etc. This iterative procedure converges to reach the same results as what is achieved with CA's first axis.
 
-CA is designed to analyze contingency tables (count tables) such $Y$:
+CA is designed to analyze contingency tables (count tables) such $Y$: 
+
 
 ```{r, echo = FALSE, message = FALSE}
 dat <- readRDS(here("data/Barbaro2012.rds"))
@@ -42,6 +50,8 @@ c <- dim(Y)[2]
 
 plotmat(r = r, c = c)
 ```
+
+Here, $Y$ represents the abundance of different bird species (columns) at different sites (rows) in New Zealand.
 
 Here is a preview of $Y$ with our example dataset:
 
@@ -54,9 +64,7 @@ knitr::kable(Y)
 (c <- dim(Y)[2])
 ```
 
-This table represents the abundance of different bird species (columns) at different sites (rows) in New Zealand.
-
-More generally CA, can be used to analyze tables which are dimensionnally homogeneous and contain no negative values.
+More generally, CA can be used to analyze tables which are dimensionally homogeneous and contain no negative values.
 
 CA preserves $\chi^2$ distances $D$ between rows and columns of the contingency table:
 
@@ -78,229 +86,62 @@ $\frac{y_{1j}}{y_{1\cdot}}$ are relative frequencies of individuals per rows (if
 For example, we compute the $\chi^2$ distance between `sp1` and `sp2`:
 
 ```{r}
+# Get total number of individuals in all sites
+ytot <- sum(Y)
+
 # Get how much each site contributed to the total count of species
-freq <- apply(Y, 2, FUN = function(x) x/sum(x))
+y_j <- apply(Y, 2, FUN = function(x) x/sum(x))
 
-# Get total number of individuals of bats in all sites
-(ytot <- sum(Y))
-
-sqrt( sum(1/(rowSums(Y)/ytot)*(freq[, "sp1"] - freq[, "sp2"])^2 ) )
+sqrt( sum(1/(rowSums(Y)/ytot)*(y_j[, "sp1"] - y_j[, "sp2"])^2 ) )
 ```
 
 And between sites `1` and `2`:
 
 ```{r}
 # Get the relative composition of species for each site
-freq <- t(apply(Y, 1, FUN = function(x) x/sum(x)))
+yi_ <- t(apply(Y, 1, FUN = function(x) x/sum(x)))
 
-sqrt( sum(1/(colSums(Y)/ytot)*(freq["1",] - freq["2", ])^2 ) )
+sqrt( sum(1/(colSums(Y)/ytot)*(yi_["1",] - yi_["2", ])^2 ) )
 ```
 
 ## Computation
 
 ::: {.callout-tip title="*TL;DR*"}
-Given a data matrix $Y$, we "center-scale" this matrix ($\bar{Q}$).
+Given a data matrix $Y$, we "center-scale" this matrix ($P_0$).
 
-We can perform the SVD of $\bar{Q}$:
-
-$$
-\hat{Q} = \hat{U} \Delta U'
-$$
-
-$U$ ($c \times c$) contains the loadings of the columns (species) of the contingency table.
-
-$\hat{U}$ ($r \times c$) contains the loadings of the rows (sites) of the contingency table.
-
-There are $\min(c-1, r-1)$ non-null eigenvalues. The CA eigenvalues are the squares of the SVD eigenvalues: $\Lambda = \Delta^2$.
-
-Also, there is a link between $\hat{U}$ and $U$: 
-$$
-\hat{U} = \bar{Q}U\Lambda^{-1/2}
-$$ 
-
-and 
+We can perform the SVD of $P_0$:
 
 $$
-U = \bar{Q}'\hat{U}\Lambda^{-1/2}
-$$
-:::
-
-### Transform the table
-
-We transform values of the contingency table $Y$ with counts $f_{ij}$ into proportions $p_{ij}$:
-
-$$
-P = Y/f_{\cdot \cdot}
+P_0 = U_0 \Delta V_0^\top
 $$
 
-With our example data:
+$V_0$ ($c \times c$) contains the loadings of the columns (species) of the contingency table.
 
-```{r}
-P <- Y/sum(Y)
-```
+$U_0$ ($r \times c$) contains the loadings of the rows (sites) of the contingency table.
 
-Then we transform values of this table into a quantity related to $\chi^2$ values $\bar{Q}$:
+There are $k = \min(c-1, r-1)$ non-null eigenvalues. The CA eigenvalues are the squares of the SVD eigenvalues: $\Lambda = \Delta^2$.
 
-$$
-\bar{Q} = [\bar{q}_{ij}] = \left[ \frac{p_{ij} - p_{i\cdot} p_{\cdot j}}{\sqrt{p_{i\cdot} p_{\cdot j}}} \right]
-$$
-
-The $\bar{q}_{ij}$ values are equal to the $\chi$ values, a constant apart: $\bar{q}_{ij} = \chi_{ij}/\sqrt{f_{\cdot \cdot}}$.
-
-With our data:
-
-```{r}
-# Initialize Qbar matrix
-Qbar <- matrix(ncol = ncol(Y), nrow = nrow(Y))
-colnames(Qbar) <- colnames(Y)
-rownames(Qbar) <- rownames(Y)
-
-for(i in 1:nrow(Y)) { # For each row
-  for (j in 1:ncol(Y)) { # For each column
-    # Do the sum
-    pi_ <- sum(P[i, ])
-    p_j <- sum(P[, j])
-    
-    # Compute the transformation
-    Qbar[i, j] <- (P[i, j] - (pi_*p_j))/sqrt(pi_*p_j)
-  }
-}
-```
-
-
-We could also do this by matrix multiplication: 
+Also, there is a link between $U_0$ and $V_0$ given by the following transition formulae:
 
 $$
-\bar{Q} = D(p_{i\cdot})^{-1/2} P D(p_{\cdot j})^{-1/2}
+\left\{
+\begin{array}{ll}
+  U_0 &= P_0 V_0 \Lambda^{-1/2}\\
+  V_0 &= P_0^\top U_0 \Lambda^{-1/2}\\
+\end{array}
+\right.
 $$
 
-In [@carroll1986], the formula is:
+Finally, we define the following transformations of $U_0$ and $V_0$ (that have variance 1 and correspond to `l1` and `c1`):
 
 $$
-\bar{Q} = D(y_{i\cdot})^{-1/2} Y D(y_{\cdot j})^{-1/2}
+\left\{
+\begin{array}{ll}
+  U &= D_r^{-1/2} U_0\\
+  V &= D_c^{-1/2} V_0\\
+\end{array}
+\right.
 $$
-
-where matrices $D(p_{i \cdot})$ and $D(p_{\cdot j})$ are the diagonal matrices with the row and columns sums of $P$ (respectively) and $D(y_{i \cdot})$ and $D(y_{\cdot j})$ are he equivalent for matrix $Y$.
-
-*NB: I could not verify this result numerically, since here $\bar{Q}$ is not equal to $D(p_{i \cdot})^{-1/2} Q D(p_{\cdot j})^{-1/2}$, as in [@carroll1987].*
-
-```{r}
-# Define weights matrices
-Dpi_ <- diag(rowSums(P))
-Dp_j <- diag(colSums(P))
-
-# Also define a variable for just the sums for easier manipulation
-dpi_ <- rowSums(P)
-dp_j <- colSums(P)
-
-# Define weights matrices
-Dyi_ <- diag(rowSums(Y))
-Dy_j <- diag(colSums(Y))
-
-# Also define a variable for just the sums for easier manipulation
-dyi_ <- rowSums(Y)
-dy_j <- colSums(Y)
-```
-
-```{r, include=FALSE}
-# Compute Qbar with the formula from Caroll
-Qbar2 <- diag(dyi_^(-1/2)) %*% Y %*% diag(dy_j^(-1/2))
-
-Qbar2/Qbar # It is not equal: not centered? 
-# When performing CA on a non-centered matrix, there is one extra eigenvalue (Legendre & Legendre) of value 1. This is probably what Caroll et al do in their article.
-
-# Compute Qbar with the Ps
-Qbar3 <- diag(dpi_^(-1/2)) %*% Y %*% diag(dp_j^(-1/2))
-Qbar3/Qbar # It is not equal and also not equal to Qbar2
-
-# Compute Qbar with all Ps
-Qbar4 <- diag(dpi_^(-1/2)) %*% P %*% diag(dp_j^(-1/2))
-Qbar4/Qbar # It equal to Qbar2
-```
-
-### Singular value decomposition of $\bar{Q}$
-
-$$
-\bar{Q} = \hat{U}WU'
-$$
-
-Where $\bar{Q}$ is $r \times c$, $\hat{U}$ is $r \times c$, $W$ is a $c \times c$ diagonal matrix (assuming $r \geq c$; the table can be transposed to meet this condition) and $U'$ is $c \times c$.
-
-Note that the last eigenvalue of this SVD will always be null (due to the centering).
-
-```{r}
-sv <- svd(Qbar)
-
-# Eigenvalues
-(delta <- sv$d) # Last eigenvalue is zero
-lambda <- delta^2
-Lambda <- diag(lambda)
- 
-# Eigenvectors
-Uhat <- sv$u
-U <- sv$v
-```
-
-This SVD is equivalent to a diagonalization: with the SVD, we can rewrite $\bar{Q}' \bar{Q}$:
-
-$$
-\bar{Q}' \bar{Q} = U W' \hat{U'} \hat{U} W U'
-$$
-
-We have $\hat{U}' \hat{U} = I$ (because $\hat{U}$ is orthonormal), so:
-
-$$
-\bar{Q}' \bar{Q} =  U W' W U'
-$$
-
-If we rewrite $W' W$ as $\Lambda$ (so $W = \Lambda^{1/2}$), and since $U' = U^{-1}$ ($U$ is orthonormal), then we can write this as a diagonalization:
-
-$$
-\bar{Q}' \bar{Q} =  U \Lambda U^{-1}
-$$
-
-Similarly, we can rewrite $\bar{Q} \bar{Q}'$:
-
-$$
-\bar{Q} \bar{Q}' =  \hat{U} \Lambda \hat{U}^{-1}
-$$
-
-```{r}
-# Diagonalize Q'Q ---
-dg1 <- eigen(t(Qbar) %*% Qbar)
-
-# Eigenvalues are equal to the square roots of SVD eigenvalues
-all((dg1$values - lambda) < 10e-10)
-
-# Eigenvectors are equal to U
-all(abs(dg1$vectors/U) - 1 < 10e-10)
-```
-
-```{r}
-# Diagonalize QQ' ---
-dg2 <- eigen(Qbar %*% t(Qbar))
-
-# Eigenvalues are equal to the square roots of SVD eigenvalues
-all((dg1$values - lambda) < 10e-10)
-
-# Eigenvectors are equal to Uhat
-all(abs(dg2$vectors[, 1:(c-1)]/Uhat[, 1:(c-1)]) - 1 < 10e-10)
-```
-
-## Scalings
-
-::: {.callout-tip title="*TL;DR*"}
-To plot rows and columns on separate plots, one can plot the eigenvectors $\hat{U}$ (rows = sites) and $U$ (columns = species).
-
-To plot columns and rows individuals on the same biplot, different scalings have been proposed. For sites (rows), these scalings are equal to $\hat{S}_i = D(p_{i \cdot})^{-1/2} \hat{U} \Delta^\alpha$ (with $\alpha =$ 1, 0 or 1/2).
-
-For species (columns), these scalings are equal to $\hat{S}_i = D(p_{\cdot j})^{-1/2} U \Delta^{1-\alpha}$.
-
--   Scaling type 1 ($\alpha = 1$): this scaling preserves the distances between rows. Rows (sites) are represented with $F = D(p_{i \cdot})^{-1/2} \hat{U} \Lambda^{1/2}$ and species (columns) with $V = D(p_{\cdot j})^{-1/2} U$.
--   Scaling type 2  ($\alpha = 0$): this scaling preserves distances between columns. Rows (sites) are represented with $\hat{V} = D(p_{i \cdot})^{-1/2} \hat{U}$ and species (columns) with $\hat{F} = D(p_{\cdot j})^{-1/2} U \Lambda^{1/2}$.
--   Scaling type 3  ($\alpha = 1/2$): this scaling is a compromise between scalings type 1 and 2. Rows (sites) are represented with $\hat{S}_3 = D(p_{i \cdot})^{-1/2} \hat{U} \Lambda^{1/4}$ and species (columns) with $S_3 = D(p_{\cdot j})^{-1/2} U \Lambda^{1/4}$.
-
-As noted in [@carroll1987], if we plot distances of different scalings on the same biplot, we cannot interpret between-sets distances, but within-sets distances are still be interpretable. This is what the scaling type 4 described below does and this scaling is what [@carroll1987] refers to.
 :::
 
 Let's perform a CA with `ade4` to check results later.
@@ -311,21 +152,326 @@ ca <- dudi.coa(Y,
                nf = min(r, c))
 ```
 
+### Transform the table
+
+We transform values of the contingency table $Y$ with counts $y_{ij}$ into proportions $p_{ij}$:
+
+$$
+P = Y/y_{\cdot \cdot}
+$$
+
+With our example data:
+
+```{r}
+P <- Y/sum(Y)
+```
+
+Then we transform values of this table into a quantity related to $\chi^2$ values $P_0$:
+
+$$
+P_0 = [p_{0ij}] = \left[ \frac{p_{ij} - p_{i\cdot} p_{\cdot j}}{\sqrt{p_{i\cdot} p_{\cdot j}}} \right]
+$$
+
+```{r}
+# Initialize P0 matrix
+P0 <- matrix(ncol = ncol(Y), nrow = nrow(Y))
+colnames(P0) <- colnames(Y)
+rownames(P0) <- rownames(Y)
+
+for(i in 1:nrow(Y)) { # For each row
+  for (j in 1:ncol(Y)) { # For each column
+    # Do the sum
+    pi_ <- sum(P[i, ])
+    p_j <- sum(P[, j])
+    
+    # Compute the transformation
+    P0[i, j] <- (P[i, j] - (pi_*p_j))/sqrt(pi_*p_j)
+  }
+}
+```
+
+We could also do this by matrix multiplication: 
+
+$$
+P_0 = D_r^{-1/2} (P - p_{i\cdot} p_{\cdot j}^\top) D_c^{-1/2}
+$$
+
+where $p_{i\cdot}$ and $p_{\cdot j}$ are the rows and columns sums vectors (respectively) and $D_r$ and $D_c$ are the associated diagonal matrices (respectively).
+
+```{r}
+# Define weights matrices
+Dr <- diag(rowSums(P))
+Dc <- diag(colSums(P))
+
+# Also define a variable for just the sums for easier manipulation
+dr <- rowSums(P)
+dc <- colSums(P)
+
+# Compute P0 with this computation
+P0_mat <- diag(dr^(-1/2)) %*% (P - (dr %*% t(dc))) %*% diag(dc^(-1/2)) 
+
+all((P0_mat/P0 - 1) < zero) # It works
+```
+
+The $p_{0ij}$ values are equal to the $\chi$ values, a constant apart: $p_{0ij} = \chi_{ij}/\sqrt{y_{\cdot \cdot}}$.
+
+
+### Singular value decomposition of $P_0$
+
+We perform the SVD of $P_0$:
+
+$$
+P_0 = U \Delta V_0^\top
+$$
+
+Where $P_0$ is $r \times c$, $U_0$ is $r \times c$, $\Delta$ is a $c \times c$ diagonal matrix (assuming $r \geq c$; the table can be transposed to meet this condition) and $V_0$ is $c \times c$.
+
+Note that the last eigenvalue of this SVD will always be null (due to the centering).
+
+```{r}
+sv <- svd(P0)
+
+# Eigenvalues
+delta <- sv$d # Last eigenvalue is zero
+lambda <- delta^2
+Lambda <- diag(lambda)
+
+# Define the number of non-null eigenvalues
+k <- min(c-1, r-1)
+
+# Eigenvectors
+U0 <- sv$u
+V0 <- sv$v
+```
+
+#### SVD as a diagonalization
+
+This SVD is equivalent to a diagonalization: with the SVD, we can rewrite $P_0^\top P_0$:
+
+$$
+P_0^\top P_0 = V_0 \Delta^\top U_0^\top U_0 \Delta V_0^\top
+$$
+
+We have $U_0^\top U_0 = I$ (because $U_0$ is orthonormal), so:
+
+$$
+P_0^\top P_0 =  V_0 \Delta^\top \Delta V_0^\top
+$$
+
+If we rewrite $\Delta^\top \Delta$ as $\Lambda$ (so $\Delta = \Lambda^{1/2}$), and since $V_0^\top = V_0^{-1}$ ($V_0$ is orthonormal), then we can write this as a diagonalization:
+
+$$
+P_0^\top P_0 =  V_0 \Lambda V_0^{-1}
+$$
+
+```{r}
+# Diagonalize P0^t P0 ---
+dg1 <- eigen(t(P0) %*% P0)
+
+# Eigenvalues are equal to the square roots of SVD eigenvalues
+all((dg1$values - lambda) < zero)
+
+# Eigenvectors are equal to V0
+all(abs(dg1$vectors/V0) - 1 < zero)
+```
+
+Similarly, we can rewrite $P_0 P_0^\top$:
+
+$$
+P_0 P_0^\top =  U_0 \Lambda U_0^{-1}
+$$
+
+```{r}
+# Diagonalize P0 P0^t ---
+dg2 <- eigen(P0 %*% t(P0))
+
+# Eigenvalues are equal to the square roots of SVD eigenvalues
+all((dg1$values - lambda) < zero)
+
+# Eigenvectors corresponding to non-null eigenvalues are equal to U0
+all(abs(dg2$vectors[, 1:k]/U0[, 1:k]) - 1 < zero)
+```
+
+#### Comparison with @carroll1986
+
+In @carroll1986, CA is defined as the SVD of matrix $H$ defined as:
+
+$$
+H = D(y_{i\cdot})^{-1/2} Y D(y_{\cdot j})^{-1/2}
+$$
+
+Where $D(y_{i \cdot})$ and $D(y_{\cdot j})$ are the equivalent of $D_r$ and $D_c$ for matrix $Y$.
+
+We compute this matrix and compare the results with the SVD of $P_0$.
+
+```{r}
+# Define weights matrices
+Dyi_ <- diag(rowSums(Y))
+Dy_j <- diag(colSums(Y))
+
+# Also define a variable for just the sums for easier manipulation
+dyi_ <- rowSums(Y)
+dy_j <- colSums(Y)
+```
+
+```{r}
+# Compute H with the formula from Caroll
+H <- diag(dyi_^(-1/2)) %*% Y %*% diag(dy_j^(-1/2))
+
+res <- H/P0 
+all((res - 1) < zero) # It is not equal to P0
+
+# We try to center it:
+H_centered <- diag(dyi_^(-1/2)) %*% (Y - (dyi_ %*% t(dy_j))) %*% diag(dy_j^(-1/2))
+
+res <- H_centered/P0
+all((res - 1) < zero) # Not equal
+```
+
+We compare the SVDs of $H$ and $P_0$: they give the same value.
+
+```{r}
+# SVD of H
+svH <- svd(H)
+
+# Eigenvalues are the same, except for the first eigenvalue equal to one
+res <- svH$d[2:(k+1)]/delta[1:k]
+all((res - 1) < zero)
+
+# Eigenvectors are the same (but for the first one)
+res <- svH$u[, 2:(k+1)]/U0[, 1:k]
+all((res - 1) < zero)
+
+res <- svH$v[, 2:(k+1)]/V0[, 1:k]
+all((res - 1) < zero)
+```
+
+
+*NB: $P_0$ is not equal to $H$ defined in @carroll1987. But they do not center the matrix, so the first eigenvalue is one and the rest are the same.*
+
+
+### Relationship between $U_0$ and $V_0$
+
+We have the following transition formulae between $U_0$ and $V_0$:
+
+$$
+\left\{
+\begin{array}{ll}
+  U_0 &= P_0 V_0 \Lambda^{-1/2}\\
+  V_0 &= P_0^\top U_0 \Lambda^{-1/2}\\
+\end{array}
+\right.
+$$
+```{r}
+# Sites weighted averaging
+U0_wa <- P0 %*% V0 %*% diag(lambda^(-1/2))
+res <- U0_wa/U0
+all((abs(res[, 1:k]) - 1) < zero)
+
+# Species weighted averaging
+V0_wa <- t(P0) %*% U0 %*% diag(lambda^(-1/2))
+res <- V0_wa/V0
+all((abs(res[, 1:k]) - 1) < zero)
+```
+
+### Define $U$ and $V$
+
+We define weighted versions of $U_0$ and $V_0$:
+
+$$
+\left\{
+\begin{array}{ll}
+  U &= D_r^{-1/2} U_0\\
+  V &= D_c^{-1/2} V_0\\
+\end{array}
+\right.
+$${#eq-uv}
+
+```{r}
+# Sites
+U <- diag(dr^(-1/2)) %*% U0
+  
+# Species
+V <- diag(dc^(-1/2)) %*% V0
+```
+
+These vectors have the property to be of variance 1 (when weighted by $D_r$ and $D_c$): it is easier to interpret than vectors of norm 1 like $U_0$ and $V_0$.
+
+```{r}
+# Variance of columns vectors for columns
+varV <- apply(V, 2, varwt, wt = dc)
+res <- varV[1:k]/1
+all(res - 1 < zero)
+
+# Variance of columns vectors for rows
+varU <- apply(U, 2, varwt, wt = dr)
+res <- varU[1:k]/1
+all(res - 1 < zero)
+```
+
+We check that these are equal to the `l1` and `c1` of CA:
+
+```{r}
+res <- U/ca$l1
+all((abs(res) - 1) < zero)
+
+res <- V/ca$c1
+all((abs(res) - 1) < zero)
+```
+
+
+## Scalings
+
+::: {.callout-tip title="*TL;DR*"}
+To plot rows and columns on separate plots, one can plot the eigenvectors $U_0$ (rows = sites) and $V_0$ (columns = species). But in data analyses, the weighted vectors $U$ and $V$ are more commonly used @eq-uv.
+
+To plot columns and rows individuals on the same biplot, different scalings have been proposed. For sites (rows), these scalings are equal to $S_\alpha = U \Lambda^{\alpha/2}$ and for species (columns), $S_\alpha = V \Lambda^{(1-\alpha)/2}$. (with $\alpha =$ 1, 0 or 1/2).
+
+-   Scaling type 1 ($\alpha = 1$): this scaling preserves the distances between rows. Rows (sites) are represented with $B = U \Lambda^{1/2}$ and species (columns) with $V$.
+
+-   Scaling type 2  ($\alpha = 0$): this scaling preserves distances between columns. Rows (sites) are represented with $U$ and species (columns) with $A = V \Lambda^{1/2}$.
+
+-   Scaling type 3  ($\alpha = 1/2$): this scaling is a compromise between scalings type 1 and 2. Rows (sites) are represented with $\hat{S}_3 = U \Lambda^{1/4}$ and species (columns) with $S_3 = V \Lambda^{1/4}$.
+
+As noted in @carroll1987, if we plot distances of different scalings on the same biplot, we cannot interpret between-sets distances, but within-sets distances are still be interpretable. But this type of interpretation is often attempted with scaling type 4 (described below), and this scaling is what @carroll1987 criticize.
+:::
+
 ### No scaling
 
-One can represent the eigenvectors directly without scaling to display them on separate plots.
+One can represent the eigenvectors $U_0$ and $V_0$ (or $U$ and $V$) on separate plots.
+
+$U_0$ and $V_0$:
 
 ```{r, fig.height=4, fig.width=8, warning=FALSE}
 #| code-fold: true
-
 # Plot sites ---
-g1 <- multiplot(indiv_row = Uhat, 
+g1 <- multiplot(indiv_row = U0, 
           indiv_row_lab = rownames(Y), 
           row_color = params$colsite,
           eig = lambda)
 
 # Plot species ---
-g2 <- multiplot(indiv_row = U, 
+g2 <- multiplot(indiv_row = V0, 
+          indiv_row_lab = colnames(Y), 
+          row_color = params$colspp,
+          eig = lambda)
+
+grid.arrange(grobs = list(g1, g2), nrow = 1)
+```
+
+
+$U$ and $V$:
+
+```{r, fig.height=4, fig.width=8, warning=FALSE}
+#| code-fold: true
+# Plot sites ---
+g1 <- multiplot(indiv_row = U, 
+          indiv_row_lab = rownames(Y), 
+          row_color = params$colsite,
+          eig = lambda)
+
+# Plot species ---
+g2 <- multiplot(indiv_row = V, 
           indiv_row_lab = colnames(Y), 
           row_color = params$colspp,
           eig = lambda)
@@ -335,62 +481,115 @@ grid.arrange(grobs = list(g1, g2), nrow = 1)
 
 ### Scaling type 1
 
-This scaling preserves the row $\chi^2$ distances and is useful to interpret distances between row individuals (sites). In this scaling, the rows individuals are positioned at the barycentre of the corresponding column (species) individuals.
+This scaling preserves the row $\chi^2$ distances and is useful to interpret distances between row individuals (sites). In this scaling, the rows individuals (sites) are positioned at the barycentre of the corresponding column (species) individuals.
 
 For that, we use:
 
--   $F = D(p_{\cdot j})^{-1/2} \hat{U} \Lambda^{1/2}$ (rows = sites)
--   $V = D(p_{\cdot j})^{-1/2} U$ (columns = species)
+-   $B = U \Lambda^{1/2}$ (rows = sites): corresponds to the `li`
+-   $V = D_c^{-1/2} V_0$ (columns = species): corresponds to the `c1`
 
 ```{r}
 # Sites
-F_ <- diag(dpi_^(-1/2)) %*% Uhat %*% Lambda^(1/2)
-
-# Species
-V <- diag(dp_j^(-1/2)) %*% U
+B <- U %*% Lambda^(1/2)
 ```
 
-*NB: $F$ (sites scores) can also be computed from the* **species** *scores, since there is a correspondence between $U$ and $\hat{U}$. This shows better the relationship between sites and species scores (sites are at the barycentre of their species with this scaling).*
-
-*NB2: I could not find back the formula in [@legendre2012] for $F = D(p_{i\cdot})^{-1} Q V$ and $\hat{F} = D(p_{\cdot j})^{-1} Q' \hat{V}$ (p 479). Indeed, for these formulas to be valid, we need $\bar{Q} = D(p_{i \cdot})^{-1/2} Q D(p_{\cdot j})^{-1/2}$, as in [@carroll1987], but it is not the case here.*
+We check that $B$ corresponds to the `li` of CA:
 
 ```{r}
-# Compute sites coordinates using species coordinates
-F2 <- diag(dpi_^(-1/2)) %*% Qbar %*% U
-
-# Check that this corresponds to F_ cmputed above
-all(F_[, 1:(c-1)]/F2[, 1:(c-1)] - 1 < 10e-10)
+res <- B/ca$li
+all((abs(res) - 1) < zero)
 ```
 
+These scalings correspond to fixed variances for rows and columns. With scaling type 1, variance of the columns is fixed at one (corresponds to `c1`) and variance of the rows correspond to the eigenvalues (corresponds to `li`).
 
-```{r, include=FALSE}
-F_/ca$li
-V/ca$c1
-
-scatter(ca, method = 2,
-        posieig = 'none')
-
-s.label(ca$c1,
-        ppoints.col = params$colspp,
-        plabels.col = params$colspp,
-        plabels.optim = TRUE) # Spp are constrained at variance 1
-s.label(ca$li, 
-        ppoints.col = params$colsite,
-        plabels.col = params$colsite,
-        plabels.optim = TRUE,
-        add = TRUE) # Sites distances are preserved
+```{r}
+# Variance of columns vectors for rows
+varB <- apply(B, 2, varwt, wt = ca$lw)
+res <- varB[1:k]/ca$eig
+all(res -1 < zero)
 ```
+
+#### Plots
+
+Plot with our coordinates:
 
 ```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
-
-multiplot(indiv_row = F_, indiv_col = V, 
+multiplot(indiv_row = B, # variance lambda (averaging)
+          indiv_col = V, # variance 1
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           row_color = params$colsite, col_color = params$colspp,
           eig = lambda)
 ```
 
 
+Plot with ade4:
+
+```{r}
+#| code-fold: true
+s.label(ca$c1,
+        ppoints.col = params$colspp,
+        plabels.col = params$colspp,
+        plabels.optim = TRUE) # variance 1
+s.label(ca$li, 
+        ppoints.col = params$colsite,
+        plabels.col = params$colsite,
+        plabels.optim = TRUE,
+        add = TRUE) # variance lambda (averaging)
+```
+
+Other plotting method with ade4:
+
+```{r}
+#| code-fold: true
+# Check the agreement between li/c1 and scaling type
+# From the doc: when method = 2, rows variance 1 and columns by averaging
+scatter(ca, method = 2,
+        plabels.optim = TRUE,
+        posieig = 'none')
+```
+
+
+#### Weighted averaging
+
+$B$ (sites scores) can also be computed from the **species** scores using weighted averaging, since there is a correspondence between $V_0$ and $U_0$. This shows better the relationship between sites and species scores (sites are at the barycentre of their species with this scaling).
+
+
+$B$ can be expressed by weighted averaging using the following formulas:
+
+$$
+B = \left\{
+\begin{array}{ll}
+  D_r^{-1/2} P_0 V_0 \qquad &\text{(from } V_0 \text{)}\\
+  D_r^{-1/2} P_0 D_c^{1/2} V \qquad &\text{(from } V \text{)}\\
+   D_r^{-1} P V \qquad &\text{(from } V \text{ and } P \text{)}\\
+\end{array}
+\right.
+$${#eq-wa-sites}
+
+```{r}
+# Compute sites coordinates using weighted averaging
+
+# With V0
+B_wa <- diag(dr^(-1/2)) %*% P0 %*% V0
+res <- B_wa/B
+all(res[, 1:k] - 1 < zero)
+```
+
+
+```{r}
+# With V
+B_wa_V <- diag(dr^(-1/2)) %*% P0 %*% diag(dc^(1/2)) %*% V
+res <- B_wa_V/B
+all(res[, 1:k] - 1 < zero)
+```
+
+```{r}
+# With V and P
+B_wa_legendre <- diag(dr^(-1)) %*% P %*% V
+res <- B_wa_legendre/B
+all(res[, 1:k] - 1 < zero)
+``` 
 
 ### Scaling type 2
 
@@ -398,52 +597,102 @@ This preserves $\chi^2$ distances between species on the plot. Here, species are
 
 We use:
 
--   $\hat{V} = D(p_{i\cdot})^{-1/2} \hat{U}$ (rows = sites)
--   $\hat{F} = D(p_{\cdot j})^{-1/2} U \Lambda^{1/2}$ (columns = species)
+-   $U = D_r^{-1/2} U_0$ (rows = sites)
+-   $A = V \Lambda^{1/2}$ (columns = species)
 
 ```{r}
-# Sites
-Vhat <- diag(dpi_^(-1/2)) %*% Uhat
-
 # Species
-Fhat <- diag(dp_j^(-1/2)) %*% U %*% Lambda^(1/2)
+A <- V %*% diag(lambda^(1/2))
 ```
 
-*NB: like $F$, $\hat{F}$ (species scores) can also be computed from the* **sites** *scores. This shows better the relationship between species and sites scores (species are at the barycentre of their sites with this scaling).*
 
+We check that $A$ corresponds to the `co` of CA:
 
 ```{r}
-# Compute sites coordinates using species coordinates
-Fhat2 <- diag(dp_j^(-1/2)) %*% t(Qbar) %*% Uhat
-
-# Check that this corresponds to Fhat cmputed above
-all(Fhat[, 1:(c-1)]/Fhat2[, 1:(c-1)] - 1 < 10e-10)
+res <- A/ca$co
+all((abs(res) - 1) < zero)
 ```
 
-```{r, include=FALSE}
-Fhat/ca$co
-Vhat/ca$l1
+These scalings correspond to fixed variances for rows and columns. With scaling type 2, variance of the rows is fixed at one (corresponds to `l1`) and variance of the columns correspond to the eigenvalues (corresponds to `co`).
 
-scatter(ca, method = 3, 
-        posieig = 'none')
-
-s.label(ca$l1, 
-        ppoints.col = params$colsite,
-        plabels.col = params$colsite,
-        plabels.optim = TRUE) # Sites are constrained at variance 1
-s.label(ca$co,
-        ppoints.col = params$colspp,
-        plabels.col = params$colspp,
-        plabels.optim = TRUE,
-        add = TRUE) # Spp distances are preserved
+```{r}
+# Variance of columns vectors for rows
+varA <- apply(A, 2, varwt, wt = ca$cw)
+res <- varA[1:k]/ca$eig
+all(res -1 < zero)
 ```
+
+#### Plots
+
+Plot with our coordinates:
 
 ```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
-multiplot(indiv_row = Vhat, indiv_col = Fhat, 
+multiplot(indiv_row = U, # variance 1 
+          indiv_col = A, # variance lambda (weighted averaging)
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           row_color = params$colsite, col_color = params$colspp,
           eig = lambda)
+```
+
+
+Plot with ade4:
+
+```{r}
+#| code-fold: true
+s.label(ca$l1, # variance 1 (rows/sites)
+        ppoints.col = params$colsite,
+        plabels.col = params$colsite,
+        plabels.optim = TRUE)
+s.label(ca$co, #  variance lambda (weighted averaging) (cols/spp)
+        ppoints.col = params$colspp,
+        plabels.col = params$colspp,
+        plabels.optim = TRUE,
+        add = TRUE)
+```
+
+Other plotting method with ade4:
+
+```{r}
+#| code-fold: true
+# ade4 doc: method = 3 -> 3 columns variance 1 and rows by averaging 
+# Error? here we have columns by WA and rows variance 1
+
+scatter(ca, method = 3, 
+        plabels.optim = TRUE,
+        posieig = 'none')
+```
+
+
+#### Weighted averaging
+
+Like $B$, $A$ (species scores) can also be computed from the **sites** scores. This shows better the relationship between species and sites scores (species are at the barycentre of their sites with this scaling).
+
+$$
+A = \left\{
+\begin{array}{ll}
+  D_c^{-1/2} P_0^\top U_0 \qquad &\text{(from } U_0 \text{)}\\
+  D_c^{-1/2} P_0^\top D_r^{1/2} U \qquad &\text{(from } U \text{)}\\
+   D_c^{-1} P U^\top \qquad &\text{(from } U \text{ and } P \text{)}\\
+\end{array}
+\right.
+$${#eq-wa-spp}
+
+```{r}
+# U0
+A_wa <- diag(dc^(-1/2)) %*% t(P0) %*% U0
+res <- A_wa/A
+all(res[, 1:k] - 1 < zero)
+
+# U
+A_wa_U <- diag(dc^(-1/2)) %*% t(P0) %*% diag(dr^(1/2)) %*% U
+res <- A_wa_U/A
+all(res[, 1:k] - 1 < zero)
+
+# U and P
+A_wa <- diag(dc^(-1)) %*% t(P) %*% U
+res <- A_wa/A
+all(res[, 1:k] - 1 < zero)
 ```
 
 
@@ -453,50 +702,70 @@ It is a compromise between scalings 1 and 2. It preserves none of the $\chi^2$ d
 
 We use:
 
--   $\hat{S}_3 = D(p_{i\cdot})^{-1/2} \hat{U} \Lambda^{1/4}$ (for sites)
--   $S_3 = D(p_{\cdot j})^{-1/2} U \Lambda^{1/4}$ (for species).
+-   $S_r = U \Lambda^{1/4}$ (for sites)
+-   $S_c = V \Lambda^{1/4}$ (for species).
 
 ```{r}
-s3_r <- diag(dpi_^(-1/2)) %*% Uhat %*% Lambda^(1/4)
-s3_c <- diag(dp_j^(-1/2)) %*% U %*% Lambda^(1/4)
+Sr <- U %*% Lambda^(1/4)
+Sc <- V %*% Lambda^(1/4)
 ```
 
-```{r, include=FALSE}
-# This is not exactly adequate
-scatter(ca, method = 1,
-        posieig = 'none')
+#### Plots
 
-# This is
-sites_ade4 <- as.matrix(ca$l1) %*% diag(ca$eig^(1/4))
-s.label(sites_ade4, 
+Plot with our values:
+
+```{r, fig.height=6, fig.width=6, warning=FALSE}
+#| code-fold: true
+multiplot(indiv_row = Sr, indiv_col = Sc, 
+          indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
+          row_color = params$colsite, col_color = params$colspp,
+          eig = lambda)
+```
+
+Plot with ade4 values:
+
+```{r}
+#| code-fold: true
+Sr_ade4 <- as.matrix(ca$l1) %*% diag(ca$eig^(1/4))
+Sc_ade4 <- as.matrix(ca$c1) %*% diag(ca$eig^(1/4))
+
+s.label(Sr_ade4, 
         ylim = c(-5, 5),
         xlim = c(-5, 5),
         ppoints.col = params$colsite,
         plabels.col = params$colsite,
         plabels.optim = TRUE)
-spp_ade4 <- as.matrix(ca$c1) %*% diag(ca$eig^(1/4))
-s.label(spp_ade4,
+s.label(Sc_ade4,
         ppoints.col = params$colspp,
         plabels.col = params$colspp,
         plabels.optim = TRUE,
         add = TRUE)
 ```
 
+
+
+### Scaling type 4
+
+Use $B$ (sites) and $A$ (species). Then, both $\chi^2$ distances are preserved. It is useful for a table crossing two factors.
+
+Plot with our values:
+
 ```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
-multiplot(indiv_row = s3_r, indiv_col = s3_c, 
+multiplot(indiv_row = B, 
+          indiv_col = A, 
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           row_color = params$colsite, col_color = params$colspp,
           eig = lambda)
 ```
 
-### Scaling type 4
 
-Use $F$ (sites) and $\hat{F}$ (species). Then, both $\chi^2$ distances are preserved. It is useful for a table crossing two factors.
+Plot with ade4 values:
 
-```{r, include=FALSE}
+```{r}
+#| code-fold: true
 s.label(ca$li, 
-        ylim = c(-2, 2),
+        ylim = c(-2, 3),
         xlim = c(-3, 2),
         ppoints.col = params$colsite,
         plabels.col = params$colsite,
@@ -508,26 +777,23 @@ s.label(ca$co,
         add = TRUE)
 ```
 
-```{r, fig.height=6, fig.width=6, warning=FALSE}
-#| code-fold: true
+Other ade4 method:
 
-multiplot(indiv_row = F_, indiv_col = Fhat, 
-          indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
-          row_color = params$colsite, col_color = params$colspp,
-          eig = lambda)
+```{r}
+#| code-fold: true
+# 1 rows and columns with the coordinates of lambda variance
+scatter(ca, method = 1,
+        plabels.optim = TRUE,
+        posieig = 'none')
 ```
 
 ## Interpretation
 
-Using the "transition formula" defined above ($\hat{U} = \bar{Q}U\Lambda^{-1/2}$), we can relate $V$ and $\hat{V}$ with the following equation:
+Using the "transition formula" defined in @eq-wa-sites and @eq-wa-spp, we can relate the ordination of rows (sites) ($U$) to the ordination of columns (species) ($V$) by expressing it as a weighted average of the other dimensions' individuals.
 
-$$
-\hat{V} \Lambda^{1/2} = D(p_{i\cdot})^{-1/2}\bar{Q}D(p_{\cdot j})^{1/2}V
-$$
+For instance, the sites coordinates $B$ (weighted average) represent the mean of the coordinates of species present in this site. The species coordinates $A$ (weighted average) represent the mean of the coordinates of sites that this species is present in. 
 
-This equation relates the ordination of rows (sites) ($\hat{V}$) to the ordination of columns (species) ($V$). The "conversion factor" is $\Lambda^{1/2}$, which translates to $\sqrt{\lambda_h}$ along principal axis $h$.
-
-Indeed, the eigenvalue $\lambda_h$ is a measure of the correlation of the rows and columns ordinations along axis $h$.
+The eigenvalue $\lambda_h$ is a measure of the correlation of the rows and columns ordinations along axis $h$.
 
 If species have a unimodal (bell-shaped) response along the gradient defined by the sites ordination along a given axis, then their position should be close to their niche optimum.
 

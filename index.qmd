@@ -9,11 +9,11 @@ This website aims at summarizing the theory behind different methods to analyze 
 -   canonical CA (CCA)
 -   double-constrained CA (dc-CA)
 
-It also describes reciprocal scaling [@thioulouse1992] (and its extensions with CCA and dcCA). Reciprocal scaling is a method to compute and visualize the dispersion among count tables analyzed with multivariate methods.
+It also describes reciprocal scaling [@thioulouse1992] (and its extensions with CCA and dc-CA). Reciprocal scaling is a method to compute and visualize the dispersion among count tables analyzed with multivariate methods.
 
 ## Dataset
 
-Throughout this document, we will use the data from [@barbaro2012] on bird species distribution in New Zealand extracted from the CESTES database [@jeliazkov2020].
+Throughout this document, we will use the data from @barbaro2012 on bird species distribution in New Zealand extracted from the CESTES database [@jeliazkov2020].
 
 Throughout this document, we will analyze a matrix $Y$ ($r \times c$) and two associated matrices $E$ ($r \times e$) and $T$ ($t \times c$). In our example:
 
