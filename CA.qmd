@@ -427,9 +427,9 @@ To plot rows and columns on separate plots, one can plot the eigenvectors $U_0$ 
 
 To plot columns and rows individuals on the same biplot, different scalings have been proposed. For sites (rows), these scalings are equal to $S_\alpha = U \Lambda^{\alpha/2}$ and for species (columns), $S_\alpha = V \Lambda^{(1-\alpha)/2}$. (with $\alpha =$ 1, 0 or 1/2).
 
--   Scaling type 1 ($\alpha = 1$): this scaling preserves the distances between rows. Rows (sites) are represented with $B = U \Lambda^{1/2}$ and species (columns) with $V$.
+-   Scaling type 1 ($\alpha = 1$): this scaling preserves the distances between rows. Rows (sites) are represented with $U^\star = U \Lambda^{1/2}$ and species (columns) with $V$.
 
--   Scaling type 2  ($\alpha = 0$): this scaling preserves distances between columns. Rows (sites) are represented with $U$ and species (columns) with $A = V \Lambda^{1/2}$.
+-   Scaling type 2  ($\alpha = 0$): this scaling preserves distances between columns. Rows (sites) are represented with $U$ and species (columns) with $V^\star = V \Lambda^{1/2}$.
 
 -   Scaling type 3  ($\alpha = 1/2$): this scaling is a compromise between scalings type 1 and 2. Rows (sites) are represented with $\hat{S}_3 = U \Lambda^{1/4}$ and species (columns) with $S_3 = V \Lambda^{1/4}$.
 
@@ -485,18 +485,18 @@ This scaling preserves the row $\chi^2$ distances and is useful to interpret dis
 
 For that, we use:
 
--   $B = U \Lambda^{1/2}$ (rows = sites): corresponds to the `li`
+-   $U^\star = U \Lambda^{1/2}$ (rows = sites): corresponds to the `li`
 -   $V = D_c^{-1/2} V_0$ (columns = species): corresponds to the `c1`
 
 ```{r}
 # Sites
-B <- U %*% Lambda^(1/2)
+Ustar <- U %*% Lambda^(1/2)
 ```
 
-We check that $B$ corresponds to the `li` of CA:
+We check that $U^\star$ corresponds to the `li` of CA:
 
 ```{r}
-res <- B/ca$li
+res <- Ustar/ca$li
 all((abs(res) - 1) < zero)
 ```
 
@@ -504,8 +504,8 @@ These scalings correspond to fixed variances for rows and columns. With scaling 
 
 ```{r}
 # Variance of columns vectors for rows
-varB <- apply(B, 2, varwt, wt = ca$lw)
-res <- varB[1:k]/ca$eig
+varUstar <- apply(Ustar, 2, varwt, wt = ca$lw)
+res <- varUstar[1:k]/ca$eig
 all(res -1 < zero)
 ```
 
@@ -515,7 +515,7 @@ Plot with our coordinates:
 
 ```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
-multiplot(indiv_row = B, # variance lambda (averaging)
+multiplot(indiv_row = Ustar, # variance lambda (averaging)
           indiv_col = V, # variance 1
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           row_color = params$colsite, col_color = params$colspp,
@@ -552,13 +552,13 @@ scatter(ca, method = 2,
 
 #### Weighted averaging
 
-$B$ (sites scores) can also be computed from the **species** scores using weighted averaging, since there is a correspondence between $V_0$ and $U_0$. This shows better the relationship between sites and species scores (sites are at the barycentre of their species with this scaling).
+$U^\star$ (sites scores) can also be computed from the **species** scores using weighted averaging, since there is a correspondence between $V_0$ and $U_0$. This shows better the relationship between sites and species scores (sites are at the barycentre of their species with this scaling).
 
 
-$B$ can be expressed by weighted averaging using the following formulas:
+$U^\star$ can be expressed by weighted averaging using the following formulas:
 
 $$
-B = \left\{
+U^\star = \left\{
 \begin{array}{ll}
   D_r^{-1/2} P_0 V_0 \qquad &\text{(from } V_0 \text{)}\\
   D_r^{-1/2} P_0 D_c^{1/2} V \qquad &\text{(from } V \text{)}\\
@@ -571,23 +571,23 @@ $${#eq-wa-sites}
 # Compute sites coordinates using weighted averaging
 
 # With V0
-B_wa <- diag(dr^(-1/2)) %*% P0 %*% V0
-res <- B_wa/B
+Ustar_wa <- diag(dr^(-1/2)) %*% P0 %*% V0
+res <- Ustar_wa/Ustar
 all(res[, 1:k] - 1 < zero)
 ```
 
 
 ```{r}
 # With V
-B_wa_V <- diag(dr^(-1/2)) %*% P0 %*% diag(dc^(1/2)) %*% V
-res <- B_wa_V/B
+Ustar_wa_V <- diag(dr^(-1/2)) %*% P0 %*% diag(dc^(1/2)) %*% V
+res <- Ustar_wa_V/Ustar
 all(res[, 1:k] - 1 < zero)
 ```
 
 ```{r}
 # With V and P
-B_wa_legendre <- diag(dr^(-1)) %*% P %*% V
-res <- B_wa_legendre/B
+Ustar_wa_legendre <- diag(dr^(-1)) %*% P %*% V
+res <- Ustar_wa_legendre/Ustar
 all(res[, 1:k] - 1 < zero)
 ``` 
 
@@ -598,18 +598,18 @@ This preserves $\chi^2$ distances between species on the plot. Here, species are
 We use:
 
 -   $U = D_r^{-1/2} U_0$ (rows = sites)
--   $A = V \Lambda^{1/2}$ (columns = species)
+-   $V^\star = V \Lambda^{1/2}$ (columns = species)
 
 ```{r}
 # Species
-A <- V %*% diag(lambda^(1/2))
+Vstar <- V %*% diag(lambda^(1/2))
 ```
 
 
-We check that $A$ corresponds to the `co` of CA:
+We check that $V^\star$ corresponds to the `co` of CA:
 
 ```{r}
-res <- A/ca$co
+res <- Vstar/ca$co
 all((abs(res) - 1) < zero)
 ```
 
@@ -617,7 +617,7 @@ These scalings correspond to fixed variances for rows and columns. With scaling 
 
 ```{r}
 # Variance of columns vectors for rows
-varA <- apply(A, 2, varwt, wt = ca$cw)
+varA <- apply(Vstar, 2, varwt, wt = ca$cw)
 res <- varA[1:k]/ca$eig
 all(res -1 < zero)
 ```
@@ -629,7 +629,7 @@ Plot with our coordinates:
 ```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
 multiplot(indiv_row = U, # variance 1 
-          indiv_col = A, # variance lambda (weighted averaging)
+          indiv_col = Vstar, # variance lambda (weighted averaging)
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           row_color = params$colsite, col_color = params$colspp,
           eig = lambda)
@@ -666,10 +666,10 @@ scatter(ca, method = 3,
 
 #### Weighted averaging
 
-Like $B$, $A$ (species scores) can also be computed from the **sites** scores. This shows better the relationship between species and sites scores (species are at the barycentre of their sites with this scaling).
+Like $U^\star$, $V^\star$ (species scores) can also be computed from the **sites** scores. This shows better the relationship between species and sites scores (species are at the barycentre of their sites with this scaling).
 
 $$
-A = \left\{
+V^\star = \left\{
 \begin{array}{ll}
   D_c^{-1/2} P_0^\top U_0 \qquad &\text{(from } U_0 \text{)}\\
   D_c^{-1/2} P_0^\top D_r^{1/2} U \qquad &\text{(from } U \text{)}\\
@@ -680,18 +680,18 @@ $${#eq-wa-spp}
 
 ```{r}
 # U0
-A_wa <- diag(dc^(-1/2)) %*% t(P0) %*% U0
-res <- A_wa/A
+Vstar_wa <- diag(dc^(-1/2)) %*% t(P0) %*% U0
+res <- Vstar_wa/Vstar
 all(res[, 1:k] - 1 < zero)
 
 # U
-A_wa_U <- diag(dc^(-1/2)) %*% t(P0) %*% diag(dr^(1/2)) %*% U
-res <- A_wa_U/A
+Vstar_wa_U <- diag(dc^(-1/2)) %*% t(P0) %*% diag(dr^(1/2)) %*% U
+res <- Vstar_wa_U/Vstar
 all(res[, 1:k] - 1 < zero)
 
 # U and P
-A_wa <- diag(dc^(-1)) %*% t(P) %*% U
-res <- A_wa/A
+Vstar_wa <- diag(dc^(-1)) %*% t(P) %*% U
+res <- Vstar_wa/Vstar
 all(res[, 1:k] - 1 < zero)
 ```
 
@@ -746,14 +746,14 @@ s.label(Sc_ade4,
 
 ### Scaling type 4
 
-Use $B$ (sites) and $A$ (species). Then, both $\chi^2$ distances are preserved. It is useful for a table crossing two factors.
+Use $U^\star$ (sites) and $V^\star$ (species). Then, both $\chi^2$ distances are preserved. It is useful for a table crossing two factors.
 
 Plot with our values:
 
 ```{r, fig.height=6, fig.width=6, warning=FALSE}
 #| code-fold: true
-multiplot(indiv_row = B, 
-          indiv_col = A, 
+multiplot(indiv_row = Ustar, 
+          indiv_col = Vstar, 
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           row_color = params$colsite, col_color = params$colspp,
           eig = lambda)
@@ -791,7 +791,7 @@ scatter(ca, method = 1,
 
 Using the "transition formula" defined in @eq-wa-sites and @eq-wa-spp, we can relate the ordination of rows (sites) ($U$) to the ordination of columns (species) ($V$) by expressing it as a weighted average of the other dimensions' individuals.
 
-For instance, the sites coordinates $B$ (weighted average) represent the mean of the coordinates of species present in this site. The species coordinates $A$ (weighted average) represent the mean of the coordinates of sites that this species is present in. 
+For instance, the sites coordinates $U^\star$ (weighted average) represent the mean of the coordinates of species present in this site. The species coordinates $V^\star$ (weighted average) represent the mean of the coordinates of sites that this species is present in. 
 
 The eigenvalue $\lambda_h$ is a measure of the correlation of the rows and columns ordinations along axis $h$.
 

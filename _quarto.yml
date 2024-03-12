@@ -20,13 +20,13 @@ website:
       - href: CCA.qmd
         text: Canonical CA (CCA)
       - href: dcCA.qmd
-        text: Double-constrained CA (dc-CA)
+        text: Double constrained CA (dc-CA)
       - href: recscal.qmd
         text: Reciprocal scaling (CA)
       - href: recscal_cca.qmd
         text: Reciprocal scaling (CCA)
       - href: recscal_dcca.qmd
-        text: Reciprocal scaling (dcCA)
+        text: Reciprocal scaling (dc-CA)
 
 format:
   html:

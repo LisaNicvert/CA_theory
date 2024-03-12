@@ -150,7 +150,7 @@ div.csl-indent {
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./dcCA.html" rel="" target="">
- <span class="menu-text">Double-constrained CA (dc-CA)</span></a>
+ <span class="menu-text">Double constrained CA (dc-CA)</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="./recscal.html" rel="" target="" aria-current="page">
@@ -334,9 +334,9 @@ div.csl-indent {
 <p><strong>From CA scores</strong></p>
 <p><span class="math inline">\(H\)</span> can be computed from the scores of the correspondence analysis of <span class="math inline">\(Y\)</span>. The score <span class="math inline">\(h_k(i, j)\)</span> for row <span class="math inline">\(i\)</span>, column <span class="math inline">\(j\)</span> and axis <span class="math inline">\(k\)</span> is:</p>
 <p><span class="math display">\[
-h_k(i, j) = \frac{b_k(i) + a_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+h_k(i, j) = \frac{u^\star_k(i) + v^\star_k(j)}{\sqrt{2 \lambda_k \mu_k}}
 \]</span></p>
-<p>where <span class="math inline">\(a_k(j)\)</span> and <span class="math inline">\(b_k(i)\)</span> are the matrices of scores obtained by weighted averaging for CA (respectively equal to <code>co</code> and <code>li</code>).</p>
+<p>where <span class="math inline">\(v^\star_k(j)\)</span> and <span class="math inline">\(u^\star_k(i)\)</span> are the vectors of scores obtained by weighted averaging for CA for axis <span class="math inline">\(k\)</span> (respectively equal to <code>co</code> and <code>li</code>).</p>
 <p>if <span class="math inline">\(y_{ij} = 0\)</span>, then the score <span class="math inline">\(h_k(i, j)\)</span> is not defined.</p>
 <p><strong>From canonical correlation analysis</strong></p>
 <p>We transform the table <span class="math inline">\(Y\)</span> in two tables:</p>
@@ -365,8 +365,8 @@ H = (S_R + S_C)_{scaled}
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">scannf =</span> <span class="cn">FALSE</span>,</span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">nf =</span> kca)</span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>B <span class="ot">&lt;-</span> ca<span class="sc">$</span>li</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> ca<span class="sc">$</span>co</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>Ustar <span class="ot">&lt;-</span> ca<span class="sc">$</span>li</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>Vstar <span class="ot">&lt;-</span> ca<span class="sc">$</span>co</span>
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> ca<span class="sc">$</span>eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -376,9 +376,9 @@ H = (S_R + S_C)_{scaled}
 </div>
 <p>We can get the coordinates of row-column pairs (ie each cell in the original table <span class="math inline">\(Y\)</span>) with:</p>
 <p><span class="math display">\[
-h_k(i, j) = \frac{b_k(i) + a_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+h_k(i, j) = \frac{u^\star_k(i) + v^\star_k(j)}{\sqrt{2 \lambda_k \mu_k}}
 \]</span></p>
-<p>where <span class="math inline">\(b_k(i)\)</span> is the coordinate of row (site) <span class="math inline">\(i\)</span> on axis <span class="math inline">\(k\)</span> and <span class="math inline">\(a_k(j)\)</span> is the same for column (species) <span class="math inline">\(j\)</span> and <span class="math inline">\(\mu_k = 1 + \sqrt{\lambda_k}\)</span>.</p>
+<p>where <span class="math inline">\(u^\star_k(i)\)</span> is the coordinate of row (site) <span class="math inline">\(i\)</span> on axis <span class="math inline">\(k\)</span> and <span class="math inline">\(v^\star_k(j)\)</span> is the same for column (species) <span class="math inline">\(j\)</span> and <span class="math inline">\(\mu_k = 1 + \sqrt{\lambda_k}\)</span>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">+</span> <span class="fu">sqrt</span>(lambda)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -401,7 +401,7 @@ h_k(i, j) = \frac{b_k(i) + a_k(j)}{\sqrt{2 \lambda_k \mu_k}}
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (obs <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(Yfreq0)) { <span class="co"># For each observation</span></span>
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    i <span class="ot">&lt;-</span> Yfreq0<span class="sc">$</span>row[obs]</span>
 <span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    j <span class="ot">&lt;-</span> Yfreq0<span class="sc">$</span>col[obs]</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    H[ind, k] <span class="ot">&lt;-</span> (B[i, k] <span class="sc">+</span> A[j, k])<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">*</span>lambda[k]<span class="sc">*</span>mu[k])</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    H[ind, k] <span class="ot">&lt;-</span> (Ustar[i, k] <span class="sc">+</span> Vstar[j, k])<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">*</span>lambda[k]<span class="sc">*</span>mu[k])</span>
 <span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    ind <span class="ot">&lt;-</span> ind <span class="sc">+</span> <span class="dv">1</span></span>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -433,7 +433,7 @@ h_k(i, j) = \frac{b_k(i) + a_k(j)}{\sqrt{2 \lambda_k \mu_k}}
 <span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>Htest <span class="ot">&lt;-</span> H[Yfreq0<span class="sc">$</span>row <span class="sc">==</span> i <span class="sc">&amp;</span> Yfreq0<span class="sc">$</span>col <span class="sc">==</span> jtxt, k]</span>
 <span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute one value with the formula</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>Hkij <span class="ot">&lt;-</span> (B[i, k] <span class="sc">+</span> A[j, k])<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">*</span>lambda[k]<span class="sc">*</span>mu[k])</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>Hkij <span class="ot">&lt;-</span> (Ustar[i, k] <span class="sc">+</span> Vstar[j, k])<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">*</span>lambda[k]<span class="sc">*</span>mu[k])</span>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare</span></span>
 <span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>Htest<span class="sc">/</span>Hkij</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2293,18 +2293,18 @@ h_k(i, j) = \frac{b_k(i) + a_k(j)}{\sqrt{2 \lambda_k \mu_k}}
 <tbody>
 <tr class="odd">
 <td>Mean for axis <span class="math inline">\(k\)</span></td>
-<td><span class="math display">\[m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} b_k(i)\]</span></td>
-<td><span class="math display">\[m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} a_k(j)\]</span></td>
+<td><span class="math display">\[m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} u^\star_k(i)\]</span></td>
+<td><span class="math display">\[m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} v^\star_k(j)\]</span></td>
 </tr>
 <tr class="even">
 <td>Variance for axis <span class="math inline">\(k\)</span></td>
-<td><span class="math display">\[s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} a_k^2(j) \right) - \lambda_k b_k^2(i) \right)\]</span></td>
-<td><span class="math display">\[s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} b_k^2(i) \right) - \lambda_k a_k^2(j) \right)\]</span></td>
+<td><span class="math display">\[s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_k(j)}^2 \right) - \lambda_k {u^\star_k(i)}^2 \right)\]</span></td>
+<td><span class="math display">\[s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_k(i)}^2 \right) - \lambda_k {v^\star_k(j)}^2 \right)\]</span></td>
 </tr>
 <tr class="odd">
 <td>Covariance between axes <span class="math inline">\(k\)</span>, <span class="math inline">\(l\)</span></td>
-<td><span class="math display">\[c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} a_k(j) a_l(j) - \sqrt{\lambda_k \lambda_l} b_k(i)b_l(i) \right)\]</span></td>
-<td><span class="math display">\[c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} b_k(i) b_l(i) - \sqrt{\lambda_k \lambda_l} a_k(j)a_l(j) \right)\]</span></td>
+<td><span class="math display">\[c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} v^\star_k(j) v^\star_l(j) - \sqrt{\lambda_k \lambda_l} u^\star_k(i)u^\star_l(i) \right)\]</span></td>
+<td><span class="math display">\[c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} u^\star_k(i) u^\star_l(i) - \sqrt{\lambda_k \lambda_l} v^\star_k(j)v^\star_l(j) \right)\]</span></td>
 </tr>
 </tbody>
 </table>
@@ -2616,9 +2616,9 @@ sp13  0  0  0  0  0  0  0  0  0   0   0   0   0   0   0   0   0   0   0   0</cod
 <h4 class="anchored" data-anchor-id="for-rows-sites-1">For rows = sites</h4>
 <p>The conditional means and variances of rows scores on axis <span class="math inline">\(k\)</span> for row <span class="math inline">\(i\)</span> can also be computed as:</p>
 <p><span class="math display">\[
-m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} b_k(i)
+m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} u^\star_k(i)
 \]</span></p>
-<p>where <span class="math inline">\(b_k(i)\)</span> corresponds to the <code>li</code> for site <span class="math inline">\(i\)</span> on axis <span class="math inline">\(k\)</span>.</p>
+<p>where <span class="math inline">\(u^\star_k(i)\)</span> corresponds to the <code>li</code> for site <span class="math inline">\(i\)</span> on axis <span class="math inline">\(k\)</span>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>mrows_ca <span class="ot">&lt;-</span> <span class="fu">sweep</span>(ca<span class="sc">$</span>li, <span class="dv">2</span>, <span class="fu">sqrt</span>(mu)<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">*</span>lambda), <span class="st">"*"</span>)</span>
 <span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -2630,7 +2630,7 @@ m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} b_k(i)
 </div>
 <p>The variance can be computed as:</p>
 <p><span class="math display">\[
-s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} a_k^2(j) \right) - \lambda_k b_k^2(i) \right)
+s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_k(j)}^2 \right) - \lambda_k {u^\star_k(i)}^2 \right)
 \]</span></p>
 <p><strong><em>Note: this formula is different from formula (15) in <span class="citation" data-cites="thioulouse1992">Thioulouse and Chessel (<a href="#ref-thioulouse1992" role="doc-biblioref">1992</a>)</span> (no square root at the denominator <span class="math inline">\(2\lambda_k\mu_k\)</span>. Numerical computations suggest this is the correct formula.</em></strong></p>
 <div class="cell">
@@ -2639,11 +2639,11 @@ s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c
 <span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>r) {</span>
 <span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get CA scores for site i</span></span>
-<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>  Li <span class="ot">&lt;-</span> B[i, ]</span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>  Li <span class="ot">&lt;-</span> Ustar[i, ]</span>
 <span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb68-8"><a href="#cb68-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Compute the part with the sum on Cj</span></span>
 <span id="cb68-9"><a href="#cb68-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># we add all coordinates Cj^2 weighted by the number of observations on site i</span></span>
-<span id="cb68-10"><a href="#cb68-10" aria-hidden="true" tabindex="-1"></a>  sumCj <span class="ot">&lt;-</span> <span class="fu">t</span>(Y[i, ]) <span class="sc">%*%</span> <span class="fu">as.matrix</span>(A)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb68-10"><a href="#cb68-10" aria-hidden="true" tabindex="-1"></a>  sumCj <span class="ot">&lt;-</span> <span class="fu">t</span>(Y[i, ]) <span class="sc">%*%</span> <span class="fu">as.matrix</span>(Vstar)<span class="sc">^</span><span class="dv">2</span></span>
 <span id="cb68-11"><a href="#cb68-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb68-12"><a href="#cb68-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fill i-th row with site i variance along each axis</span></span>
 <span id="cb68-13"><a href="#cb68-13" aria-hidden="true" tabindex="-1"></a>  varrows_ca[i, ] <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span>lambda<span class="sc">*</span>mu)<span class="sc">*</span>((<span class="dv">1</span><span class="sc">/</span>yi_[i])<span class="sc">*</span>sumCj <span class="sc">-</span> lambda<span class="sc">*</span><span class="fu">as.numeric</span>(Li)<span class="sc">^</span><span class="dv">2</span>)</span>
@@ -2658,14 +2658,14 @@ s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c
 </div>
 <p>We can also compute the covariance using CA coordinates:</p>
 <p><span class="math display">\[
-c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} a_k(j) a_l(j) - \sqrt{\lambda_k \lambda_l} b_k(i)b_l(i) \right)
+c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} v^\star_k(j) v^\star_l(j) - \sqrt{\lambda_k \lambda_l} u^\star_k(i)u^\star_l(i) \right)
 \]</span></p>
 <p>We will use the same values as above for <span class="math inline">\(k\)</span> and <span class="math inline">\(l\)</span>: <span class="math inline">\(k =\)</span> 1 and <span class="math inline">\(l =\)</span> 2.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Each site is multiplied by its score (Y*A[, k] by column) and then summed per site</span></span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>sum_per_site <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(Y <span class="sc">%*%</span> <span class="fu">diag</span>(A[, k]) <span class="sc">%*%</span> <span class="fu">diag</span>(A[, l]))</span>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Each site is multiplied by its score (Y*Vstar[, k] by column) and then summed per site</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>sum_per_site <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(Y <span class="sc">%*%</span> <span class="fu">diag</span>(Vstar[, k]) <span class="sc">%*%</span> <span class="fu">diag</span>(Vstar[, l]))</span>
 <span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>covrows_ca_kl <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span><span class="fu">sqrt</span>(lambda[k]<span class="sc">*</span>lambda[l])<span class="sc">*</span><span class="fu">sqrt</span>(mu[k]<span class="sc">*</span>mu[l]))<span class="sc">*</span>(<span class="dv">1</span><span class="sc">/</span>yi_<span class="sc">*</span>sum_per_site <span class="sc">-</span> <span class="fu">sqrt</span>(lambda[k]<span class="sc">*</span>lambda[l])<span class="sc">*</span>B[, k]<span class="sc">*</span>B[, l])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>covrows_ca_kl <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span><span class="fu">sqrt</span>(lambda[k]<span class="sc">*</span>lambda[l])<span class="sc">*</span><span class="fu">sqrt</span>(mu[k]<span class="sc">*</span>mu[l]))<span class="sc">*</span>(<span class="dv">1</span><span class="sc">/</span>yi_<span class="sc">*</span>sum_per_site <span class="sc">-</span> <span class="fu">sqrt</span>(lambda[k]<span class="sc">*</span>lambda[l])<span class="sc">*</span>Ustar[, k]<span class="sc">*</span>Ustar[, l])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Check that the CA formulas give the same result as the weighted covariance of correspondences:</p>
 <div class="cell">
@@ -2681,7 +2681,7 @@ c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \fra
 <h4 class="anchored" data-anchor-id="for-columns-species-1">For columns = species</h4>
 <p>Similarly, column statistics can be computed from CA with the following formulas:</p>
 <p><span class="math display">\[
-m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} a_k(j)
+m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} v^\star_k(j)
 \]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>mcols_ca <span class="ot">&lt;-</span> <span class="fu">sweep</span>(ca<span class="sc">$</span>co, <span class="dv">2</span>, <span class="fu">sqrt</span>(mu)<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">*</span>lambda), <span class="st">"*"</span>)</span>
@@ -2693,7 +2693,7 @@ m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} a_k(j)
 </div>
 </div>
 <p><span class="math display">\[
-s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} b_k^2(i) \right) - \lambda_k a_k^2(j) \right)
+s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_k(i)}^2 \right) - \lambda_k {v^\star_k(j)}^2 \right)
 \]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>varcols_ca <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> c, </span>
@@ -2701,10 +2701,10 @@ s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r
 <span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>c) {</span>
 <span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get CA scores for species j</span></span>
-<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>  Cj <span class="ot">&lt;-</span> A[j, ]</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>  Cj <span class="ot">&lt;-</span> Vstar[j, ]</span>
 <span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Compute the part with the sum on Li</span></span>
-<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a>  sumLi <span class="ot">&lt;-</span> <span class="fu">t</span>(Y[, j]) <span class="sc">%*%</span> <span class="fu">as.matrix</span>(B)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a>  sumLi <span class="ot">&lt;-</span> <span class="fu">t</span>(Y[, j]) <span class="sc">%*%</span> <span class="fu">as.matrix</span>(Ustar)<span class="sc">^</span><span class="dv">2</span></span>
 <span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb76-11"><a href="#cb76-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fill i-th row with site i variance along each axis</span></span>
 <span id="cb76-12"><a href="#cb76-12" aria-hidden="true" tabindex="-1"></a>  varcols_ca[j, ] <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span>lambda<span class="sc">*</span>mu)<span class="sc">*</span>((<span class="dv">1</span><span class="sc">/</span>y_j[j])<span class="sc">*</span>sumLi <span class="sc">-</span> lambda<span class="sc">*</span><span class="fu">as.numeric</span>(Cj)<span class="sc">^</span><span class="dv">2</span>)</span>
@@ -2718,14 +2718,14 @@ s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r
 </div>
 </div>
 <p><span class="math display">\[
-c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} b_k(i) b_l(i) - \sqrt{\lambda_k \lambda_l} a_k(j)a_l(j) \right)
+c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} u^\star_k(i) u^\star_l(i) - \sqrt{\lambda_k \lambda_l} v^\star_k(j)v^\star_l(j) \right)
 \]</span></p>
 <p>We use the same values of <span class="math inline">\(k =\)</span> 1 and <span class="math inline">\(l =\)</span> 2 as above.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Each spp is multiplied by its score (Y*B[, k] by row) and then summed per spp</span></span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>sum_per_spp <span class="ot">&lt;-</span> <span class="fu">colSums</span>(<span class="fu">diag</span>(B[, k]) <span class="sc">%*%</span> <span class="fu">diag</span>(B[, l]) <span class="sc">%*%</span> Y)</span>
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Each spp is multiplied by its score (Y*Ustar[, k] by row) and then summed per spp</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>sum_per_spp <span class="ot">&lt;-</span> <span class="fu">colSums</span>(<span class="fu">diag</span>(Ustar[, k]) <span class="sc">%*%</span> <span class="fu">diag</span>(Ustar[, l]) <span class="sc">%*%</span> Y)</span>
 <span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>covcols_kl_ca <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span><span class="fu">sqrt</span>(lambda[k]<span class="sc">*</span>lambda[l])<span class="sc">*</span><span class="fu">sqrt</span>(mu[k]<span class="sc">*</span>mu[l]))<span class="sc">*</span>(<span class="dv">1</span><span class="sc">/</span>y_j<span class="sc">*</span>sum_per_spp <span class="sc">-</span> <span class="fu">sqrt</span>(lambda[k]<span class="sc">*</span>lambda[l])<span class="sc">*</span>A[, k]<span class="sc">*</span>A[, l])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>covcols_kl_ca <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span><span class="fu">sqrt</span>(lambda[k]<span class="sc">*</span>lambda[l])<span class="sc">*</span><span class="fu">sqrt</span>(mu[k]<span class="sc">*</span>mu[l]))<span class="sc">*</span>(<span class="dv">1</span><span class="sc">/</span>y_j<span class="sc">*</span>sum_per_spp <span class="sc">-</span> <span class="fu">sqrt</span>(lambda[k]<span class="sc">*</span>lambda[l])<span class="sc">*</span>Vstar[, k]<span class="sc">*</span>Vstar[, l])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check</span></span>
@@ -3600,7 +3600,7 @@ increasing max.overlaps</code></pre>
 </section>
 <section id="mean-of-means" class="level3">
 <h3 class="anchored" data-anchor-id="mean-of-means">Mean of means</h3>
-<p>The reciprocal scaling mean computed with <span class="math inline">\(\frac{\sqrt{\mu_k}}{\sqrt{2 \lambda_k}} a_k(i)\)</span> is the same as the weighted mean of the weighted means <span class="math inline">\(\frac{\sqrt{\mu_k}}{\sqrt{2 \lambda_k}} b_k(j)\)</span>, where <span class="math inline">\(j\)</span> is used to index all species occurring in site <span class="math inline">\(i\)</span>. So we can interpret species/site-wise means of the <span class="math inline">\(H\)</span> scores as means of means of the other category.</p>
+<p>The reciprocal scaling mean computed with <span class="math inline">\(\frac{\sqrt{\mu_k}}{\sqrt{2 \lambda_k}} v^\star_k(i)\)</span> is the same as the weighted mean of the weighted means <span class="math inline">\(\frac{\sqrt{\mu_k}}{\sqrt{2 \lambda_k}} u^\star_k(j)\)</span>, where <span class="math inline">\(j\)</span> is used to index all species occurring in site <span class="math inline">\(i\)</span>. So we can interpret species/site-wise means of the <span class="math inline">\(H\)</span> scores as means of means of the other category.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb138"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># site</span></span>
 <span id="cb138-2"><a href="#cb138-2" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="co"># axes</span></span>
@@ -3684,9 +3684,9 @@ rec 1  1  1</code></pre>
 </section>
 <section id="non-reciprocal-score" class="level3">
 <h3 class="anchored" data-anchor-id="non-reciprocal-score">Non-reciprocal score</h3>
-<p>If we don’t wand to find a new common space to plot correspondences in, we can remain in the 2 biplots showing <span class="math inline">\(U\)</span> and <span class="math inline">\(A\)</span> (<code>co</code> and <code>l1</code>) and <span class="math inline">\(V\)</span> with <span class="math inline">\(B\)</span> (<code>c1</code> and <code>li</code>).</p>
+<p>If we don’t wand to find a new common space to plot correspondences in, we can remain in the 2 biplots showing <span class="math inline">\(U\)</span> and <span class="math inline">\(V^\star\)</span> (<code>co</code> and <code>l1</code>) and <span class="math inline">\(V\)</span> with <span class="math inline">\(U^\star\)</span> (<code>c1</code> and <code>li</code>).</p>
 <p>To do that, we define the “CA-correspondences” <span class="math inline">\(\tilde{h}_k(i, j)\)</span>:</p>
-<p><span class="math display">\[\tilde{h}_k(i, j) = \frac{b_k(i) + v_k(j)}{2}\]</span></p>
+<p><span class="math display">\[\tilde{h}_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}\]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb143"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create duplicated records of the site (one for each species)</span></span>
 <span id="cb143-2"><a href="#cb143-2" aria-hidden="true" tabindex="-1"></a>cali_rep <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
@@ -3705,7 +3705,7 @@ rec 1  1  1</code></pre>
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
-<p>Below is a graphical demonstration showing the ellipses computed with <span class="math inline">\(\tilde{h}_k(i, j)\)</span>. Its mean is surimposed with <code>li</code> (<span class="math inline">\(B\)</span>) (or it should be, theoretically) and it is similar but smaller than the ellipse computed with <code>c1</code> (<span class="math inline">\(V\)</span>):</p>
+<p>Below is a graphical demonstration showing the ellipses computed with <span class="math inline">\(\tilde{h}_k(i, j)\)</span>. Its mean is surimposed with <code>li</code> (<span class="math inline">\(U^\star\)</span>) (or it should be, theoretically) and it is similar but smaller than the ellipse computed with <code>c1</code> (<span class="math inline">\(V\)</span>):</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -3734,7 +3734,7 @@ rec 1  1  1</code></pre>
 <p><img src="recscal_files/figure-html/unnamed-chunk-90-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>If we were to compute these CA correspondences in the other biplot, it would be: <span class="math display">\[\tilde{h}_k(i, j) = \frac{u_k(i) + a_k(j)}{2}\]</span></p>
+<p>If we were to compute these CA correspondences in the other biplot, it would be: <span class="math display">\[\tilde{h}_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}\]</span></p>
 
 
 

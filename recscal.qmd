@@ -73,10 +73,10 @@ These scores can be presented in a matrix $H$ ($n_\bar{0} \times K$). Here, $n_\
 $H$ can be computed from the scores of the correspondence analysis of $Y$. The score $h_k(i, j)$ for row $i$, column $j$ and axis $k$ is:
 
 $$
-h_k(i, j) = \frac{b_k(i) + a_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+h_k(i, j) = \frac{u^\star_k(i) + v^\star_k(j)}{\sqrt{2 \lambda_k \mu_k}}
 $$
 
-where $a_k(j)$ and $b_k(i)$ are the matrices of scores obtained by weighted averaging for CA (respectively equal to `co` and `li`).
+where $v^\star_k(j)$ and $u^\star_k(i)$ are the vectors of scores obtained by weighted averaging for CA for axis $k$ (respectively equal to `co` and `li`).
 
 
 if $y_{ij} = 0$, then the score $h_k(i, j)$ is not defined.
@@ -116,8 +116,8 @@ ca <- dudi.coa(Ydf,
                scannf = FALSE,
                nf = kca)
 
-B <- ca$li
-A <- ca$co
+Ustar <- ca$li
+Vstar <- ca$co
 
 lambda <- ca$eig
 ```
@@ -131,10 +131,10 @@ rec_ca <- reciprocal.coa(ca)
 We can get the coordinates of row-column pairs (ie each cell in the original table $Y$) with:
 
 $$
-h_k(i, j) = \frac{b_k(i) + a_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+h_k(i, j) = \frac{u^\star_k(i) + v^\star_k(j)}{\sqrt{2 \lambda_k \mu_k}}
 $$
 
-where $b_k(i)$ is the coordinate of row (site) $i$ on axis $k$ and $a_k(j)$ is the same for column (species) $j$ and $\mu_k = 1 + \sqrt{\lambda_k}$.
+where $u^\star_k(i)$ is the coordinate of row (site) $i$ on axis $k$ and $v^\star_k(j)$ is the same for column (species) $j$ and $\mu_k = 1 + \sqrt{\lambda_k}$.
 
 ```{r}
 mu <- 1 + sqrt(lambda)
@@ -160,7 +160,7 @@ for (k in 1:length(lambda)) { # For each axis
   for (obs in 1:nrow(Yfreq0)) { # For each observation
     i <- Yfreq0$row[obs]
     j <- Yfreq0$col[obs]
-    H[ind, k] <- (B[i, k] + A[j, k])/sqrt(2*lambda[k]*mu[k])
+    H[ind, k] <- (Ustar[i, k] + Vstar[j, k])/sqrt(2*lambda[k]*mu[k])
     ind <- ind + 1
   }
 }
@@ -191,7 +191,7 @@ l <- 2 # axis
 Htest <- H[Yfreq0$row == i & Yfreq0$col == jtxt, k]
 
 # Compute one value with the formula
-Hkij <- (B[i, k] + A[j, k])/sqrt(2*lambda[k]*mu[k])
+Hkij <- (Ustar[i, k] + Vstar[j, k])/sqrt(2*lambda[k]*mu[k])
 
 # Compare
 Htest/Hkij
@@ -351,9 +351,9 @@ The variances are equivalent to a "weighted variance" (the formula resembles the
 
 |                                  | Rows (sites)                                                                                                                                                                                | Columns (species)                                                                                                                                                                           |
 |-------------------|------------------------------|------------------------|
-| Mean for axis $k$                | $$m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} b_k(i)$$                                                                                                                                  | $$m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} a_k(j)$$                                                                                                                                  |
-| Variance for axis $k$            | $$s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} a_k^2(j) \right) - \lambda_k b_k^2(i) \right)$$                                             | $$s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} b_k^2(i) \right) - \lambda_k a_k^2(j) \right)$$                                             |
-| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} a_k(j) a_l(j) - \sqrt{\lambda_k \lambda_l} b_k(i)b_l(i) \right)$$ | $$c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} b_k(i) b_l(i) - \sqrt{\lambda_k \lambda_l} a_k(j)a_l(j) \right)$$ |
+| Mean for axis $k$                | $$m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} u^\star_k(i)$$                                                                                                                                  | $$m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} v^\star_k(j)$$                                                                                                                                  |
+| Variance for axis $k$            | $$s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_k(j)}^2 \right) - \lambda_k {u^\star_k(i)}^2 \right)$$                                             | $$s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_k(i)}^2 \right) - \lambda_k {v^\star_k(j)}^2 \right)$$                                             |
+| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} v^\star_k(j) v^\star_l(j) - \sqrt{\lambda_k \lambda_l} u^\star_k(i)u^\star_l(i) \right)$$ | $$c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} u^\star_k(i) u^\star_l(i) - \sqrt{\lambda_k \lambda_l} v^\star_k(j)v^\star_l(j) \right)$$ |
 
 ***Note: formulas for the variances $s^2_k(i)$ and $s^2_k(j)$ are different from formula (15) in @thioulouse1992 (no square root at the denominator  $2\lambda_k\mu_k$).***
 :::
@@ -648,10 +648,10 @@ all(reslist[-sp1])
 The conditional means and variances of rows scores on axis $k$ for row $i$ can also be computed as:
 
 $$
-m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} b_k(i)
+m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} u^\star_k(i)
 $$
 
-where $b_k(i)$ corresponds to the `li` for site $i$ on axis $k$.
+where $u^\star_k(i)$ corresponds to the `li` for site $i$ on axis $k$.
 
 ```{r}
 mrows_ca <- sweep(ca$li, 2, sqrt(mu)/sqrt(2*lambda), "*")
@@ -663,7 +663,7 @@ all(mrows_ca/mrows_ade4 - 1 < zero)
 The variance can be computed as:
 
 $$
-s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} a_k^2(j) \right) - \lambda_k b_k^2(i) \right)
+s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_k(j)}^2 \right) - \lambda_k {u^\star_k(i)}^2 \right)
 $$ 
 
 ***Note: this formula is different from formula (15) in @thioulouse1992 (no square root at the denominator $2\lambda_k\mu_k$. Numerical computations suggest this is the correct formula.***
@@ -674,11 +674,11 @@ varrows_ca <- matrix(nrow = r,
 
 for (i in 1:r) {
   # Get CA scores for site i
-  Li <- B[i, ]
+  Li <- Ustar[i, ]
   
   # Compute the part with the sum on Cj
   # we add all coordinates Cj^2 weighted by the number of observations on site i
-  sumCj <- t(Y[i, ]) %*% as.matrix(A)^2
+  sumCj <- t(Y[i, ]) %*% as.matrix(Vstar)^2
 
   # Fill i-th row with site i variance along each axis
   varrows_ca[i, ] <- 1/(2*lambda*mu)*((1/yi_[i])*sumCj - lambda*as.numeric(Li)^2)
@@ -694,16 +694,16 @@ all(varrows_ca/varrows_ade4 - 1 < zero)
 We can also compute the covariance using CA coordinates:
 
 $$
-c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} a_k(j) a_l(j) - \sqrt{\lambda_k \lambda_l} b_k(i)b_l(i) \right)
+c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} v^\star_k(j) v^\star_l(j) - \sqrt{\lambda_k \lambda_l} u^\star_k(i)u^\star_l(i) \right)
 $$
 
 We will use the same values as above for $k$ and $l$: $k =$ `r k` and $l =$ `r l`.
 
 ```{r}
-# Each site is multiplied by its score (Y*A[, k] by column) and then summed per site
-sum_per_site <- rowSums(Y %*% diag(A[, k]) %*% diag(A[, l]))
+# Each site is multiplied by its score (Y*Vstar[, k] by column) and then summed per site
+sum_per_site <- rowSums(Y %*% diag(Vstar[, k]) %*% diag(Vstar[, l]))
 
-covrows_ca_kl <- 1/(2*sqrt(lambda[k]*lambda[l])*sqrt(mu[k]*mu[l]))*(1/yi_*sum_per_site - sqrt(lambda[k]*lambda[l])*B[, k]*B[, l])
+covrows_ca_kl <- 1/(2*sqrt(lambda[k]*lambda[l])*sqrt(mu[k]*mu[l]))*(1/yi_*sum_per_site - sqrt(lambda[k]*lambda[l])*Ustar[, k]*Ustar[, l])
 ```
 
 Check that the CA formulas give the same result as the weighted covariance of correspondences:
@@ -719,7 +719,7 @@ all(covrows_ca_kl/covrows_kl2 - 1 < zero)
 Similarly, column statistics can be computed from CA with the following formulas:
 
 $$
-m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} a_k(j)
+m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} v^\star_k(j)
 $$
 ```{r}
 mcols_ca <- sweep(ca$co, 2, sqrt(mu)/sqrt(2*lambda), "*")
@@ -729,7 +729,7 @@ all(mcols_ca/mcols_ade4 - 1 < zero)
 ```
 
 $$
-s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} b_k^2(i) \right) - \lambda_k a_k^2(j) \right)
+s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_k(i)}^2 \right) - \lambda_k {v^\star_k(j)}^2 \right)
 $$
 
 ```{r}
@@ -738,10 +738,10 @@ varcols_ca <- matrix(nrow = c,
 
 for (j in 1:c) {
   # Get CA scores for species j
-  Cj <- A[j, ]
+  Cj <- Vstar[j, ]
   
   # Compute the part with the sum on Li
-  sumLi <- t(Y[, j]) %*% as.matrix(B)^2
+  sumLi <- t(Y[, j]) %*% as.matrix(Ustar)^2
 
   # Fill i-th row with site i variance along each axis
   varcols_ca[j, ] <- 1/(2*lambda*mu)*((1/y_j[j])*sumLi - lambda*as.numeric(Cj)^2)
@@ -755,17 +755,17 @@ all(varcols_ca[-sp1, ]/varcols_ade4[-sp1, ] - 1 < zero)
 
 
 $$
-c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} b_k(i) b_l(i) - \sqrt{\lambda_k \lambda_l} a_k(j)a_l(j) \right)
+c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} u^\star_k(i) u^\star_l(i) - \sqrt{\lambda_k \lambda_l} v^\star_k(j)v^\star_l(j) \right)
 $$
 
 
 We use the same values of $k =$ `r k` and $l =$ `r l` as above.
 
 ```{r}
-# Each spp is multiplied by its score (Y*B[, k] by row) and then summed per spp
-sum_per_spp <- colSums(diag(B[, k]) %*% diag(B[, l]) %*% Y)
+# Each spp is multiplied by its score (Y*Ustar[, k] by row) and then summed per spp
+sum_per_spp <- colSums(diag(Ustar[, k]) %*% diag(Ustar[, l]) %*% Y)
 
-covcols_kl_ca <- 1/(2*sqrt(lambda[k]*lambda[l])*sqrt(mu[k]*mu[l]))*(1/y_j*sum_per_spp - sqrt(lambda[k]*lambda[l])*A[, k]*A[, l])
+covcols_kl_ca <- 1/(2*sqrt(lambda[k]*lambda[l])*sqrt(mu[k]*mu[l]))*(1/y_j*sum_per_spp - sqrt(lambda[k]*lambda[l])*Vstar[, k]*Vstar[, l])
 ```
 
 ```{r}
@@ -1413,7 +1413,7 @@ With this equality, we can indeed prove numerically the equivalence between mean
 
 ### Mean of means
 
-The reciprocal scaling mean computed with $\frac{\sqrt{\mu_k}}{\sqrt{2 \lambda_k}} a_k(i)$ is the same as the weighted mean of the weighted means $\frac{\sqrt{\mu_k}}{\sqrt{2 \lambda_k}} b_k(j)$, where $j$ is used to index all species occurring in site $i$. So we can interpret species/site-wise means of the $H$ scores as means of means of the other category.
+The reciprocal scaling mean computed with $\frac{\sqrt{\mu_k}}{\sqrt{2 \lambda_k}} v^\star_k(i)$ is the same as the weighted mean of the weighted means $\frac{\sqrt{\mu_k}}{\sqrt{2 \lambda_k}} u^\star_k(j)$, where $j$ is used to index all species occurring in site $i$. So we can interpret species/site-wise means of the $H$ scores as means of means of the other category.
 
 ```{r}
 i <- 1 # site
@@ -1491,11 +1491,11 @@ s.label(h_i,
 
 ### Non-reciprocal score
 
-If we don't wand to find a new common space to plot correspondences in, we can remain in the 2 biplots showing $U$ and $A$ (`co` and `l1`) and $V$ with $B$ (`c1` and `li`).
+If we don't wand to find a new common space to plot correspondences in, we can remain in the 2 biplots showing $U$ and $V^\star$ (`co` and `l1`) and $V$ with $U^\star$ (`c1` and `li`).
 
 To do that, we define the "CA-correspondences" $\tilde{h}_k(i, j)$:
 
-$$\tilde{h}_k(i, j) = \frac{b_k(i) + v_k(j)}{2}$$
+$$\tilde{h}_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}$$
 ```{r}
 # Create duplicated records of the site (one for each species)
 cali_rep <- c()
@@ -1512,7 +1512,7 @@ res <- htilde_mean_i/ca$li[i, ]
 all(res - 1 < zero) # this corresponds to the li
 ```
 
-Below is a graphical demonstration showing the ellipses computed with $\tilde{h}_k(i, j)$. Its mean is surimposed with `li` ($B$) (or it should be, theoretically) and it is similar but smaller than the ellipse computed with `c1`  ($V$):
+Below is a graphical demonstration showing the ellipses computed with $\tilde{h}_k(i, j)$. Its mean is surimposed with `li` ($U^\star$) (or it should be, theoretically) and it is similar but smaller than the ellipse computed with `c1`  ($V$):
 
 
 ```{r}
@@ -1539,6 +1539,6 @@ s.label(ca$li[i, ],
         plabels.col = params$colsite, add = TRUE)
 ```
 If we were to compute these CA correspondences in the other biplot, it would be:
-$$\tilde{h}_k(i, j) = \frac{u_k(i) + a_k(j)}{2}$$
+$$\tilde{h}_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}$$
 
 

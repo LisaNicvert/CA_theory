@@ -30,6 +30,14 @@ source(here("functions/plot.R"))
 library(gridExtra)
 ```
 
+
+```{r}
+#| code-fold: true
+
+# Define bound for comparison to zero
+zero <- 10e-10
+```
+
 ## Introduction
 
 This is an extension of reciprocal scaling defined for correspondence analysis by @thioulouse1992 to canonical correspondence analysis.
@@ -128,14 +136,14 @@ rec_cca[,1:neig]/H
 
 ### From canonical correlation analysis
 
-To perform the canonical correlation analysis, we compute the inflated tables $R$ ($\omega \times l$) and $C$ ($\omega \times c$) from $Y$ ($r \times c$) and $E$ ($r \times l$). The difference with CA is that we use $E$ instead of $Y$ to compute the inflated table $R$. $R$ is equivalent to $E$ where rows of $E$ are duplicated as many times as there are correspondences in $Y$.
+To perform the canonical correlation analysis, we compute the inflated tables $R$ ($n_{\bar{0}} \times l$) and $C$ ($n_{\bar{0}} \times c$) from $Y$ ($r \times c$) and $E$ ($r \times l$). The difference with CA is that we use $E$ instead of $Y$ to compute the inflated table $R$. $R$ is equivalent to $E$ where rows of $E$ are duplicated as many times as there are correspondences in $Y$.
 
 We take the frequency table defined before and use it to compute the inflated tables (with weights):
 
 ```{r}
 # Create indicator tables
 tabR <- acm.disjonctif(as.data.frame(Yfreq0$row))
-tabR <- as.matrix(tabR) %*% as.matrix(E) # duplicate rows of E according th the correspondences of Y
+tabR <- as.matrix(tabR) %*% as.matrix(E) # duplicate rows of E according to the correspondences of Y
 tabC <- acm.disjonctif(as.data.frame(Yfreq0$col))
 colnames(tabC) <- colnames(Y)
 
@@ -145,7 +153,8 @@ wt <- Yfreq0$Freq
 
 Below are the first lines of tables $R$ and $C$:
 
-```{r, echo=FALSE}
+```{r}
+#| code-fold: true
 knitr::kable(head(tabR, 30))
 knitr::kable(head(tabC, 30))
 ```
@@ -181,7 +190,7 @@ scoreRC_scaled <- scalewt(scoreRC, wt = wt)
 
 ```{r}
 # Check result
-all(abs(scoreRC_scaled/H) - 1 < 10e-10)
+all(abs(scoreRC_scaled/H) - 1 < zero)
 ```
 
 ### Plot RC scores
@@ -578,7 +587,7 @@ Similarly we can use this relationship to compute the variance directly from the
 We define the "new" RC score $H2$ in which we replace $LC_k(i)$ with $L_k(i)$. Then, this should help to get the mean for the rows (which are at the mean of the $CC1_k(j)$).
 
 $$
-H2_k(i, j) = \frac{L_k(i) + CC_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+H2_k(i, j) = \frac{L_k(i) + C_k(j)}{\sqrt{2 \lambda_k \mu_k}}
 $$
 
 ```{r}
@@ -637,3 +646,7 @@ varcolsH2 <- varfacwt(H2, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 mcolsH2/cca$co
 varcolsH2/varcolsRC
 ```
+
+
+
+

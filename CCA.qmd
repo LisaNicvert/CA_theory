@@ -20,7 +20,6 @@ library(expm)
 
 # Plots
 source(here("functions/plot.R"))
-library(gridExtra)
 ```
 
 ```{r}
@@ -444,7 +443,7 @@ As with CA, we have scalings type 1, 2 and 3. There are 2 differences with CA:
 
 **Scaling type 1 ($\alpha = 1$)**
 
--   WA scores for rows (sites): $B = U \Lambda^{-1/2}$ (`ls`)
+-   WA scores for rows (sites): $U^\star = U \Lambda^{-1/2}$ (`ls`)
 -   LC scores for rows (sites): $Z_1 = D_r^{-1/2} \hat{P_0} V$ (`li`)
 -   Columns (species) scores: $V = D_c^{-1/2} V_0$ (`c1`)
 -   Variables scores: $BS_1 = E_{stand}^\top D_r Z_{stand} \Lambda^{1/2}$
@@ -453,7 +452,7 @@ As with CA, we have scalings type 1, 2 and 3. There are 2 differences with CA:
 
 -   WA scores for rows (sites): $U = D_r^{-1/2} U_0$ (not computed by ade4: sort of `ls1`, but variance not normed to one)
 -   LC scores for rows (sites): $Z_2 = D_r^{-1/2}\hat{P_0} V \Lambda^{-1/2}$ (`l1`)
--   Columns (species) scores: $A = V \Lambda^{1/2}$ (`co`)
+-   Columns (species) scores: $V^\star = V \Lambda^{1/2}$ (`co`)
 -   Variables scores: $BS_2 = E_{stand}^\top D_r Z_{stand}$
 
 **Scaling type 3 ($\alpha = 1/2$)**
@@ -464,7 +463,7 @@ As with CA, we have scalings type 1, 2 and 3. There are 2 differences with CA:
 -   Variables scores: $BS_3 = E_{stand}' D_r Z_{stand}\Lambda^{1/4}$
 
 
-$A$ (columns/species) and $B$ (rows/sites) correspond to weighted averagings, and cab be computed from $U$ (rows/sites) (resp. $V$ (columns/species)). See @eq-wa-sites and @eq-wa-spp below.
+$V^\star$ (columns/species) and $U^\star$ (rows/sites) correspond to weighted averagings, and cab be computed from $U$ (rows/sites) (resp. $V$ (columns/species)). See @eq-wa-sites and @eq-wa-spp below.
 
 ***How to find the fa (i.e. correlation coefficients for each environmental variable in the multivariate space)??***
 
@@ -556,13 +555,13 @@ all(abs(Zstand2/Zstand - 1) < zero)
 
 Here, $\chi^2$ distances between rows (sites) are preserved they are positioned at the centroid of species. 
 
-+ the rows (sites) scores can be positioned by averaging: $B = U \Lambda^{-1/2}$ (`ls`) or by predicted positions $Z_1 = D_r^{-1/2} \hat{P_0} V$ (`li`)
++ the rows (sites) scores can be positioned by averaging: $U^\star = U \Lambda^{-1/2}$ (`ls`) or by predicted positions $Z_1 = D_r^{-1/2} \hat{P_0} V$ (`li`)
 + the columns (species) scores are positioned at variance 1 $V = D_c^{-1/2} V_0$ (`c1`)
 + the explanatory variable score are $BS_1 = E_{stand}^\top D_r Z_{stand}\Lambda^{1/2}$
 
 ```{r}
 # Rows WA scores
-B <- U %*% diag(lambda^(1/2))
+Ustar <- U %*% diag(lambda^(1/2))
 
 # Variables correlation
 BS1 <- t(Estand) %*% Dr %*% Zstand %*% sqrt(Lambda)
@@ -572,7 +571,7 @@ If we compare to the results obtained with ade4, we can see what each score corr
 
 ```{r}
 all(abs(abs(Z1/cca$li) - 1) < zero) # Predicted sites scores
-all(abs(abs(B/cca$ls) - 1) < zero) # Averaging sites scores
+all(abs(abs(Ustar/cca$ls) - 1) < zero) # Averaging sites scores
 
 all(abs(abs(V/cca$c1) - 1) < zero) # Variance 1 species scores
 
@@ -581,7 +580,7 @@ res <- as.matrix(cca$cor)/(BS1 %*% diag(lambda^(-1/2)) )
 all(abs(abs(res) - 1) < zero)
 ```
 
-We know that $V$/`c1` is of variance 1 (computed above). Below we show that $Z_1$/`li` is of variance $\lambda$ and try to get the variance of $B$/`ls`.
+We know that $V$/`c1` is of variance 1 (computed above). Below we show that $Z_1$/`li` is of variance $\lambda$ and try to get the variance of $U^\star$/`ls`.
 
 ```{r}
 # The CCA weights can be recovered from data (modulo a constant)
@@ -592,15 +591,15 @@ cca$cw/(colSums(Y)/ncol(Y))
 
 ```{r}
 apply(Z1, 2, varwt, wt = cca$lw)/cca$eig # Z1 variance = eigenvalues
-apply(B, 2, varwt, wt = cca$lw)
+apply(Ustar, 2, varwt, wt = cca$lw)
 ```
 
 #### Weighted averaging
 
-Similarly to the [CA case](CA.qmd#weighted-averaging), $B$ (sites coordinates) can be obtained from species coordinates, weighted by the observed data matrix:
+Similarly to the [CA case](CA.qmd#weighted-averaging), $U^\star$ (sites coordinates) can be obtained from species coordinates, weighted by the observed data matrix:
 
 $$
-B = \left\{
+U^\star = \left\{
 \begin{array}{ll}
   D_r^{-1/2} P_0 V_0 \qquad &\text{(from } V_0 \text{)}\\
   D_r^{-1/2} P_0 D_c^{1/2} V \qquad &\text{(from } V \text{)}\\
@@ -611,18 +610,18 @@ $${#eq-wa-sites}
 
 ```{r}
 # With V0
-B_wa <- diag(dr^(-1/2)) %*% P0 %*% V0
-res <- B_wa/B
+Ustar_wa <- diag(dr^(-1/2)) %*% P0 %*% V0
+res <- Ustar_wa/Ustar
 all(res[, 1:neig] - 1 < zero)
 
 # With V
-B_wa_V <- diag(dr^(-1/2)) %*% P0 %*% diag(dc^(1/2)) %*% V
-res <- B_wa_V/B
+Ustar_wa_V <- diag(dr^(-1/2)) %*% P0 %*% diag(dc^(1/2)) %*% V
+res <- Ustar_wa_V/Ustar
 all(res[, 1:neig] - 1 < zero)
 
 # With V and P
-B_wa_legendre <- diag(dr^(-1)) %*% P %*% V
-res <- B_wa_legendre/B
+Ustar_wa_legendre <- diag(dr^(-1)) %*% P %*% V
+res <- Ustar_wa_legendre/Ustar
 all(res[, 1:neig] - 1 < zero)
 ```
 
@@ -667,7 +666,7 @@ We can also plot the weighted averaging sites scores:
 #| code-fold: true
 
 # WA scores
-multiplot(indiv_row = B, indiv_col = V, 
+multiplot(indiv_row = Ustar, indiv_col = V, 
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           var_row = BS1, var_row_lab = colnames(E),
           row_color = params$colsite, col_color = params$colspp,
@@ -698,7 +697,7 @@ Here, $\chi^2$ distances between columns (species) are preserved they are positi
 
 
 + the rows (sites) scores can be $U = D_r^{-1/2} U_0$ (variance 1) or $Z_2 = D_r^{-1/2} \hat{P_0} V_0 \Lambda^{-1/2}$ (`l1`) (predicted sites scores)
-+ the columns (species) scores are $A = V \Lambda^{1/2}$ (`co`) (WA scores from sites latent ordination)
++ the columns (species) scores are $V^\star = V \Lambda^{1/2}$ (`co`) (WA scores from sites latent ordination)
 + the explanatory variable score are $BS_2 = E_{stand}^\top D_r Z_{stand}$
 
 
@@ -707,7 +706,7 @@ Here, $\chi^2$ distances between columns (species) are preserved they are positi
 Z2 <- diag(dr^(-1/2)) %*% P0hat %*% V0 %*% diag(lambda^(-1/2))
 
 # Columns WA scores
-A <- V %*% Lambda^(1/2)
+Vstar <- V %*% Lambda^(1/2)
 
 # Variables correlation
 BS2 <- t(Estand) %*% Dr %*% Zstand
@@ -719,19 +718,19 @@ If we compare to the results obtained with ade4, we can see what each score corr
 ```{r}
 all(abs(abs(Z2/cca$l1) - 1) < zero) # Predicted sites scores of variance 1
 
-# U is not computed by ade4 so we compute it from ls (corresponding to B)
+# U is not computed by ade4 so we compute it from ls (corresponding to Ustar)
 ls1_ade4 <- as.matrix(cca$ls) %*% diag(lambda^(-1/2))
 all(abs(abs(ls1_ade4/U) - 1) < zero)
 
-all(abs(abs(A/cca$co) - 1) < zero) # Averaging column scores
+all(abs(abs(Vstar/cca$co) - 1) < zero) # Averaging column scores
 
 all(abs(abs(cca$cor/BS2) - 1) < zero) # Variables correlations
 ```
 
-Below we show that $A$/`co` is of variance $\lambda$, $Z_2$/`l1` is of variance 1 and try to get the variance of $U$/`ls1`.
+Below we show that $V^\star$/`co` is of variance $\lambda$, $Z_2$/`l1` is of variance 1 and try to get the variance of $U$/`ls1`.
 
 ```{r}
-apply(A, 2, varwt, wt = cca$cw)/cca$eig # A variance = eigenvalues
+apply(Vstar, 2, varwt, wt = cca$cw)/cca$eig # Vstar variance = eigenvalues
 apply(Z2, 2, varwt, wt = cca$lw) # Z variance = 1
 apply(ls1_ade4, 2, varwt, wt = cca$lw) # ?
 ```
@@ -739,10 +738,10 @@ apply(ls1_ade4, 2, varwt, wt = cca$lw) # ?
 
 #### Weighted averaging
 
-$A$ (species coordinates) can be obtained from sites coordinates, weighted by the *predicted* data matrix. Contrary to the [CA case](CA.qmd#weighted-averaging-1), sites coordinates are not weighted by $P_0$ (observed) but by $\hat{P}_0$ (predicted):
+$V^\star$ (species coordinates) can be obtained from sites coordinates, weighted by the *predicted* data matrix. Contrary to the [CA case](CA.qmd#weighted-averaging-1), sites coordinates are not weighted by $P_0$ (observed) but by $\hat{P}_0$ (predicted):
 
 $$
-A = \left\{
+V^\star = \left\{
 \begin{array}{ll}
   D_c^{-1/2} \hat{P}_0^\top U_0 \qquad &\text{(from } U_0 \text{)}\\
   D_c^{-1/2} \hat{P}_0^\top D_r^{1/2} U \qquad &\text{(from } U \text{)}
@@ -752,12 +751,12 @@ $${#eq-wa-spp}
 
 ```{r}
 # U0
-A_wa <- diag(dc^(-1/2)) %*% t(P0hat) %*% U0
-res <- A_wa/A
+Vstar_wa <- diag(dc^(-1/2)) %*% t(P0hat) %*% U0
+res <- Vstar_wa/Vstar
 all(res[, 1:neig] - 1 < zero)
 
-A_wa_U <- diag(dc^(-1/2)) %*% t(P0hat) %*% diag(dr^(1/2)) %*% U
-res <- A_wa_U/A
+Vstar_wa_U <- diag(dc^(-1/2)) %*% t(P0hat) %*% diag(dr^(1/2)) %*% U
+res <- Vstar_wa_U/Vstar
 all(res[, 1:neig] - 1 < zero)
 ```
 
@@ -771,7 +770,7 @@ We can plot the predicted scores for sites (LC scores):
 mult <- 1
 
 # LC scores
-multiplot(indiv_row = Z2, indiv_col = A, 
+multiplot(indiv_row = Z2, indiv_col = Vstar, 
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           var_row = BS2, var_row_lab = colnames(E),
           row_color = params$colsite, col_color = params$colspp,
@@ -803,7 +802,7 @@ We can also plot the sites WA scores $U$:
 #| code-fold: true
 
 # WA scores
-multiplot(indiv_row = U, indiv_col = A, 
+multiplot(indiv_row = U, indiv_col = Vstar, 
           indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
           var_row = BS2, var_row_lab = colnames(E),
           row_color = params$colsite, col_color = params$colspp,
@@ -948,10 +947,10 @@ Warning: in CCA, using noisy or not relevant explanatory variables leads to spur
 
 ### Residual analysis
 
-In order to examinate residuals, a CA can be performed on the table of residuals $P_0_{res}$:
+In order to examinate residuals, a CA can be performed on the table of residuals $P_{\text{res}}$:
 
 $$
-P_{0res} = P_0 - \hat{P}_0
+P_{\text{res}} = P_0 - \hat{P}_0
 $$
 
 ```{r}
