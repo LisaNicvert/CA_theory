@@ -95,13 +95,13 @@ $$
 
 The matrix $V_0$ ($c \times \text{mindim}$) contains the loadings of the columns (species) of the contingency table. There are $\text{mindim} = \min(r-1, c, l)$ non-null eigenvalues.
 
-Then, we can find the loadings rows (sites) $U_0$ ($r \times \text{mindim}$) from the columns (species) loadings using the following formula:
+Then, we can find the rows (sites) observed scores $U_0$ ($r \times \text{mindim}$) from the eigenvectors of the multivariate space using the following formula:
 
 $$
 U_0 = P_0 V_0 \Lambda^{-1/2}
 $$
 
-Here, it is important to note that $U_0$ contains the loadings of the sites computed *from the species ordination*, i.e. the latent ordination of the sites not taking into account the sites variables. The position of the sites taking into account the regression will be defined below in the [scalings](#scaling) section.
+Here, it is important to note that $U_0$ contains the loadings of the sites computed *from the observed data matrix* $P_0$, i.e. the latent ordination of the sites not taking into account the sites variables. The position of the sites taking into account the regression will be defined below in the [scalings](#scaling) section.
 
 
 Finally, we define the following transformations of $U_0$ and $V_0$ ($V_0$ corresponds to `c1`):
@@ -347,7 +347,7 @@ V0 <- eig$vectors[, 1:neig] # We keep only the eigenvectors
 rownames(V0) <- colnames(Y)
 ```
 
-Finally, we can get the ordination of rows (sites) by using the link between rows and columns ordination:
+Finally, we can get the ordination of rows (sites) by projecting the observed values (matrix $P_0$) onto the axes defined by the diagonalization ($V_0$):
 
 $$
 U_0 = P_0 V_0 \Lambda^{-1/2}
@@ -358,7 +358,7 @@ $$
 U0 <- P0 %*% V0 %*% diag(lambda^(-1/2))
 rownames(U0) <- rownames(U0)
 
-dim(U0)
+apply(U0, 2, varfacwt, wt = rowSums(P)) # Norm?
 ```
 
 
@@ -411,13 +411,12 @@ $$
 First, we define the diagonal matrices with rows and columns weights (respectively $D_r$ and $D_c$).
 
 ```{r}
-# Define weights matrices
-Dr <- diag(rowSums(P))
-Dc <- diag(colSums(P))
-
-# Also define a variable for just the sums for easier manipulation
+# Define weights vectors and matrices
 dr <- rowSums(P)
 dc <- colSums(P)
+
+Dr <- diag(dr)
+Dc <- diag(dc)
 ```
 
 ```{r}
@@ -429,36 +428,37 @@ V <- diag(dc^(-1/2)) %*% V0
 ```
 
 ```{r}
-apply(U, 2, varfacwt, wt = dr) # variance?
+apply(U, 2, varfacwt, wt = dr)/lambda # variance larger than lambda, because it contains the residuals of P0hat as well!!
 apply(V, 2, varfacwt, wt = dc) # variance is one
 ```
+
 
 ## Scaling
 
 ::: {.callout-tip title="*TL;DR*"}
 As with CA, we have scalings type 1, 2 and 3. There are 2 differences with CA:
 
-+ For the sites, we have 2 types of scores: the predicted sites scores (LC scores), computed from the regression, and the weighted averages (WA scores), computed from the species scores.
++ For the sites, we have 3 types of scores: the predicted sites scores $Z$ (LC scores), computed from the regression, the "observed" sites scores $U$ computed from the observed data matrix, and the weighted averages $U^\star$ (WA scores), computed from the species scores.
 + There are also scalings for the correlations of the explanatory variables with the axes.
 
 **Scaling type 1 ($\alpha = 1$)**
 
--   WA scores for rows (sites): $U^\star = U \Lambda^{-1/2}$ (`ls`)
--   LC scores for rows (sites): $Z_1 = D_r^{-1/2} \hat{P_0} V$ (`li`)
+-   WA scores for rows (sites): $U^\star = U \Lambda^{1/2}$ (`ls`)
+-   LC scores for rows (sites): $Z_1 = D_r^{-1/2} \hat{P_0} V_0$ (`li`)
 -   Columns (species) scores: $V = D_c^{-1/2} V_0$ (`c1`)
 -   Variables scores: $BS_1 = E_{stand}^\top D_r Z_{stand} \Lambda^{1/2}$
 
 **Scaling type 2 ($\alpha = 0$)**
 
 -   WA scores for rows (sites): $U = D_r^{-1/2} U_0$ (not computed by ade4: sort of `ls1`, but variance not normed to one)
--   LC scores for rows (sites): $Z_2 = D_r^{-1/2}\hat{P_0} V \Lambda^{-1/2}$ (`l1`)
+-   LC scores for rows (sites): $Z_2 = D_r^{-1/2}\hat{P_0} V_0 \Lambda^{-1/2}$ (`l1`)
 -   Columns (species) scores: $V^\star = V \Lambda^{1/2}$ (`co`)
 -   Variables scores: $BS_2 = E_{stand}^\top D_r Z_{stand}$
 
 **Scaling type 3 ($\alpha = 1/2$)**
 
 -   WA scores for rows (sites): $\hat{S}_3 = U \Lambda^{1/4}$
--   LC scores for rows (sites): $Z_3 = D_r^{-1/2}\hat{P_0}U_0 \Lambda^{-1/4}$
+-   LC scores for rows (sites): $Z_3 = D_r^{-1/2}\hat{P_0} V_0 \Lambda^{-1/4}$
 -   Columns (species) scores: $S_3 = V \Lambda^{1/4}$
 -   Variables scores: $BS_3 = E_{stand}' D_r Z_{stand}\Lambda^{1/4}$
 
@@ -490,11 +490,13 @@ The scores for the explanatory variables are computed from matrix $Z_{stand}$: s
 $Z_1$, $Z_2$ or $Z_3$ are defined as some variation of:
 
 $$Z_i = D_r^{-1/2} \hat{P}_0 V_0 \Lambda^\alpha$$
-where $\alpha$ is an exponent equal to 0, -1/2 or -1/4.
+where $\alpha$ is an exponent equal to 0, -1/2 or -1/4. This equation corresponds to the projection of the predicted data matrix $\hat{P}_0$ onto the multivariate space.
 
 ```{r}
 # Compute Z1
 Z1 <- diag(dr^(-1/2)) %*% P0hat %*% V0
+
+apply(Z1, 2, varfacwt)
 
 Z_wt <- E_wt
 Zstand <- scalewt(Z1, wt = Z_wt)
@@ -555,7 +557,7 @@ all(abs(Zstand2/Zstand - 1) < zero)
 
 Here, $\chi^2$ distances between rows (sites) are preserved they are positioned at the centroid of species. 
 
-+ the rows (sites) scores can be positioned by averaging: $U^\star = U \Lambda^{-1/2}$ (`ls`) or by predicted positions $Z_1 = D_r^{-1/2} \hat{P_0} V$ (`li`)
++ the rows (sites) scores can be positioned by averaging: $U^\star = U \Lambda^{1/2}$ (`ls`) or by predicted positions $Z_1 = D_r^{-1/2} \hat{P_0} V_0$ (`li`)
 + the columns (species) scores are positioned at variance 1 $V = D_c^{-1/2} V_0$ (`c1`)
 + the explanatory variable score are $BS_1 = E_{stand}^\top D_r Z_{stand}\Lambda^{1/2}$
 
@@ -579,6 +581,7 @@ all(abs(abs(V/cca$c1) - 1) < zero) # Variance 1 species scores
 res <- as.matrix(cca$cor)/(BS1 %*% diag(lambda^(-1/2)) )
 all(abs(abs(res) - 1) < zero)
 ```
+
 
 We know that $V$/`c1` is of variance 1 (computed above). Below we show that $Z_1$/`li` is of variance $\lambda$ and try to get the variance of $U^\star$/`ls`.
 

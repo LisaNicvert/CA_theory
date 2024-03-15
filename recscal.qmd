@@ -26,6 +26,7 @@ library(expm)
 
 # Plots
 source(here("functions/plot.R"))
+library(CAnetwork)
 library(patchwork)
 ```
 
@@ -1493,52 +1494,111 @@ s.label(h_i,
 
 If we don't wand to find a new common space to plot correspondences in, we can remain in the 2 biplots showing $U$ and $V^\star$ (`co` and `l1`) and $V$ with $U^\star$ (`c1` and `li`).
 
-To do that, we define the "CA-correspondences" $\tilde{h}_k(i, j)$:
 
-$$\tilde{h}_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}$$
+#### H1 for rows niches
+
+To do that, we define the "CA-correspondences" $h1_k(i, j)$ for scaling type 1:
+
+$$h1_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}$$
 ```{r}
-# Create duplicated records of the site (one for each species)
-cali_rep <- c()
-for (jiter in 1:length(j)) {
-  cali_rep <- rbind(cali_rep, ca$li[i, ])
+# Initialize results matrix
+H1 <- matrix(nrow = nrow(Yfreq0), 
+             ncol = length(lambda))
+
+for (k in 1:length(ca$eig)) { # For each axis
+  ind <- 1 # initialize row index
+  for (obs in 1:nrow(Yfreq0)) { # For each observation
+    i <- Yfreq0$row[obs]
+    j <- Yfreq0$col[obs]
+    H1[ind, k] <- (ca$li[i, k] + ca$c1[j, k])/2
+    ind <- ind + 1
+  }
 }
 
-# Compute Htilde for this site
-Htilde <- (ca$c1[j, ] + cali_rep)/2
+corresp <- paste(Yfreq0$row, Yfreq0$col, sep = "-")
+multiplot(indiv_row = as.data.frame(H1), 
+          indiv_row_lab = corresp,
+          row_color = "black")
+```
+```{r}
+# Groupwise mean
+mrows_nr <- meanfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
+mrows_nr/ca$li
+mrows_nr/mrows # It is different from the reciprocal scaling means
 
-htilde_mean_i <- apply(Htilde, 2, 
-                       FUN = meanfacwt, wt = wth)
-res <- htilde_mean_i/ca$li[i, ]
-all(res - 1 < zero) # this corresponds to the li
+# Groupwise variance
+varrows_nr <- varfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
+varrows_nr/varrows # It is different from the reciprocal scaling means
+
+# Plots
+s.class(H1, fac = Yfreq0$row, main = "Non-reciprocal scaling")
+s.class(H, fac = Yfreq0$row, main = "Reciprocal scaling")
 ```
 
-Below is a graphical demonstration showing the ellipses computed with $\tilde{h}_k(i, j)$. Its mean is surimposed with `li` ($U^\star$) (or it should be, theoretically) and it is similar but smaller than the ellipse computed with `c1`  ($V$):
 
+$h1_k(i, j)$ can also be defined from the canonical correlation scores:
+
+$$h1_k(i, j) = \frac{\sqrt{n} (S_R \Lambda^{1/2} + S_C)}{2}$$
+```{r}
+# Find back the formula from the scores 
+H1_cancor <- (sqrt(n)*(scoreR[, 1:(c-1)] %*% diag(lambda^(1/2)) + scoreC))/2
+# H1_cancor_scaled <- scalewt(H1_cancor, wt = wt/sum(wt))
+
+H1_cancor/H1
+```
+
+#### H2 for columns niches
+
+We define the "CA-correspondences" $h2_k(i, j)$ for scaling type 2:
+
+$$h2_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}$$
 
 ```{r}
-#| code-fold: true
-# Get the mean of the c1
-s.class(ca$c1[j, ], 
-        fac = factor(rep(i, nrow(ca$c1[j, ]))),
-        wt = Yfreq0$Freq[Yfreq0$row == i],
-        ppoints.col = "darkgrey",
-        main = "Non-reciprocal scaling")
-s.label(ca$c1[j, ], 
-        plabels.col = params$colspp, 
-        ppoints.col = params$colspp,  
-        plabels.optim = TRUE,
-        add = TRUE)
-# Mean of the Htilde
-s.class(Htilde, 
-        fac = factor(rep(i, nrow(Hsub))),
-        wt = Yfreq0$Freq[Yfreq0$row == i],
-        ppoints.col = "darkorchid",
-        add = TRUE)
-# li
-s.label(ca$li[i, ], 
-        plabels.col = params$colsite, add = TRUE)
+# Initialize results matrix
+H2 <- matrix(nrow = nrow(Yfreq0), 
+             ncol = length(lambda))
+
+for (k in 1:length(ca$eig)) { # For each axis
+  ind <- 1 # initialize row index
+  for (obs in 1:nrow(Yfreq0)) { # For each observation
+    i <- Yfreq0$row[obs]
+    j <- Yfreq0$col[obs]
+    H2[ind, k] <- (ca$l1[i, k] + ca$co[j, k])/2
+    ind <- ind + 1
+  }
+}
+
+corresp <- paste(Yfreq0$row, Yfreq0$col, sep = "-")
+multiplot(indiv_row = as.data.frame(H2), 
+          indiv_row_lab = corresp,
+          row_color = "black")
 ```
-If we were to compute these CA correspondences in the other biplot, it would be:
-$$\tilde{h}_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}$$
+
+```{r}
+# Groupwise mean
+mcols_nr <- meanfacwt(H2, fac = Yfreq0$col, wt = Yfreq0$Freq)
+mcols_nr/ca$co
+mcols_nr/mcols # It is different from the reciprocal scaling means
+
+# Groupwise variance
+varcols_nr <- varfacwt(H1, fac = Yfreq0$col, wt = Yfreq0$Freq)
+varcols_nr/varcols # It is different from the reciprocal scaling means
+
+# Plots
+s.class(H2, fac = Yfreq0$row, main = "Non-reciprocal scaling")
+s.class(H, fac = Yfreq0$row, main = "Reciprocal scaling")
+```
+
+
+$h2_k(i, j)$ can also be defined from the canonical correlation scores:
+
+$$h2_k(i, j) = \frac{\sqrt{n} (S_R + S_C  \Lambda^{1/2})}{2}$$
+
+```{r}
+# Find back the formula from the scores 
+H2_cancor <- (sqrt(n)*(scoreR[, 1:(c-1)] + scoreC %*% diag(lambda^(1/2))))/2
+
+H2_cancor/H2
+```
 
 

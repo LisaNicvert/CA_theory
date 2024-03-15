@@ -123,7 +123,7 @@ There are several ways to perform dc-CA [@terbraak2018], notably:
 
 -   singular value decomposition (the method used here)
 -   an iterative method *à la* reciprocal averaging
--   canonical correlation analysis between $T$ et $E$, weighted by $Y$
+-   canonical correlation analysis between $T$ et $E$, weighted by $P$
 
 ## Computation
 
@@ -131,7 +131,9 @@ There are several ways to perform dc-CA [@terbraak2018], notably:
 
 We define matrix $D$ as: 
 
-$$D = [E_{center}^\top D_r E_{center}]^{-1/2} E_{center}^\top Y T_{center} [T_{center}^\top D_c T_{center}]^{-1/2}$$
+$$D = [E_{center}^\top D_r E_{center}]^{-1/2} E_{center}^\top P T_{center} [T_{center}^\top D_c T_{center}]^{-1/2}$$
+
+*Note: contrary to @terbraak2018, in this document we use the matrice of relative counts $P$ instead of the matrix of absolte counts $Y$.*
 
 We perform the SVD of $D$:
 
@@ -163,8 +165,8 @@ Linear combinations (LC scores) are computed from those coefficients :
 
 Weighted averages (WA scores) are computed from the scores of the **other** individuals:
 
-+ $U^\star = {D_r}^{-1} Y V$ for row (sites) scores 
-+ $V^\star = {D_c}^{-1} Y^\top U$ for column (species) scores
++ $U^\star = {D_r}^{-1} P V$ for row (sites) scores 
++ $V^\star = {D_c}^{-1} P^\top U$ for column (species) scores
 :::
 
 ### Pre-computations
@@ -183,36 +185,35 @@ dcca <- dpcaiv2(dudi = ca,
                 nf = min(k, l))
 ```
 
-Coefficients etc computed with our method are equal to those computed by `ade4`, but we need to multiply them by a scaling factor $\sqrt{y_{\cdot \cdot}}$.
-
-```{r}
-(scaling <- sqrt(sum(Y)))
-```
-
-
 ### Center matrices
 
-First, we need to center the traits and environment matrices (resp. $T_{center}$ and $E_{center}$). To do so, we use the occurrences in matrix $Y$ as weights:
+We define $P$ as the relative counts of $Y$:
+
+```{r}
+P <- Y/sum(Y)
+```
+
+First, we need to center the traits and environment matrices (resp. $T_{center}$ and $E_{center}$). To do so, we use the occurrences in matrix $P$ as weights:
 
 
 ```{r}
-E_wt <- rowSums(Y)/nrow(E)
+E_wt <- rowSums(P)/nrow(E)
 Ecenter <- scalewt(E, wt = E_wt, scale = FALSE)
 
-T_wt <- colSums(Y)/nrow(T_)
+T_wt <- colSums(P)/nrow(T_)
 Tcenter <- scalewt(T_, wt = T_wt, scale = FALSE)
 ```
 
 ```{r}
 # Check centering
-M1 <- matrix(rep(1, nrow(Y)), nrow = 1)
-all(abs(M1 %*% diag(rowSums(Y)) %*% Ecenter) < zero)
+M1 <- matrix(rep(1, nrow(P)), nrow = 1)
+all(abs(M1 %*% diag(rowSums(P)) %*% Ecenter) < zero)
 
-M1 <- matrix(rep(1, ncol(Y)), nrow = 1)
-all(abs(M1 %*% diag(colSums(Y)) %*% Tcenter) < zero)
+M1 <- matrix(rep(1, ncol(P)), nrow = 1)
+all(abs(M1 %*% diag(colSums(P)) %*% Tcenter) < zero)
 ```
 
-This is equivalent to centering "inflated" versions of these matrices matching the occurrence counts in $Y$ (below).
+This is equivalent to centering "inflated" versions of these matrices matching the occurrence counts in $P$ (below).
 
 $$
 E_{center} = E - \bar{E}_{infl} =\left[e_i \sum_i y_{i\cdot}e_i/y_{\cdot\cdot} \right]
@@ -226,22 +227,22 @@ $$
 #| code-fold: true
 
 # Center E -----
-yi_ <- rowSums(Y)
+pi_ <- rowSums(P)
 Ecenter2 <- matrix(nrow = nrow(E), ncol = ncol(E))
 
 for(i in 1:ncol(Ecenter)) {
-  Ecenter2[, i] <- E[, i] - sum(E[, i]*yi_)/sum(Y)
+  Ecenter2[, i] <- E[, i] - sum(E[, i]*pi_)/sum(P)
 }
 # This is the same as computing a mean on inflated data matrix Einfl and centering E with these means
 
 # Center T -----
-y_j <- colSums(Y)
+p_j <- colSums(P)
 Tcenter2 <- matrix(nrow = nrow(T_), ncol = ncol(T_))
 rownames(Tcenter2) <- rownames(T_)
 colnames(Tcenter2) <- colnames(T_)
 
 for(j in 1:ncol(Tcenter)) {
-  Tcenter2[, j] <- T_[, j] - (sum(T_[, j]*y_j)/sum(Y))
+  Tcenter2[, j] <- T_[, j] - (sum(T_[, j]*p_j)/sum(P))
 }
 ```
 
@@ -255,29 +256,25 @@ all(abs(Tcenter/Tcenter2 - 1) < zero)
 
 ### Rationale: regression
 
-Then, we search scores $u$ and $v$ that maximize the fourth-corner correlation $u^\top Y v$ (where $u$ are the sites (rows) scores and $v$ are the species (columns) scores).
+Then, we search scores $u$ and $v$ that maximize the fourth-corner correlation $u^\top P v$ (where $u$ are the sites (rows) scores and $v$ are the species (columns) scores).
 
 In this framework, we define $u$ and $v$ as linear combinations of traits and environmental variables: $u = E_{center}b$ and $v = T_{center}c$. 
 
-So in the end, we need to maximize $u^\top Y v$ with respect to the coefficients vectors $b$ and $c$:
+So in the end, we need to maximize $u^\top P v$ with respect to the coefficients vectors $b$ and $c$:
 
 $$
-\max_{b, c}(u^\top Y v) = \max_{b, c}\left(\left[E_{center}b\right]^\top Y  T_{center}c \right) 
+\max_{b, c}(u^\top P v) = \max_{b, c}\left(\left[E_{center}b\right]^\top P  T_{center}c \right) 
 $$
 
 ::: {.callout-note}
 These equations are written for the first axis, but we can also write them in matrix form:
 
 $$
-\max_{B, C}(U^\top Y V) = \max_{B, C}\left(\left[E_{center}B\right]^\top Y T_{center}C \right) 
+\max_{B, C}(U^\top P V) = \max_{B, C}\left(\left[E_{center}B\right]^\top P T_{center}C \right) 
 $$
 ::: 
 
 We define the diagonal matrices $D_r$ and $D_c$, which contain the column and row sums (respectively). We introduce the following constraint on $U$ and $V$: $u^\top D_r u = 1$ and $v^\top D_c v = 1$. It means that the matrices $U$ and $V$ are orthonormal with respect to the weights $D_r$ and $D_c$. (In fact, these constraints will be relaxed later depending on the scaling (see below)).
-
-::: {.callout-note}
-$D_r$ and $D_c$ are analogous to matrices $D_r$ and $D_c$ defined for CA and CCA, but we use $Y$ instead of $P$ to define the margins. This only changes scores by a constant factor since the relative weights are the same.
-::: 
 
 To find the coefficients $B$ and $C$ defined above, we can perform a SVD or two diagonalizations (see below).
 
@@ -286,13 +283,13 @@ To find the coefficients $B$ and $C$ defined above, we can perform a SVD or two 
 To find the coefficients $B$ and $C$, we perform the SVD of a matrix $D$ defined as:
 
 $$
-D = \underbrace{[E_{center}^\top D_r E_{center}]^{-1/2}}_{L^{-1/2}} \underbrace{E_{center}^\top Y T_{center}}_{R} \underbrace{[T_{center}^\top D_c T_{center}]^{-1/2}}_{K^{-1/2}}
+D = \underbrace{[E_{center}^\top D_r E_{center}]^{-1/2}}_{L^{-1/2}} \underbrace{E_{center}^\top P T_{center}}_{R} \underbrace{[T_{center}^\top D_c T_{center}]^{-1/2}}_{K^{-1/2}}
 $$ 
 
 ```{r}
 # Define weights
-dr <- rowSums(Y)
-dc <- colSums(Y)
+dr <- rowSums(P)
+dc <- colSums(P)
 
 Dr <- diag(dr)
 Dc <- diag(dc)
@@ -301,7 +298,7 @@ Dc <- diag(dc)
 ```{r}
 # Define intermediate matrices
 L <- t(Ecenter) %*% Dr %*% Ecenter
-R <- t(Ecenter) %*% Y %*% Tcenter
+R <- t(Ecenter) %*% P %*% Tcenter
 K <- t(Tcenter) %*% Dc %*% Tcenter
 ```
 
@@ -309,7 +306,7 @@ With our dataset:
 
 ```{r}
 D <- solve(sqrtm(t(Ecenter) %*% Dr %*% Ecenter)) %*%
-  t(Ecenter) %*% Y %*% Tcenter %*%
+  t(Ecenter) %*% P %*% Tcenter %*%
   solve(sqrtm(t(Tcenter) %*% Dc %*% Tcenter))
 ```
 
@@ -345,30 +342,30 @@ Equivalently, we can also diagonalize the matrices $M$ and $M_2$ defined below.
 $M$ is defined as:
 
 $$
-M = [\underbrace{E_{center}^\top D_r E_{center}}_{L} ]^{-1} \underbrace{E_{center}^\top Y T_{center}}_{R} [ \underbrace{T_{center}^\top D_c T_{center}}_{K} ]^{-1} \underbrace{T_{center}^\top Y^\top E_{center}}_{R^\top}
+M = [\underbrace{E_{center}^\top D_r E_{center}}_{L} ]^{-1} \underbrace{E_{center}^\top P T_{center}}_{R} [ \underbrace{T_{center}^\top D_c T_{center}}_{K} ]^{-1} \underbrace{T_{center}^\top P^\top E_{center}}_{R^\top}
 $${#eq-M}
 
 We can also view $M$ as:
 
 $$
-M = \underbrace{\left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top Y T_{center}}_{\hat{E}_{center} = \beta T_{center}} \underbrace{\left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top Y^\top E_{center}}_{\hat{T}_{center} = \gamma E_{center}}
+M = \underbrace{\left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top P T_{center}}_{\hat{E}_{center} = \beta T_{center}} \underbrace{\left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top P^\top E_{center}}_{\hat{T}_{center} = \gamma E_{center}}
 $$
 
-where $\hat{E}_{center}$ is the predicted values of *sites* variables from *species* traits. Reciprocally, $\hat{T}_{center}$ is the predicted values of *species* traits from *sites* variables. $\beta$ and $\gamma$ are the vectors of the regression coefficients. From @eq-M, we have $\beta = \left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top Y$ and $\gamma = \left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top Y^\top$.
+where $\hat{E}_{center}$ is the predicted values of *sites* variables from *species* traits. Reciprocally, $\hat{T}_{center}$ is the predicted values of *species* traits from *sites* variables. $\beta$ and $\gamma$ are the vectors of the regression coefficients. From @eq-M, we have $\beta = \left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top P$ and $\gamma = \left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top P^\top$.
 
 ```{r}
-M <- solve(t(Ecenter) %*% Dr %*% Ecenter) %*% t(Ecenter) %*% Y %*% Tcenter %*% solve(t(Tcenter) %*% Dc %*% Tcenter) %*% t(Tcenter) %*% t(Y) %*% Ecenter
+M <- solve(t(Ecenter) %*% Dr %*% Ecenter) %*% t(Ecenter) %*% P %*% Tcenter %*% solve(t(Tcenter) %*% Dc %*% Tcenter) %*% t(Tcenter) %*% t(P) %*% Ecenter
 ```
 
 
 $M_2$ is defined as:
 
 $$
-M_2 = \underbrace{\left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top Y^\top E_{center}}_{\hat{T}_{center} = \gamma E_{center}} \underbrace{\left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top Y T_{center}}_{\hat{E}_{center} = \beta T_{center}}
+M_2 = \underbrace{\left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top P^\top E_{center}}_{\hat{T}_{center} = \gamma E_{center}} \underbrace{\left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top P T_{center}}_{\hat{E}_{center} = \beta T_{center}}
 $$
 
 ```{r}
-M2 <- solve(t(Tcenter) %*% Dc %*% Tcenter) %*% t(Tcenter) %*% t(Y) %*% Ecenter %*% solve(t(Ecenter) %*% Dr %*% Ecenter) %*% t(Ecenter) %*% Y %*% Tcenter 
+M2 <- solve(t(Tcenter) %*% Dc %*% Tcenter) %*% t(Tcenter) %*% t(P) %*% Ecenter %*% solve(t(Ecenter) %*% Dr %*% Ecenter) %*% t(Ecenter) %*% P %*% Tcenter 
 ```
 
 The eigenvectors matrices of these diagonalizations give us $B$ and $C$:
@@ -448,9 +445,19 @@ C <- solve(sqrtm(K)) %*% C0
 apply(B0, 2, function(x) sqrt(sum(x^2))) 
 apply(C0, 2, function(x) sqrt(sum(x^2))) 
 
-# B and C are not
-apply(B, 2, function(x) sqrt(sum(x^2))) 
-apply(C, 2, function(x) sqrt(sum(x^2))) 
+# B and C are normed with L and K
+apply(B, 2, function(x) sqrt(sum(x^2)))
+apply(C, 2, function(x) sqrt(sum(x^2)))
+
+# t(B) L B is the identity matrix
+id_l <- diag(1, nrow = l, ncol = l)
+all(abs((t(B) %*% L %*% B) - id_l) < zero)
+
+# t(C) K C is the identity matrix
+id_c <- diag(c(rep(1, k-1), 0),
+             nrow = k, ncol = k) # Identity minus last vector (zero)
+C_k <- cbind(C, rep(0, k)) # Add null eigenvector
+all(abs(t(C_k) %*% K %*% C_k - id_c) < zero)
 ```
 
 
@@ -466,7 +473,7 @@ Using the coefficients $B$ and $C$, we can now define scores for sites and speci
 U <- Ecenter %*% B
 
 # Check it is the same as ade4 scores
-all(abs(U*scaling/dcca$l1) - 1 < zero)
+all(abs(U/dcca$l1) - 1 < zero)
 ```
 
 
@@ -476,7 +483,7 @@ all(abs(U*scaling/dcca$l1) - 1 < zero)
 V <- Tcenter %*% C
 
 # Check it is the same as ade4 scores
-all(abs(V*scaling/dcca$c1) - 1 < zero)
+all(abs(V/dcca$c1) - 1 < zero)
 ```
 
 
@@ -484,22 +491,22 @@ all(abs(V*scaling/dcca$c1) - 1 < zero)
 
 We can also define species scores as the mean of sites LC scores (and the reverse):
 
-+ sites scores as weighted averages of species scores are $U^\star = D_r^{-1} Y V$
++ sites scores as weighted averages of species scores are $U^\star = D_r^{-1} P V$
 
 ```{r}
-Ustar <- diag(dr^(-1)) %*% Y %*% V
+Ustar <- diag(dr^(-1)) %*% P %*% V
 
 # Check it is the same as ade4 scores
-all(abs(Ustar*scaling/dcca$lsR) - 1 < zero)
+all(abs(Ustar/dcca$lsR) - 1 < zero)
 ```
 
-+ species scores as weighted averages of sites scores are $V^\star = D_c^{-1} Y^\top U$
++ species scores as weighted averages of sites scores are $V^\star = D_c^{-1} P^\top U$
 
 ```{r}
-Vstar <- diag(dc^(-1)) %*% t(Y) %*% U
+Vstar <- diag(dc^(-1)) %*% t(P) %*% U
 
 # Check it is the same as ade4 scores
-all(abs(Vstar*scaling/dcca$lsQ) - 1 < zero)
+all(abs(Vstar/dcca$lsQ) - 1 < zero)
 ```
 
 
@@ -514,8 +521,8 @@ There are two types of coordinates: linear combination scores (LC scores) and we
 
 + the LC scores for rows (sites) are $U_i = E_{center} B \Lambda^{\alpha/2}$
 + the LC scores for columns (species) are $V_i = T_{center}C_i \Lambda^{(1 - \alpha)/2}$
-+ the WA scores for rows (sites) are $U^\star_i = {D_r}^{-1} Y V_i$
-+ the WA scores for columns (species) are $V^\star_i = {D_c}^{-1} Y^\top U_i$
++ the WA scores for rows (sites) are $U^\star_i = {D_r}^{-1} P V_i$
++ the WA scores for columns (species) are $V^\star_i = {D_c}^{-1} P^\top U_i$
 + the correlations with axes for the rows (environmental variables) are $BS_{Bi} = B  \Lambda^{\alpha/2}$
 + the correlations with axes for the columns (species traits) are $BS_{Ci} = C \Lambda^{(\alpha - 1)/2}$
 
@@ -525,8 +532,8 @@ In these formulas, note that the WA scores for one dimension are computed from t
 
 + the LC scores for rows (sites) are $U_1 = E_{center} B \Lambda^{1/2}$
 + the LC scores for columns (species) are $V_1 = T_{center}C$
-+ the WA scores for rows (sites) are $U^\star_1 = {D_r}^{-1} Y V_1$
-+ the WA scores for columns (species) are $V^\star_1 = {D_c}^{-1} Y^\top U_1$
++ the WA scores for rows (sites) are $U^\star_1 = {D_r}^{-1} P V_1$
++ the WA scores for columns (species) are $V^\star_1 = {D_c}^{-1} P^\top U_1$
 + the correlations with axes for the rows (environmental variables) are $BS_{B1} = B  \Lambda^{1/2}$
 + the correlations with axes for the columns (species traits) are $BS_{C1} = C$
 
@@ -535,8 +542,8 @@ In these formulas, note that the WA scores for one dimension are computed from t
 
 + the LC scores for rows (sites) are $U_2 = E_{center} B$
 + the LC scores for columns (species) are $V_2 = T_{center}C \Lambda^{1/2}$
-+ the WA scores for rows (sites) are $U^\star_2 = {D_r}^{-1} Y V_2$
-+ the WA scores for columns (species) are $V^\star_2 = {D_c}^{-1} Y^\top U_2$
++ the WA scores for rows (sites) are $U^\star_2 = {D_r}^{-1} P V_2$
++ the WA scores for columns (species) are $V^\star_2 = {D_c}^{-1} P^\top U_2$
 + the correlations with axes for the rows (environmental variables) are $BS_{B2} = B$
 + the correlations with axes for the columns (species traits) are $BS_{C2} = C  \Lambda^{1/2}$
 
@@ -544,8 +551,8 @@ In these formulas, note that the WA scores for one dimension are computed from t
 
 + the LC scores for rows (sites) are $U_3 = E_{center} B \Lambda^{1/4}$
 + the LC scores for columns (species) are $V_3 = T_{center} C \Lambda^{1/4}$
-+ the WA scores for rows (sites) are $U^\star_3 = {D_r}^{-1} Y V_3$
-+ the WA scores for columns (species) are $V^\star_3 = {D_c}^{-1} Y^\top U_3$
++ the WA scores for rows (sites) are $U^\star_3 = {D_r}^{-1} P V_3$
++ the WA scores for columns (species) are $V^\star_3 = {D_c}^{-1} P^\top U_3$
 + the correlations with axes for the rows (environmental variables) are $BS_{B3} = B \Lambda^{1/4}$
 + the correlations with axes for the columns (species traits) are $BS_{C3} = C \Lambda^{1/4}$
 
@@ -580,8 +587,8 @@ U1 <- Ecenter %*% B %*% Delta # rows
 V1 <- Tcenter %*% C # columns
 
 # WA scores
-Ustar1 <- solve(Dr) %*% Y %*% V1 # rows
-Vstar1 <- solve(Dc) %*% t(Y) %*% U1  # columns
+Ustar1 <- solve(Dr) %*% P %*% V1 # rows
+Vstar1 <- solve(Dc) %*% t(P) %*% U1  # columns
 
 # Variables scores
 BS_B1 <- B %*% Delta
@@ -594,11 +601,11 @@ BS_C1norm <- normalize(BS_C1, 1)
 
 ```{r}
 # Compare results to ade4
-all(abs(U1*scaling/dcca$li) - 1 < zero) # sites LC
-all(abs(V1*scaling/dcca$c1) - 1 < zero) # spp LC
+all(abs(U1/dcca$li) - 1 < zero) # sites LC
+all(abs(V1/dcca$c1) - 1 < zero) # spp LC
 
-all(abs(Ustar1*scaling/dcca$lsR) - 1 < zero) # sites WA
-all(abs(abs(Vstar1*scaling/dcca$lsQ) - 1) < zero) # not stored in ade4
+all(abs(Ustar1/dcca$lsR) - 1 < zero) # sites WA
+all(abs(abs(Vstar1/dcca$lsQ) - 1) < zero) # not stored in ade4
 
 all(abs(BS_B1norm/dcca$corR) - 1 < zero) # not true
 all(abs(BS_C1norm/dcca$corQ) - 1 < zero) # not true, but should be
@@ -610,8 +617,8 @@ all(abs(BS_C1norm/dcca$corQ) - 1 < zero) # not true, but should be
 #| code-fold: true
 
 # LC scores
-glc <- multiplot(indiv_row = U1*scaling, # LC for sites
-                 indiv_col = V1*scaling, # LC1 for spp
+glc <- multiplot(indiv_row = U1, # LC for sites
+                 indiv_col = V1, # LC1 for spp
                  indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
                  # var_row = BS_B1norm, var_row_lab = colnames(E),
                  # var_col = BS_C1norm, var_col_lab = colnames(T_),
@@ -620,8 +627,8 @@ glc <- multiplot(indiv_row = U1*scaling, # LC for sites
   ggtitle("LC scores for sites")
 
 # WA scores
-gwa <- multiplot(indiv_row = Ustar1*scaling, # WA for sites
-                 indiv_col = V1*scaling, # LC1 for spp
+gwa <- multiplot(indiv_row = Ustar1, # WA for sites
+                 indiv_col = V1, # LC1 for spp
                  indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
                  # var_row = BS_B1norm, var_row_lab = colnames(E),
                  # var_col = BS_C1norm, var_col_lab = colnames(T_),
@@ -709,8 +716,8 @@ U2 <- Ecenter %*% B # rows
 V2 <- Tcenter %*% C %*% Delta # columns
 
 # WA scores
-Ustar2 <- solve(Dr) %*% Y %*% V2 # rows
-Vstar2 <- solve(Dc) %*% t(Y) %*% U2 # columns
+Ustar2 <- solve(Dr) %*% P %*% V2 # rows
+Vstar2 <- solve(Dc) %*% t(P) %*% U2 # columns
 
 # Variables scores
 BS_B2 <- B
@@ -722,11 +729,11 @@ BS_C2norm <- normalize(BS_C2, 1)
 ```
 
 ```{r}
-all(abs(U2*scaling/dcca$l1) - 1 < zero) # LC sites
-all(abs(V2*scaling/dcca$co) - 1 < zero) # LC spp
+all(abs(U2/dcca$l1) - 1 < zero) # LC sites
+all(abs(V2/dcca$co) - 1 < zero) # LC spp
 
-all(abs(Vstar2*scaling/dcca$lsQ) - 1 < zero) # WA spp
-all(abs(Ustar2*scaling/dcca$lsR) - 1 < zero) # not stored in ade4
+all(abs(Vstar2/dcca$lsQ) - 1 < zero) # WA spp
+all(abs(Ustar2/dcca$lsR) - 1 < zero) # not stored in ade4
 
 all(abs(BS_B2norm/dcca$corR) - 1 < zero) # Not equal, but should be
 all(abs(BS_C2norm/dcca$corQ) - 1 < zero) # Not equal
@@ -738,7 +745,7 @@ all(abs(BS_C2norm/dcca$corQ) - 1 < zero) # Not equal
 #| code-fold: true
 
 # LC scores
-glc <- multiplot(indiv_row = U2*scaling, indiv_col = V2*scaling, 
+glc <- multiplot(indiv_row = U2, indiv_col = V2, 
                  indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
                  # var_row = BS_B2norm, var_row_lab = colnames(E),
                  # var_col = BS_C2norm, var_col_lab = colnames(T_),
@@ -747,7 +754,7 @@ glc <- multiplot(indiv_row = U2*scaling, indiv_col = V2*scaling,
   ggtitle("LC scores for species")
 
 # WA scores
-gwa <- multiplot(indiv_row = U2*scaling, indiv_col = Vstar2*scaling, 
+gwa <- multiplot(indiv_row = U2, indiv_col = Vstar2, 
                  indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
                  # var_row = BS_B2norm, var_row_lab = colnames(E),
                  # var_col = BS_C2norm, var_col_lab = colnames(T_),
@@ -816,8 +823,8 @@ U3 <- Ecenter %*% B %*% Delta^(1/2) # rows
 V3 <- Tcenter %*% C %*% Delta^(1/2) # columns
 
 # WA scores
-Ustar3 <- solve(Dr) %*% Y %*% V3 # rows
-Vstar3 <- solve(Dc) %*% t(Y) %*% U3 # columns
+Ustar3 <- solve(Dr) %*% P %*% V3 # rows
+Vstar3 <- solve(Dc) %*% t(P) %*% U3 # columns
 
 # Variables scores
 BS_B3 <- B %*% Delta^(1/2)
@@ -834,7 +841,7 @@ BS_C3norm <- normalize(BS_C3, 1)
 #| code-fold: true
 
 # LC scores
-glc <- multiplot(indiv_row = U3*scaling, indiv_col = V3*scaling, 
+glc <- multiplot(indiv_row = U3, indiv_col = V3, 
                  indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
                  # var_row = BS_B3norm, var_row_lab = colnames(E),
                  # var_col = BS_C3norm, var_col_lab = colnames(T_),
@@ -843,7 +850,7 @@ glc <- multiplot(indiv_row = U3*scaling, indiv_col = V3*scaling,
   ggtitle("LC scores")
 
 # WA scores
-gwa <- multiplot(indiv_row = Ustar3*scaling, indiv_col = Vstar3*scaling, 
+gwa <- multiplot(indiv_row = Ustar3, indiv_col = Vstar3, 
                  indiv_row_lab = rownames(Y), indiv_col_lab = colnames(Y), 
                  # var_row = BS_B3norm, var_row_lab = colnames(E),
                  # var_col = BS_C3norm, var_col_lab = colnames(T_),
