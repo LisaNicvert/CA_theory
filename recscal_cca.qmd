@@ -579,20 +579,19 @@ Similarly we can use this relationship to compute the variance directly from the
 
 
 
-## Tests
-
-### Non-reciprocal score
+## Non-reciprocal score
 
 We can remain in the 2 biplots showing $V$ with $U^\star$ (`c1` and `ls`) (scaling type 1 = rows niches) and $U$ and $V^\star$ (`co` and `l1`) (scaling type 2 = column niches).
 
 
-#### H1 for rows niches
+### $H_1$ (scaling type 1, rows niches)
 
 To do that, we define the "CA-correspondences" $h1_k(i, j)$ for scaling type 1:
 
 $$h1_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}$$
 
 ```{r}
+#| code-fold: true
 # Initialize results matrix
 H1 <- matrix(nrow = nrow(Yfreq0), 
              ncol = length(lambda_CCA))
@@ -606,7 +605,11 @@ for (k in 1:length(lambda_CCA)) { # For each axis
     ind <- ind + 1
   }
 }
+```
 
+
+```{r, warning=FALSE}
+#| code-fold: true
 corresp <- paste(Yfreq0$row, Yfreq0$col, sep = "-")
 multiplot(indiv_row = as.data.frame(H1), 
           indiv_row_lab = corresp,
@@ -628,8 +631,11 @@ all(abs(res/varrowsRC) - 1 < zero)
 H1_scaled <- H1 %*% diag(sqrt(2/mu_CCA)) # Factor sqrt(2/mu)
 varrows_nr_scaled <- varfacwt(H1_scaled, fac = Yfreq0$row, wt = Yfreq0$Freq)
 all(abs(varrows_nr_scaled/varrowsRC - 1) < zero)
+```
 
-# Plots
+
+```{r}
+#| code-fold: true
 s.class(H1, 
         fac = Yfreq0$row, plabels.col = params$colsite, 
         main = "Non-reciprocal scaling")
@@ -641,8 +647,8 @@ s.class(H,
 
 $h1_k(i, j)$ can also be defined from the canonical correlation scores:
 
-$$h1_k(i, j) = \frac{\sqrt{n} (R \overline{S_C} + S_C)}{2}$$
-where $R \overline{S_C}$ corresponds to the duplicated version of $\overline{S_C}$, the mean of C-scores by rows.
+$$h1_k(i, j) = \frac{\sqrt{n} (R \bar{S_C} + S_C)}{2}$$
+where $R \bar{S_C}$ corresponds to the duplicated version of $\overline{S_C}$, the mean of C-scores by rows.
 
 ```{r}
 res <- meanfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq) # get the mean of scoreC by row
@@ -656,13 +662,14 @@ H1_cancor <- (sqrt(n)*(scoreRls[, 1:l] + scoreC[, 1:l]))/2
 all(abs(abs(H1_cancor/H1) - 1) < zero)
 ```
 
-#### H2 for columns niches
+### $H_2$ (scaling type 2, columns niches)
 
 We define the "CA-correspondences" $h2_k(i, j)$ for scaling type 2:
 
 $$h2_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}$$
 
 ```{r}
+#| code-fold: true
 # Initialize results matrix
 H2 <- matrix(nrow = nrow(Yfreq0), 
              ncol = length(lambda_CCA))
@@ -676,7 +683,11 @@ for (k in 1:length(lambda_CCA)) { # For each axis
     ind <- ind + 1
   }
 }
+```
 
+
+```{r, warning=FALSE}
+#| code-fold: true
 corresp <- paste(Yfreq0$row, Yfreq0$col, sep = "-")
 multiplot(indiv_row = as.data.frame(H2), 
           indiv_row_lab = corresp,
@@ -693,9 +704,12 @@ all(abs(res/mcolsRC - 1) < zero)
 # Groupwise variance
 varcols_nr <- varfacwt(H2, fac = Yfreq0$col, wt = Yfreq0$Freq)
 varcols_nr_scaled <- varcols_nr %*% diag(2/(mu_CCA)) # factor 2/mu
-all(abs(varcols_nr_scaled/varcolsRC - 1) < zero) 
+all(abs(varcols_nr_scaled/varcolsRC - 1) < zero)
+```
 
-# Plots
+
+```{r}
+#| code-fold: true
 s.class(H2, fac = Yfreq0$row, main = "Non-reciprocal scaling")
 s.class(H, fac = Yfreq0$row, main = "Reciprocal scaling")
 ```

@@ -531,9 +531,9 @@ In these formulas, note that the WA scores for one dimension are computed from t
 
 **Scaling type 1 ($\alpha = 1$)**
 
-+ the LC scores for rows (sites) are $U_1 = E_{center} B \Lambda^{1/2}$
-+ the LC scores for columns (species) are $V_1 = T_{center}C$
-+ the WA scores for rows (sites) are $U^\star_1 = {D_r}^{-1} P V_1$
++ the LC scores for rows (sites) are $U_1 = E_{center} B \Lambda^{1/2}$ (`li`)
++ the LC scores for columns (species) are $V_1 = T_{center}C$ (`c1`)
++ the WA scores for rows (sites) are $U^\star_1 = {D_r}^{-1} P V_1$ (`lsR`)
 + the WA scores for columns (species) are $V^\star_1 = {D_c}^{-1} P^\top U_1$
 + the correlations with axes for the rows (environmental variables) are $BS_{B1} = B  \Lambda^{1/2}$
 + the correlations with axes for the columns (species traits) are $BS_{C1} = C$
@@ -541,10 +541,10 @@ In these formulas, note that the WA scores for one dimension are computed from t
 
 **Scaling type 2 ($\alpha = 0$)**
 
-+ the LC scores for rows (sites) are $U_2 = E_{center} B$
-+ the LC scores for columns (species) are $V_2 = T_{center}C \Lambda^{1/2}$
++ the LC scores for rows (sites) are $U_2 = E_{center} B$ (`l1`)
++ the LC scores for columns (species) are $V_2 = T_{center}C \Lambda^{1/2}$ (`co`)
 + the WA scores for rows (sites) are $U^\star_2 = {D_r}^{-1} P V_2$
-+ the WA scores for columns (species) are $V^\star_2 = {D_c}^{-1} P^\top U_2$
++ the WA scores for columns (species) are $V^\star_2 = {D_c}^{-1} P^\top U_2$ (`lsQ`)
 + the correlations with axes for the rows (environmental variables) are $BS_{B2} = B$
 + the correlations with axes for the columns (species traits) are $BS_{C2} = C  \Lambda^{1/2}$
 
@@ -614,7 +614,12 @@ all(abs(BS_C1norm/dcca$corQ) - 1 < zero) # not true, but should be
 
 #### Plots
 
-```{r, fig.height=6, fig.width=6, warning=FALSE}
+We can either plot:
+
++ sites as $U_1$ (`li`) and species as $V_1$ (`c1`) (left)
++ sites as $U^\star_1$ (`lsR`) and species as $V_1$ (`c1`) (right)
+
+```{r, fig.height=6, fig.width=8, warning=FALSE}
 #| code-fold: true
 
 # LC scores
@@ -625,7 +630,7 @@ glc <- multiplot(indiv_row = U1, # LC for sites
                  # var_col = BS_C1norm, var_col_lab = colnames(T_),
                  row_color = params$colsite, col_color = params$colspp,
                  eig = lambda) +
-  ggtitle("LC scores for sites")
+  ggtitle("Sites LC scores with species\nnormed at 1")
 
 # WA scores
 gwa <- multiplot(indiv_row = Ustar1, # WA for sites
@@ -635,7 +640,7 @@ gwa <- multiplot(indiv_row = Ustar1, # WA for sites
                  # var_col = BS_C1norm, var_col_lab = colnames(T_),
                  row_color = params$colsite, col_color = params$colspp,
                  eig = lambda) +
-  ggtitle("WA scores for sites")
+  ggtitle("Sites LC scores\nwith species\nnormed at 1")
 
 glc + gwa + 
   plot_layout(axis_titles = "collect")
@@ -742,7 +747,12 @@ all(abs(BS_C2norm/dcca$corQ) - 1 < zero) # Not equal
 
 #### Plots
 
-```{r, fig.height=6, fig.width=6, warning=FALSE}
+We can either plot:
+
++ sites as $U_2$ (`l1`) and species as $V_2$ (`co`) (left)
++ sites as $U_2$ (`l1`) and species as $V^\star_2$ (`lsQ`) (right)
+
+```{r, fig.height=6, fig.width=8, warning=FALSE}
 #| code-fold: true
 
 # LC scores
@@ -752,7 +762,7 @@ glc <- multiplot(indiv_row = U2, indiv_col = V2,
                  # var_col = BS_C2norm, var_col_lab = colnames(T_),
                  row_color = params$colsite, col_color = params$colspp,
                  eig = lambda) +
-  ggtitle("LC scores for species")
+  ggtitle("Species LC scores with sites\nnormed at 1")
 
 # WA scores
 gwa <- multiplot(indiv_row = U2, indiv_col = Vstar2, 
@@ -761,7 +771,7 @@ gwa <- multiplot(indiv_row = U2, indiv_col = Vstar2,
                  # var_col = BS_C2norm, var_col_lab = colnames(T_),
                  row_color = params$colsite, col_color = params$colspp,
                  eig = lambda) +
-  ggtitle("WA scores for species")
+  ggtitle("Species WA scores with sites\nnormed at 1")
 
 glc + gwa + 
   plot_layout(axis_titles = "collect")

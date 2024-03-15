@@ -1142,19 +1142,19 @@ M_2 = C \Lambda_c C^{-1}
 <p>In these formulas, note that the WA scores for one dimension are computed from the predicted scores of the other dimension.</p>
 <p><strong>Scaling type 1 (<span class="math inline">\(\alpha = 1\)</span>)</strong></p>
 <ul>
-<li>the LC scores for rows (sites) are <span class="math inline">\(U_1 = E_{center} B \Lambda^{1/2}\)</span></li>
-<li>the LC scores for columns (species) are <span class="math inline">\(V_1 = T_{center}C\)</span></li>
-<li>the WA scores for rows (sites) are <span class="math inline">\(U^\star_1 = {D_r}^{-1} P V_1\)</span></li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(U_1 = E_{center} B \Lambda^{1/2}\)</span> (<code>li</code>)</li>
+<li>the LC scores for columns (species) are <span class="math inline">\(V_1 = T_{center}C\)</span> (<code>c1</code>)</li>
+<li>the WA scores for rows (sites) are <span class="math inline">\(U^\star_1 = {D_r}^{-1} P V_1\)</span> (<code>lsR</code>)</li>
 <li>the WA scores for columns (species) are <span class="math inline">\(V^\star_1 = {D_c}^{-1} P^\top U_1\)</span></li>
 <li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_{B1} = B \Lambda^{1/2}\)</span></li>
 <li>the correlations with axes for the columns (species traits) are <span class="math inline">\(BS_{C1} = C\)</span></li>
 </ul>
 <p><strong>Scaling type 2 (<span class="math inline">\(\alpha = 0\)</span>)</strong></p>
 <ul>
-<li>the LC scores for rows (sites) are <span class="math inline">\(U_2 = E_{center} B\)</span></li>
-<li>the LC scores for columns (species) are <span class="math inline">\(V_2 = T_{center}C \Lambda^{1/2}\)</span></li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(U_2 = E_{center} B\)</span> (<code>l1</code>)</li>
+<li>the LC scores for columns (species) are <span class="math inline">\(V_2 = T_{center}C \Lambda^{1/2}\)</span> (<code>co</code>)</li>
 <li>the WA scores for rows (sites) are <span class="math inline">\(U^\star_2 = {D_r}^{-1} P V_2\)</span></li>
-<li>the WA scores for columns (species) are <span class="math inline">\(V^\star_2 = {D_c}^{-1} P^\top U_2\)</span></li>
+<li>the WA scores for columns (species) are <span class="math inline">\(V^\star_2 = {D_c}^{-1} P^\top U_2\)</span> (<code>lsQ</code>)</li>
 <li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_{B2} = B\)</span></li>
 <li>the correlations with axes for the columns (species traits) are <span class="math inline">\(BS_{C2} = C \Lambda^{1/2}\)</span></li>
 </ul>
@@ -1233,6 +1233,11 @@ M_2 = C \Lambda_c C^{-1}
 </div>
 <section id="plots" class="level4">
 <h4 class="anchored" data-anchor-id="plots">Plots</h4>
+<p>We can either plot:</p>
+<ul>
+<li>sites as <span class="math inline">\(U_1\)</span> (<code>li</code>) and species as <span class="math inline">\(V_1\)</span> (<code>c1</code>) (left)</li>
+<li>sites as <span class="math inline">\(U^\star_1\)</span> (<code>lsR</code>) and species as <span class="math inline">\(V_1\)</span> (<code>c1</code>) (right)</li>
+</ul>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -1244,7 +1249,7 @@ M_2 = C \Lambda_c C^{-1}
 <span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C1norm, var_col_lab = colnames(T_),</span></span>
 <span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
 <span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"LC scores for sites"</span>)</span>
+<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Sites LC scores with species</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
 <span id="cb87-10"><a href="#cb87-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb87-11"><a href="#cb87-11" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
 <span id="cb87-12"><a href="#cb87-12" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Ustar1, <span class="co"># WA for sites</span></span>
@@ -1254,13 +1259,13 @@ M_2 = C \Lambda_c C^{-1}
 <span id="cb87-16"><a href="#cb87-16" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C1norm, var_col_lab = colnames(T_),</span></span>
 <span id="cb87-17"><a href="#cb87-17" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
 <span id="cb87-18"><a href="#cb87-18" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb87-19"><a href="#cb87-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"WA scores for sites"</span>)</span>
+<span id="cb87-19"><a href="#cb87-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Sites LC scores</span><span class="sc">\n</span><span class="st">with species</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
 <span id="cb87-20"><a href="#cb87-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb87-21"><a href="#cb87-21" aria-hidden="true" tabindex="-1"></a>glc <span class="sc">+</span> gwa <span class="sc">+</span> </span>
 <span id="cb87-22"><a href="#cb87-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">"collect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-33-1.png" class="img-fluid" width="576"></p>
+<p><img src="dcCA_files/figure-html/unnamed-chunk-33-1.png" class="img-fluid" width="768"></p>
 </div>
 <details>
 <summary>Code</summary>
@@ -1272,7 +1277,7 @@ M_2 = C \Lambda_c C^{-1}
 <span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-33-2.png" class="img-fluid" width="576"></p>
+<p><img src="dcCA_files/figure-html/unnamed-chunk-33-2.png" class="img-fluid" width="768"></p>
 </div>
 </div>
 <p>On this plot, we can interpret 5 sets of pairs:</p>
@@ -1392,6 +1397,11 @@ M_2 = C \Lambda_c C^{-1}
 </div>
 <section id="plots-1" class="level4">
 <h4 class="anchored" data-anchor-id="plots-1">Plots</h4>
+<p>We can either plot:</p>
+<ul>
+<li>sites as <span class="math inline">\(U_2\)</span> (<code>l1</code>) and species as <span class="math inline">\(V_2\)</span> (<code>co</code>) (left)</li>
+<li>sites as <span class="math inline">\(U_2\)</span> (<code>l1</code>) and species as <span class="math inline">\(V^\star_2\)</span> (<code>lsQ</code>) (right)</li>
+</ul>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -1402,7 +1412,7 @@ M_2 = C \Lambda_c C^{-1}
 <span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C2norm, var_col_lab = colnames(T_),</span></span>
 <span id="cb105-6"><a href="#cb105-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
 <span id="cb105-7"><a href="#cb105-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb105-8"><a href="#cb105-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"LC scores for species"</span>)</span>
+<span id="cb105-8"><a href="#cb105-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Species LC scores with sites</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
 <span id="cb105-9"><a href="#cb105-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb105-10"><a href="#cb105-10" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
 <span id="cb105-11"><a href="#cb105-11" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U2, <span class="at">indiv_col =</span> Vstar2, </span>
@@ -1411,13 +1421,13 @@ M_2 = C \Lambda_c C^{-1}
 <span id="cb105-14"><a href="#cb105-14" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C2norm, var_col_lab = colnames(T_),</span></span>
 <span id="cb105-15"><a href="#cb105-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
 <span id="cb105-16"><a href="#cb105-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb105-17"><a href="#cb105-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"WA scores for species"</span>)</span>
+<span id="cb105-17"><a href="#cb105-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Species WA scores with sites</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
 <span id="cb105-18"><a href="#cb105-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb105-19"><a href="#cb105-19" aria-hidden="true" tabindex="-1"></a>glc <span class="sc">+</span> gwa <span class="sc">+</span> </span>
 <span id="cb105-20"><a href="#cb105-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">"collect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid" width="576"></p>
+<p><img src="dcCA_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid" width="768"></p>
 </div>
 <details>
 <summary>Code</summary>
@@ -1429,7 +1439,7 @@ M_2 = C \Lambda_c C^{-1}
 <span id="cb106-6"><a href="#cb106-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-37-2.png" class="img-fluid" width="576"></p>
+<p><img src="dcCA_files/figure-html/unnamed-chunk-37-2.png" class="img-fluid" width="768"></p>
 </div>
 </div>
 <p><strong>There is no interpretation for species - species traits (<span class="math inline">\(V_2\)</span> - <span class="math inline">\(BS_{C2}\)</span>).</strong></p>

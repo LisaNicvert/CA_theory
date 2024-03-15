@@ -213,13 +213,10 @@ div.csl-indent {
   <li><a href="#scorer-1" id="toc-scorer-1" class="nav-link" data-scroll-target="#scorer-1">scoreR</a></li>
   </ul></li>
   </ul></li>
-  <li><a href="#tests" id="toc-tests" class="nav-link" data-scroll-target="#tests">Tests</a>
-  <ul>
   <li><a href="#non-reciprocal-score" id="toc-non-reciprocal-score" class="nav-link" data-scroll-target="#non-reciprocal-score">Non-reciprocal score</a>
   <ul>
-  <li><a href="#h1-for-rows-niches" id="toc-h1-for-rows-niches" class="nav-link" data-scroll-target="#h1-for-rows-niches">H1 for rows niches</a></li>
-  <li><a href="#h2-for-columns-niches" id="toc-h2-for-columns-niches" class="nav-link" data-scroll-target="#h2-for-columns-niches">H2 for columns niches</a></li>
-  </ul></li>
+  <li><a href="#h_1-scaling-type-1-rows-niches" id="toc-h_1-scaling-type-1-rows-niches" class="nav-link" data-scroll-target="#h_1-scaling-type-1-rows-niches"><span class="math inline">\(H_1\)</span> (scaling type 1, rows niches)</a></li>
+  <li><a href="#h_2-scaling-type-2-columns-niches" id="toc-h_2-scaling-type-2-columns-niches" class="nav-link" data-scroll-target="#h_2-scaling-type-2-columns-niches"><span class="math inline">\(H_2\)</span> (scaling type 2, columns niches)</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -2352,16 +2349,16 @@ sp22     1     1     1    -1     1     1</code></pre>
 </section>
 </section>
 </section>
-<section id="tests" class="level2">
-<h2 class="anchored" data-anchor-id="tests">Tests</h2>
-<section id="non-reciprocal-score" class="level3">
-<h3 class="anchored" data-anchor-id="non-reciprocal-score">Non-reciprocal score</h3>
+<section id="non-reciprocal-score" class="level2">
+<h2 class="anchored" data-anchor-id="non-reciprocal-score">Non-reciprocal score</h2>
 <p>We can remain in the 2 biplots showing <span class="math inline">\(V\)</span> with <span class="math inline">\(U^\star\)</span> (<code>c1</code> and <code>ls</code>) (scaling type 1 = rows niches) and <span class="math inline">\(U\)</span> and <span class="math inline">\(V^\star\)</span> (<code>co</code> and <code>l1</code>) (scaling type 2 = column niches).</p>
-<section id="h1-for-rows-niches" class="level4">
-<h4 class="anchored" data-anchor-id="h1-for-rows-niches">H1 for rows niches</h4>
+<section id="h_1-scaling-type-1-rows-niches" class="level3">
+<h3 class="anchored" data-anchor-id="h_1-scaling-type-1-rows-niches"><span class="math inline">\(H_1\)</span> (scaling type 1, rows niches)</h3>
 <p>To do that, we define the “CA-correspondences” <span class="math inline">\(h1_k(i, j)\)</span> for scaling type 1:</p>
 <p><span class="math display">\[h1_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}\]</span></p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize results matrix</span></span>
 <span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>H1 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(Yfreq0), </span>
 <span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">ncol =</span> <span class="fu">length</span>(lambda_CCA))</span>
@@ -2374,18 +2371,19 @@ sp22     1     1     1    -1     1     1</code></pre>
 <span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>    H1[ind, k] <span class="ot">&lt;-</span> (cca<span class="sc">$</span>ls[i, k] <span class="sc">+</span> cca<span class="sc">$</span>c1[j, k])<span class="sc">/</span><span class="dv">2</span></span>
 <span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a>    ind <span class="ot">&lt;-</span> ind <span class="sc">+</span> <span class="dv">1</span></span>
 <span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a>corresp <span class="ot">&lt;-</span> <span class="fu">paste</span>(Yfreq0<span class="sc">$</span>row, Yfreq0<span class="sc">$</span>col, <span class="at">sep =</span> <span class="st">"-"</span>)</span>
-<span id="cb69-16"><a href="#cb69-16" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> <span class="fu">as.data.frame</span>(H1), </span>
-<span id="cb69-17"><a href="#cb69-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> corresp,</span>
-<span id="cb69-18"><a href="#cb69-18" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> <span class="st">"black"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: ggrepel: 173 unlabeled data points (too many overlaps). Consider
-increasing max.overlaps</code></pre>
+<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>corresp <span class="ot">&lt;-</span> <span class="fu">paste</span>(Yfreq0<span class="sc">$</span>row, Yfreq0<span class="sc">$</span>col, <span class="at">sep =</span> <span class="st">"-"</span>)</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> <span class="fu">as.data.frame</span>(H1), </span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> corresp,</span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> <span class="st">"black"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
-<p><img src="recscal_cca_files/figure-html/unnamed-chunk-47-1.png" class="img-fluid" width="672"></p>
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-48-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="cell">
@@ -2419,22 +2417,29 @@ increasing max.overlaps</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H1, </span>
-<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite, </span>
-<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"Non-reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="recscal_cca_files/figure-html/unnamed-chunk-48-1.png" class="img-fluid" width="672"></p>
 </div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H1, </span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite, </span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"Non-reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-50-1.png" class="img-fluid" width="672"></p>
+</div>
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H,</span>
 <span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite, </span>
 <span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"Reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
-<p><img src="recscal_cca_files/figure-html/unnamed-chunk-48-2.png" class="img-fluid" width="672"></p>
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-50-2.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p><span class="math inline">\(h1_k(i, j)\)</span> can also be defined from the canonical correlation scores:</p>
-<p><span class="math display">\[h1_k(i, j) = \frac{\sqrt{n} (R \overline{S_C} + S_C)}{2}\]</span> where <span class="math inline">\(R \overline{S_C}\)</span> corresponds to the duplicated version of <span class="math inline">\(\overline{S_C}\)</span>, the mean of C-scores by rows.</p>
+<p><span class="math display">\[h1_k(i, j) = \frac{\sqrt{n} (R \bar{S_C} + S_C)}{2}\]</span> where <span class="math inline">\(R \bar{S_C}\)</span> corresponds to the duplicated version of <span class="math inline">\(\overline{S_C}\)</span>, the mean of C-scores by rows.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">meanfacwt</span>(scoreC, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq) <span class="co"># get the mean of scoreC by row</span></span>
 <span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>tabR <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">acm.disjonctif</span>(<span class="fu">as.data.frame</span>(Yfreq0<span class="sc">$</span>row)))</span>
@@ -2450,11 +2455,13 @@ increasing max.overlaps</code></pre>
 </div>
 </div>
 </section>
-<section id="h2-for-columns-niches" class="level4">
-<h4 class="anchored" data-anchor-id="h2-for-columns-niches">H2 for columns niches</h4>
+<section id="h_2-scaling-type-2-columns-niches" class="level3">
+<h3 class="anchored" data-anchor-id="h_2-scaling-type-2-columns-niches"><span class="math inline">\(H_2\)</span> (scaling type 2, columns niches)</h3>
 <p>We define the “CA-correspondences” <span class="math inline">\(h2_k(i, j)\)</span> for scaling type 2:</p>
 <p><span class="math display">\[h2_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}\]</span></p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize results matrix</span></span>
 <span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>H2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(Yfreq0), </span>
 <span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">ncol =</span> <span class="fu">length</span>(lambda_CCA))</span>
@@ -2467,18 +2474,19 @@ increasing max.overlaps</code></pre>
 <span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a>    H2[ind, k] <span class="ot">&lt;-</span> (cca<span class="sc">$</span>l1[i, k] <span class="sc">+</span> cca<span class="sc">$</span>co[j, k])<span class="sc">/</span><span class="dv">2</span></span>
 <span id="cb83-11"><a href="#cb83-11" aria-hidden="true" tabindex="-1"></a>    ind <span class="ot">&lt;-</span> ind <span class="sc">+</span> <span class="dv">1</span></span>
 <span id="cb83-12"><a href="#cb83-12" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb83-13"><a href="#cb83-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb83-14"><a href="#cb83-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb83-15"><a href="#cb83-15" aria-hidden="true" tabindex="-1"></a>corresp <span class="ot">&lt;-</span> <span class="fu">paste</span>(Yfreq0<span class="sc">$</span>row, Yfreq0<span class="sc">$</span>col, <span class="at">sep =</span> <span class="st">"-"</span>)</span>
-<span id="cb83-16"><a href="#cb83-16" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> <span class="fu">as.data.frame</span>(H2), </span>
-<span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> corresp,</span>
-<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> <span class="st">"black"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: ggrepel: 122 unlabeled data points (too many overlaps). Consider
-increasing max.overlaps</code></pre>
+<span id="cb83-13"><a href="#cb83-13" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>corresp <span class="ot">&lt;-</span> <span class="fu">paste</span>(Yfreq0<span class="sc">$</span>row, Yfreq0<span class="sc">$</span>col, <span class="at">sep =</span> <span class="st">"-"</span>)</span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> <span class="fu">as.data.frame</span>(H2), </span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> corresp,</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> <span class="st">"black"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
-<p><img src="recscal_cca_files/figure-html/unnamed-chunk-50-1.png" class="img-fluid" width="672"></p>
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-53-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="cell">
@@ -2496,18 +2504,25 @@ increasing max.overlaps</code></pre>
 <div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Groupwise variance</span></span>
 <span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>varcols_nr <span class="ot">&lt;-</span> <span class="fu">varfacwt</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>col, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
 <span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>varcols_nr_scaled <span class="ot">&lt;-</span> varcols_nr <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="dv">2</span><span class="sc">/</span>(mu_CCA)) <span class="co"># factor 2/mu</span></span>
-<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(varcols_nr_scaled<span class="sc">/</span>varcolsRC <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(varcols_nr_scaled<span class="sc">/</span>varcolsRC <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] NA</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
-<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">main =</span> <span class="st">"Non-reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="recscal_cca_files/figure-html/unnamed-chunk-51-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">main =</span> <span class="st">"Reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">main =</span> <span class="st">"Non-reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
-<p><img src="recscal_cca_files/figure-html/unnamed-chunk-51-2.png" class="img-fluid" width="672"></p>
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-55-1.png" class="img-fluid" width="672"></p>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">main =</span> <span class="st">"Reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-55-2.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p><span class="math inline">\(h2_k(i, j)\)</span> can also be defined from the canonical correlation scores:</p>
@@ -2524,7 +2539,6 @@ increasing max.overlaps</code></pre>
 
 
 
-</section>
 </section>
 </section>
 

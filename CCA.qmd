@@ -632,7 +632,9 @@ all(res[, 1:neig] - 1 < zero)
 
 #### Plots
 
-We can plot the predicted scores for sites (LC scores):
+In these plots, we use $V$/`c1` for species coordinates.
+
+For sites, we can plot the predicted scores for sites (LC scores = $Z_1$/`li`):
 
 ```{r, warning=FALSE}
 #| code-fold: true
@@ -646,7 +648,7 @@ multiplot(indiv_row = Z1, indiv_col = V,
           row_color = params$colsite, col_color = params$colspp,
           mult = mult,
           eig = lambda) +
-  ggtitle("LC scores for sites")
+  ggtitle("LC scores for sites and species\nnormed at 1")
 ```
 
 
@@ -657,7 +659,7 @@ s.label(cca$c1, # Species constrained at variance 1
         plabels.optim = TRUE,
         plabels.col  = params$colspp,
         ppoints.col = params$colspp,
-        main = "LC scores for sites")
+        main = "LC scores for sites and species\nnormed at 1")
 s.label(cca$li, # Predicted sites scores
         plabels.optim = TRUE,
         plabels.col  = params$colsite,
@@ -665,7 +667,7 @@ s.label(cca$li, # Predicted sites scores
         add = TRUE)
 ```
 
-We can also plot the weighted averaging sites scores:
+We can also plot the WA scores for sites ($U^\star$/`ls`):
 
 ```{r, warning=FALSE}
 #| code-fold: true
@@ -677,7 +679,7 @@ multiplot(indiv_row = Ustar, indiv_col = V,
           row_color = params$colsite, col_color = params$colspp,
           mult = mult,
           eig = lambda) +
-  ggtitle("WA scores for sites")
+  ggtitle("WA scores for sites and species\nnormed at 1")
 ```
 
 ```{r}
@@ -687,7 +689,7 @@ s.label(cca$c1, # Species constrained at variance 1
         plabels.optim = TRUE,
         plabels.col  = params$colspp,
         ppoints.col = params$colspp,
-        main = "WA scores for sites")
+        main = "WA scores for sites and species\nnormed at 1")
 s.label(cca$ls, # WA sites scores
         plabels.optim = TRUE,
         plabels.col  = params$colsite,
@@ -767,7 +769,10 @@ all(res[, 1:neig] - 1 < zero)
 
 #### Plots
 
-We can plot the predicted scores for sites (LC scores):
+In these plots, we always use WA scores ($V^\star$/`co`) for the columns.
+
+
+We can plot the columns WA scores ($V^\star$/`co`) with the predicted scores for sites (LC scores) ($Z_2$/`l1`):
 
 ```{r, warning=FALSE}
 #| code-fold: true
@@ -781,7 +786,7 @@ multiplot(indiv_row = Z2, indiv_col = Vstar,
           row_color = params$colsite, col_color = params$colspp,
           mult = mult,
           eig = lambda) +
-  ggtitle("LC scores for sites (variance 1)")
+  ggtitle("Specis WA scores with\nsites LC scores of variance 1")
 ```
 
 ```{r}
@@ -791,7 +796,7 @@ s.label(cca$l1, # Predicted sites scores of variance 1
         plabels.optim = TRUE,
         plabels.col  = params$colsite,
         ppoints.col = params$colsite,
-        main = "LC scores for sites (variance 1)")
+        main = "Specis WA scores with\nsites LC scores of variance 1")
 s.label(cca$co, # Species WA
         plabels.optim = TRUE,
         plabels.col  = params$colspp,
@@ -801,9 +806,9 @@ s.label(cca$co, # Species WA
 s.corcircle(cca$cor)
 ```
 
-We can also plot the sites WA scores $U$:
+We can also plot columns WA scores ($V^\star$/`co`) with the sites observed scores ($U$/"`ls1`" (not computed by ade4)):
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, fig.width=5, fig.height=5}
 #| code-fold: true
 
 # WA scores
@@ -813,19 +818,19 @@ multiplot(indiv_row = U, indiv_col = Vstar,
           row_color = params$colsite, col_color = params$colspp,
           mult = mult,
           eig = lambda) +
-  ggtitle("Sites WA scores (U)")
+  ggtitle("Specis WA scores with\nsites observed scores of variance 1")
 ```
 
-ade4 does not compute the sites WA scores corresponding to $U$, so we compute them below:
+ade4 does not compute the sites observed scores normed at 1 (corresponding to $U$), so we compute them as $\text{ls1} = \text{ls} \Lambda^{-1/2}$:
 
 ```{r}
 #| code-fold: true
-
+as.matrix(cca$ls) %*% diag(lambda^(-1/2))
 s.label(ls1_ade4, # Sites WA scores U
         plabels.optim = TRUE,
         plabels.col  = params$colsite,
         ppoints.col = params$colsite,
-        main = "Sites WA scores (U)")
+        main = "Specis WA scores with\nsites observed scores of variance 1")
 s.label(cca$co, # Species WA
         plabels.optim = TRUE,
         plabels.col  = params$colspp,
