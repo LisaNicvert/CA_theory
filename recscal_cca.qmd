@@ -27,7 +27,8 @@ library(expm)
 
 # Plots
 source(here("functions/plot.R"))
-library(gridExtra)
+# library(gridExtra)
+library(CAnetwork)
 ```
 
 
@@ -582,71 +583,133 @@ Similarly we can use this relationship to compute the variance directly from the
 
 ## Tests
 
-### For rows = sites
+### Non-reciprocal score
 
-We define the "new" RC score $H2$ in which we replace $LC_k(i)$ with $L_k(i)$. Then, this should help to get the mean for the rows (which are at the mean of the $CC1_k(j)$).
+We can remain in the 2 biplots showing $V$ with $U^\star$ (`c1` and `ls`) (scaling type 1 = rows niches) and $U$ and $V^\star$ (`co` and `l1`) (scaling type 2 = column niches).
 
-$$
-H2_k(i, j) = \frac{L_k(i) + C_k(j)}{\sqrt{2 \lambda_k \mu_k}}
-$$
+
+#### H1 for rows niches
+
+To do that, we define the "CA-correspondences" $h1_k(i, j)$ for scaling type 1:
+
+$$h1_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}$$
+
+```{r}
+# Initialize results matrix
+H1 <- matrix(nrow = nrow(Yfreq0), 
+             ncol = length(lambda_CCA))
+
+for (k in 1:length(lambda_CCA)) { # For each axis
+  ind <- 1 # initialize row index
+  for (obs in 1:nrow(Yfreq0)) { # For each observation
+    i <- Yfreq0$row[obs]
+    j <- Yfreq0$col[obs]
+    H1[ind, k] <- (cca$ls[i, k] + cca$c1[j, k])/2
+    ind <- ind + 1
+  }
+}
+
+corresp <- paste(Yfreq0$row, Yfreq0$col, sep = "-")
+multiplot(indiv_row = as.data.frame(H1), 
+          indiv_row_lab = corresp,
+          row_color = "black")
+```
+
+```{r}
+# Groupwise mean
+mrows_nr <- meanfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
+all(abs(abs(mrows_nr/cca$ls) - 1) < zero)
+head(mrows_nr/mrowsRC) # It is different from the reciprocal scaling means
+
+# Groupwise variance
+varrows_nr <- varfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
+res <- varrows_nr %*% diag(2/mu_CCA) # Factor 2/mu
+all(abs(res/varrowsRC) - 1 < zero)
+
+# We could also multiply H1 before computing the variance
+H1_scaled <- H1 %*% diag(sqrt(2/mu_CCA)) # Factor sqrt(2/mu)
+varrows_nr_scaled <- varfacwt(H1_scaled, fac = Yfreq0$row, wt = Yfreq0$Freq)
+all(abs(varrows_nr_scaled/varrowsRC - 1) < zero)
+
+# Plots
+s.class(H1, 
+        fac = Yfreq0$row, plabels.col = params$colsite, 
+        main = "Non-reciprocal scaling")
+s.class(H,
+        fac = Yfreq0$row, plabels.col = params$colsite, 
+        main = "Reciprocal scaling")
+```
+
+
+$h1_k(i, j)$ can also be defined from the canonical correlation scores:
+
+$$h1_k(i, j) = \frac{\sqrt{n} (R \overline{S_C} + S_C)}{2}$$
+where $R \overline{S_C}$ corresponds to the duplicated version of $\overline{S_C}$, the mean of C-scores by rows.
+
+```{r}
+res <- meanfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq) # get the mean of scoreC by row
+tabR <- as.matrix(acm.disjonctif(as.data.frame(Yfreq0$row)))
+scoreRls <- tabR %*% res # Duplicate means according to correspondences of R
+
+# Find back the formula from the scores 
+H1_cancor <- (sqrt(n)*(scoreRls[, 1:l] + scoreC[, 1:l]))/2
+# H1_cancor_scaled <- scalewt(H1_cancor, wt = wt/sum(wt))
+
+all(abs(abs(H1_cancor/H1) - 1) < zero)
+```
+
+#### H2 for columns niches
+
+We define the "CA-correspondences" $h2_k(i, j)$ for scaling type 2:
+
+$$h2_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}$$
 
 ```{r}
 # Initialize results matrix
 H2 <- matrix(nrow = nrow(Yfreq0), 
              ncol = length(lambda_CCA))
 
-for (kl in 1:length(lambda_CCA)) { # For each axis
+for (k in 1:length(lambda_CCA)) { # For each axis
   ind <- 1 # initialize row index
   for (obs in 1:nrow(Yfreq0)) { # For each observation
     i <- Yfreq0$row[obs]
     j <- Yfreq0$col[obs]
-    H2[ind, kl] <- (cca$ls[i, kl] + cca$co[j, kl])/sqrt(2*lambda_CCA[kl]*mu_CCA[kl])
+    H2[ind, k] <- (cca$l1[i, k] + cca$co[j, k])/2
     ind <- ind + 1
   }
 }
+
+corresp <- paste(Yfreq0$row, Yfreq0$col, sep = "-")
+multiplot(indiv_row = as.data.frame(H2), 
+          indiv_row_lab = corresp,
+          row_color = "black")
 ```
 
 ```{r}
-multiplot(indiv_row = H2, 
-          indiv_row_lab = paste0("site ", Yfreq0$row, "/", Yfreq0$col),
-          row_color = "black", eig = lambda_CCA)
+# Groupwise mean
+mcols_nr <- meanfacwt(H2, fac = Yfreq0$col, wt = Yfreq0$Freq)
+all(abs(abs(mcols_nr/cca$co) - 1) < zero)
+res <- mcols_nr %*% diag(sqrt(mu_CCA)/sqrt(2*lambda_CCA)) # factor sqrt(mu)/sqrt(2*lambda)
+all(abs(res/mcolsRC - 1) < zero) 
+
+# Groupwise variance
+varcols_nr <- varfacwt(H2, fac = Yfreq0$col, wt = Yfreq0$Freq)
+varcols_nr_scaled <- varcols_nr %*% diag(2/(mu_CCA)) # factor 2/mu
+all(abs(varcols_nr_scaled/varcolsRC - 1) < zero) 
+
+# Plots
+s.class(H2, fac = Yfreq0$row, main = "Non-reciprocal scaling")
+s.class(H, fac = Yfreq0$row, main = "Reciprocal scaling")
 ```
+
+
+$h2_k(i, j)$ can also be defined from the canonical correlation scores:
+
+$$h2_k(i, j) = \frac{\sqrt{n} (S_R + S_C  \Lambda^{1/2})}{2}$$
 
 ```{r}
-s.class(H2,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$row),
-        ppoints.col = "black",
-        plabels.col = params$colsite, 
-        main = "With H2 score (points = correspondences)")
+# Find back the formula from the scores 
+H2_cancor <- (sqrt(n)*(scoreR[, 1:l] + scoreC[, 1:l] %*% diag(lambda_CCA^(1/2))))/2
+
+all(abs(abs(H2_cancor/H2) - 1) < zero)
 ```
-
-
-We compute the mean and variance per site and compare them to the scores of CCA:
-
-```{r}
-mrowsH2 <- meanfacwt(H2, fac = Yfreq0$row, wt = Yfreq0$Freq)
-
-varrowsH2 <- varfacwt(H2, fac = Yfreq0$row, wt = Yfreq0$Freq)
-```
-
-
-```{r}
-mrowsH2/(as.matrix(cca$ls) %*% diag(sqrt(mu_CCA/(2*lambda_CCA))))
-
-varrowsH2/varrowsRC
-```
-
-However, the mean/variance per species is meaningless here.
-
-```{r}
-mcolsH2 <- meanfacwt(H2, fac = Yfreq0$colind, wt = Yfreq0$Freq)
-varcolsH2 <- varfacwt(H2, fac = Yfreq0$colind, wt = Yfreq0$Freq)
-
-mcolsH2/cca$co
-varcolsH2/varcolsRC
-```
-
-
-
-

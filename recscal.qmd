@@ -1492,7 +1492,7 @@ s.label(h_i,
 
 ### Non-reciprocal score
 
-If we don't wand to find a new common space to plot correspondences in, we can remain in the 2 biplots showing $U$ and $V^\star$ (`co` and `l1`) and $V$ with $U^\star$ (`c1` and `li`).
+If we don't want to find a new common space to plot correspondences in, we can remain in the 2 biplots showing $V$ with $U^\star$ (`c1` and `li`) (scaling type 1 = rows niches) and $U$ and $V^\star$ (`co` and `l1`) (scaling type 2 = columns niches).
 
 
 #### H1 for rows niches
@@ -1505,7 +1505,7 @@ $$h1_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}$$
 H1 <- matrix(nrow = nrow(Yfreq0), 
              ncol = length(lambda))
 
-for (k in 1:length(ca$eig)) { # For each axis
+for (k in 1:length(lambda)) { # For each axis
   ind <- 1 # initialize row index
   for (obs in 1:nrow(Yfreq0)) { # For each observation
     i <- Yfreq0$row[obs]
@@ -1520,15 +1520,23 @@ multiplot(indiv_row = as.data.frame(H1),
           indiv_row_lab = corresp,
           row_color = "black")
 ```
+
 ```{r}
 # Groupwise mean
 mrows_nr <- meanfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
-mrows_nr/ca$li
-mrows_nr/mrows # It is different from the reciprocal scaling means
+all(abs(abs(mrows_nr/ca$li) - 1) < zero)
+res <- mrows_nr %*% diag(sqrt(mu)/sqrt(2*lambda)) # factor sqrt(mu)/sqrt(2*lambda)
+all(abs(res/mrows - 1) < zero) 
 
 # Groupwise variance
 varrows_nr <- varfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
-varrows_nr/varrows # It is different from the reciprocal scaling means
+res <- varrows_nr %*% diag(2/mu) # Factor 2/mu
+all(abs(res/varrows) - 1 < zero)
+
+# We could also multiply H1 before computing the variance
+H1_scaled <- H1 %*% diag(sqrt(2/mu)) # Factor sqrt(2/mu)
+varrows_nr_scaled <- varfacwt(H1_scaled, fac = Yfreq0$row, wt = Yfreq0$Freq)
+all(abs(varrows_nr_scaled/varrows - 1) < zero)
 
 # Plots
 s.class(H1, fac = Yfreq0$row, main = "Non-reciprocal scaling")
@@ -1544,7 +1552,7 @@ $$h1_k(i, j) = \frac{\sqrt{n} (S_R \Lambda^{1/2} + S_C)}{2}$$
 H1_cancor <- (sqrt(n)*(scoreR[, 1:(c-1)] %*% diag(lambda^(1/2)) + scoreC))/2
 # H1_cancor_scaled <- scalewt(H1_cancor, wt = wt/sum(wt))
 
-H1_cancor/H1
+all(abs(abs(H1_cancor/H1) - 1) < zero)
 ```
 
 #### H2 for columns niches
@@ -1558,7 +1566,7 @@ $$h2_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}$$
 H2 <- matrix(nrow = nrow(Yfreq0), 
              ncol = length(lambda))
 
-for (k in 1:length(ca$eig)) { # For each axis
+for (k in 1:length(lambda)) { # For each axis
   ind <- 1 # initialize row index
   for (obs in 1:nrow(Yfreq0)) { # For each observation
     i <- Yfreq0$row[obs]
@@ -1577,12 +1585,15 @@ multiplot(indiv_row = as.data.frame(H2),
 ```{r}
 # Groupwise mean
 mcols_nr <- meanfacwt(H2, fac = Yfreq0$col, wt = Yfreq0$Freq)
-mcols_nr/ca$co
-mcols_nr/mcols # It is different from the reciprocal scaling means
+all(abs(abs(mcols_nr/ca$co) - 1) < zero) # equal to the co
+
+res <- mcols_nr %*% diag(sqrt(mu)/sqrt(2*lambda)) 
+all(abs(res/mcols - 1) < zero) # same as reciprocal scaling by a factor sqrt(mu)/sqrt(2*lambda)
 
 # Groupwise variance
-varcols_nr <- varfacwt(H1, fac = Yfreq0$col, wt = Yfreq0$Freq)
-varcols_nr/varcols # It is different from the reciprocal scaling means
+varcols_nr <- varfacwt(H2, fac = Yfreq0$col, wt = Yfreq0$Freq)
+varcols_nr_scaled <- varcols_nr %*% diag(2/(mu)) # factor 2/mu
+all(abs(varcols_nr_scaled[-sp1, ]/varcols[-sp1, ] - 1) < zero) # same as reciprocal scaling by a factor 2/mu
 
 # Plots
 s.class(H2, fac = Yfreq0$row, main = "Non-reciprocal scaling")
@@ -1598,7 +1609,7 @@ $$h2_k(i, j) = \frac{\sqrt{n} (S_R + S_C  \Lambda^{1/2})}{2}$$
 # Find back the formula from the scores 
 H2_cancor <- (sqrt(n)*(scoreR[, 1:(c-1)] + scoreC %*% diag(lambda^(1/2))))/2
 
-H2_cancor/H2
+all(abs(abs(H2_cancor/H2) - 1) < zero)
 ```
 
 

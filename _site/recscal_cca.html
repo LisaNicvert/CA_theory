@@ -215,7 +215,11 @@ div.csl-indent {
   </ul></li>
   <li><a href="#tests" id="toc-tests" class="nav-link" data-scroll-target="#tests">Tests</a>
   <ul>
-  <li><a href="#for-rows-sites-1" id="toc-for-rows-sites-1" class="nav-link" data-scroll-target="#for-rows-sites-1">For rows = sites</a></li>
+  <li><a href="#non-reciprocal-score" id="toc-non-reciprocal-score" class="nav-link" data-scroll-target="#non-reciprocal-score">Non-reciprocal score</a>
+  <ul>
+  <li><a href="#h1-for-rows-niches" id="toc-h1-for-rows-niches" class="nav-link" data-scroll-target="#h1-for-rows-niches">H1 for rows niches</a></li>
+  <li><a href="#h2-for-columns-niches" id="toc-h2-for-columns-niches" class="nav-link" data-scroll-target="#h2-for-columns-niches">H2 for columns niches</a></li>
+  </ul></li>
   </ul></li>
   </ul>
 </nav>
@@ -261,7 +265,8 @@ div.csl-indent {
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"functions/plot.R"</span>))</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># library(gridExtra)</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(CAnetwork)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -2351,177 +2356,177 @@ sp22     1     1     1    -1     1     1</code></pre>
 </section>
 <section id="tests" class="level2">
 <h2 class="anchored" data-anchor-id="tests">Tests</h2>
-<section id="for-rows-sites-1" class="level3">
-<h3 class="anchored" data-anchor-id="for-rows-sites-1">For rows = sites</h3>
-<p>We define the “new” RC score <span class="math inline">\(H2\)</span> in which we replace <span class="math inline">\(LC_k(i)\)</span> with <span class="math inline">\(L_k(i)\)</span>. Then, this should help to get the mean for the rows (which are at the mean of the <span class="math inline">\(CC1_k(j)\)</span>).</p>
-<p><span class="math display">\[
-H2_k(i, j) = \frac{L_k(i) + C_k(j)}{\sqrt{2 \lambda_k \mu_k}}
-\]</span></p>
+<section id="non-reciprocal-score" class="level3">
+<h3 class="anchored" data-anchor-id="non-reciprocal-score">Non-reciprocal score</h3>
+<p>We can remain in the 2 biplots showing <span class="math inline">\(V\)</span> with <span class="math inline">\(U^\star\)</span> (<code>c1</code> and <code>ls</code>) (scaling type 1 = rows niches) and <span class="math inline">\(U\)</span> and <span class="math inline">\(V^\star\)</span> (<code>co</code> and <code>l1</code>) (scaling type 2 = column niches).</p>
+<section id="h1-for-rows-niches" class="level4">
+<h4 class="anchored" data-anchor-id="h1-for-rows-niches">H1 for rows niches</h4>
+<p>To do that, we define the “CA-correspondences” <span class="math inline">\(h1_k(i, j)\)</span> for scaling type 1:</p>
+<p><span class="math display">\[h1_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}\]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize results matrix</span></span>
-<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>H2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(Yfreq0), </span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>H1 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(Yfreq0), </span>
 <span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">ncol =</span> <span class="fu">length</span>(lambda_CCA))</span>
 <span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (kl <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(lambda_CCA)) { <span class="co"># For each axis</span></span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(lambda_CCA)) { <span class="co"># For each axis</span></span>
 <span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>  ind <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># initialize row index</span></span>
 <span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (obs <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(Yfreq0)) { <span class="co"># For each observation</span></span>
 <span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>    i <span class="ot">&lt;-</span> Yfreq0<span class="sc">$</span>row[obs]</span>
 <span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>    j <span class="ot">&lt;-</span> Yfreq0<span class="sc">$</span>col[obs]</span>
-<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>    H2[ind, kl] <span class="ot">&lt;-</span> (cca<span class="sc">$</span>ls[i, kl] <span class="sc">+</span> cca<span class="sc">$</span>co[j, kl])<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">*</span>lambda_CCA[kl]<span class="sc">*</span>mu_CCA[kl])</span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>    H1[ind, k] <span class="ot">&lt;-</span> (cca<span class="sc">$</span>ls[i, k] <span class="sc">+</span> cca<span class="sc">$</span>c1[j, k])<span class="sc">/</span><span class="dv">2</span></span>
 <span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a>    ind <span class="ot">&lt;-</span> ind <span class="sc">+</span> <span class="dv">1</span></span>
 <span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> H2, </span>
-<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> <span class="fu">paste0</span>(<span class="st">"site "</span>, Yfreq0<span class="sc">$</span>row, <span class="st">"/"</span>, Yfreq0<span class="sc">$</span>col),</span>
-<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> <span class="st">"black"</span>, <span class="at">eig =</span> lambda_CCA)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a>corresp <span class="ot">&lt;-</span> <span class="fu">paste</span>(Yfreq0<span class="sc">$</span>row, Yfreq0<span class="sc">$</span>col, <span class="at">sep =</span> <span class="st">"-"</span>)</span>
+<span id="cb69-16"><a href="#cb69-16" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> <span class="fu">as.data.frame</span>(H1), </span>
+<span id="cb69-17"><a href="#cb69-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> corresp,</span>
+<span id="cb69-18"><a href="#cb69-18" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> <span class="st">"black"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: ggrepel: 188 unlabeled data points (too many overlaps). Consider
+<pre><code>Warning: ggrepel: 186 unlabeled data points (too many overlaps). Consider
 increasing max.overlaps</code></pre>
 </div>
 <div class="cell-output-display">
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-47-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Groupwise mean</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>mrows_nr <span class="ot">&lt;-</span> <span class="fu">meanfacwt</span>(H1, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(mrows_nr<span class="sc">/</span>cca<span class="sc">$</span>ls) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(mrows_nr<span class="sc">/</span>mrowsRC) <span class="co"># It is different from the reciprocal scaling means</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           X1         X2          X3         X4         X5           X6
+1 -1.91923728  0.6120825  0.08846083 -0.2916656  0.4261649 0.9774285987
+2  0.78867737 -0.4889211  0.67852968 -0.4176046  0.7369286 1.6630053256
+3 -0.60324520  1.1089565 -2.31301798 -1.7944394 -0.1852356 0.0005468304
+4  0.02454259  0.4747999  0.54737729 -0.3959762 -0.8024670 0.2321154464
+5  0.07328637  0.2838636  0.02034193 -0.2716035  0.1932532 0.1820447750
+6  0.38184917  0.4689434  0.07004988  0.4690175  0.1447035 0.2326957266</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Groupwise variance</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>varrows_nr <span class="ot">&lt;-</span> <span class="fu">varfacwt</span>(H1, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> varrows_nr <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="dv">2</span><span class="sc">/</span>mu_CCA) <span class="co"># Factor 2/mu</span></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(res<span class="sc">/</span>varrowsRC) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="co"># We could also multiply H1 before computing the variance</span></span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>H1_scaled <span class="ot">&lt;-</span> H1 <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">/</span>mu_CCA)) <span class="co"># Factor sqrt(2/mu)</span></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>varrows_nr_scaled <span class="ot">&lt;-</span> <span class="fu">varfacwt</span>(H1_scaled, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(varrows_nr_scaled<span class="sc">/</span>varrowsRC <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H1, </span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite, </span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"Non-reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
 <p><img src="recscal_cca_files/figure-html/unnamed-chunk-48-1.png" class="img-fluid" width="672"></p>
 </div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H2,</span>
-<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq,</span>
-<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">fac =</span> <span class="fu">as.factor</span>(Yfreq0<span class="sc">$</span>row),</span>
-<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> <span class="st">"black"</span>,</span>
-<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite, </span>
-<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"With H2 score (points = correspondences)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H,</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite, </span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"Reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="recscal_cca_files/figure-html/unnamed-chunk-49-1.png" class="img-fluid" width="672"></p>
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-48-2.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>We compute the mean and variance per site and compare them to the scores of CCA:</p>
+<p><span class="math inline">\(h1_k(i, j)\)</span> can also be defined from the canonical correlation scores:</p>
+<p><span class="math display">\[h1_k(i, j) = \frac{\sqrt{n} (R \overline{S_C} + S_C)}{2}\]</span> where <span class="math inline">\(R \overline{S_C}\)</span> corresponds to the duplicated version of <span class="math inline">\(\overline{S_C}\)</span>, the mean of C-scores by rows.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>mrowsH2 <span class="ot">&lt;-</span> <span class="fu">meanfacwt</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
-<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>varrowsH2 <span class="ot">&lt;-</span> <span class="fu">varfacwt</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">meanfacwt</span>(scoreC, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq) <span class="co"># get the mean of scoreC by row</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>tabR <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">acm.disjonctif</span>(<span class="fu">as.data.frame</span>(Yfreq0<span class="sc">$</span>row)))</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>scoreRls <span class="ot">&lt;-</span> tabR <span class="sc">%*%</span> res <span class="co"># Duplicate means according to correspondences of R</span></span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Find back the formula from the scores </span></span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>H1_cancor <span class="ot">&lt;-</span> (<span class="fu">sqrt</span>(n)<span class="sc">*</span>(scoreRls[, <span class="dv">1</span><span class="sc">:</span>l] <span class="sc">+</span> scoreC[, <span class="dv">1</span><span class="sc">:</span>l]))<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a><span class="co"># H1_cancor_scaled &lt;- scalewt(H1_cancor, wt = wt/sum(wt))</span></span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(H1_cancor<span class="sc">/</span>H1) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+</section>
+<section id="h2-for-columns-niches" class="level4">
+<h4 class="anchored" data-anchor-id="h2-for-columns-niches">H2 for columns niches</h4>
+<p>We define the “CA-correspondences” <span class="math inline">\(h2_k(i, j)\)</span> for scaling type 2:</p>
+<p><span class="math display">\[h2_k(i, j) = \frac{u_k(i) + v^\star_k(j)}{2}\]</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize results matrix</span></span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>H2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(Yfreq0), </span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">ncol =</span> <span class="fu">length</span>(lambda_CCA))</span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(lambda_CCA)) { <span class="co"># For each axis</span></span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a>  ind <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># initialize row index</span></span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (obs <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(Yfreq0)) { <span class="co"># For each observation</span></span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a>    i <span class="ot">&lt;-</span> Yfreq0<span class="sc">$</span>row[obs]</span>
+<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a>    j <span class="ot">&lt;-</span> Yfreq0<span class="sc">$</span>col[obs]</span>
+<span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a>    H2[ind, k] <span class="ot">&lt;-</span> (cca<span class="sc">$</span>l1[i, k] <span class="sc">+</span> cca<span class="sc">$</span>co[j, k])<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb83-11"><a href="#cb83-11" aria-hidden="true" tabindex="-1"></a>    ind <span class="ot">&lt;-</span> ind <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb83-12"><a href="#cb83-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb83-13"><a href="#cb83-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb83-14"><a href="#cb83-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-15"><a href="#cb83-15" aria-hidden="true" tabindex="-1"></a>corresp <span class="ot">&lt;-</span> <span class="fu">paste</span>(Yfreq0<span class="sc">$</span>row, Yfreq0<span class="sc">$</span>col, <span class="at">sep =</span> <span class="st">"-"</span>)</span>
+<span id="cb83-16"><a href="#cb83-16" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(<span class="at">indiv_row =</span> <span class="fu">as.data.frame</span>(H2), </span>
+<span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a>          <span class="at">indiv_row_lab =</span> corresp,</span>
+<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a>          <span class="at">row_color =</span> <span class="st">"black"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: ggrepel: 171 unlabeled data points (too many overlaps). Consider
+increasing max.overlaps</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-50-1.png" class="img-fluid" width="672"></p>
+</div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>mrowsH2<span class="sc">/</span>(<span class="fu">as.matrix</span>(cca<span class="sc">$</span>ls) <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">sqrt</span>(mu_CCA<span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span>lambda_CCA))))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Groupwise mean</span></span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>mcols_nr <span class="ot">&lt;-</span> <span class="fu">meanfacwt</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>col, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(mcols_nr<span class="sc">/</span>cca<span class="sc">$</span>co) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   X1 X2 X3 X4 X5 X6
-1   1  1  1  1  1  1
-2   1  1  1  1  1  1
-3   1  1  1  1  1  1
-4   1  1  1  1  1  1
-5   1  1  1  1  1  1
-6   1  1  1  1  1  1
-7   1  1  1  1  1  1
-8   1  1  1  1  1  1
-9   1  1  1  1  1  1
-10  1  1  1  1  1  1
-11  1  1  1  1  1  1
-12  1  1  1  1  1  1
-13  1  1  1  1  1  1
-14  1  1  1  1  1  1
-15  1  1  1  1  1  1
-16  1  1  1  1  1  1
-17  1  1  1  1  1  1
-18  1  1  1  1  1  1
-19  1  1  1  1  1  1
-20  1  1  1  1  1  1
-21  1  1  1  1  1  1
-22  1  1  1  1  1  1
-23  1  1  1  1  1  1
-24  1  1  1  1  1  1
-25  1  1  1  1  1  1
-26  1  1  1  1  1  1</code></pre>
+<pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>varrowsH2<span class="sc">/</span>varrowsRC</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> mcols_nr <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">sqrt</span>(mu_CCA)<span class="sc">/</span><span class="fu">sqrt</span>(<span class="dv">2</span><span class="sc">*</span>lambda_CCA)) <span class="co"># factor sqrt(mu)/sqrt(2*lambda)</span></span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(res<span class="sc">/</span>mcolsRC <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   X1 X2 X3 X4 X5 X6
-1   1  1  1  1  1  1
-2   1  1  1  1  1  1
-3   1  1  1  1  1  1
-4   1  1  1  1  1  1
-5   1  1  1  1  1  1
-6   1  1  1  1  1  1
-7   1  1  1  1  1  1
-8   1  1  1  1  1  1
-9   1  1  1  1  1  1
-10  1  1  1  1  1  1
-11  1  1  1  1  1  1
-12  1  1  1  1  1  1
-13  1  1  1  1  1  1
-14  1  1  1  1  1  1
-15  1  1  1  1  1  1
-16  1  1  1  1  1  1
-17  1  1  1  1  1  1
-18  1  1  1  1  1  1
-19  1  1  1  1  1  1
-20  1  1  1  1  1  1
-21  1  1  1  1  1  1
-22  1  1  1  1  1  1
-23  1  1  1  1  1  1
-24  1  1  1  1  1  1
-25  1  1  1  1  1  1
-26  1  1  1  1  1  1</code></pre>
+<pre><code>[1] FALSE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Groupwise variance</span></span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>varcols_nr <span class="ot">&lt;-</span> <span class="fu">varfacwt</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>col, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>varcols_nr_scaled <span class="ot">&lt;-</span> varcols_nr <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="dv">2</span><span class="sc">/</span>(mu_CCA)) <span class="co"># factor 2/mu</span></span>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(varcols_nr_scaled<span class="sc">/</span>varcolsRC <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] NA</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">main =</span> <span class="st">"Non-reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-51-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.class</span>(H, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>row, <span class="at">main =</span> <span class="st">"Reciprocal scaling"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="recscal_cca_files/figure-html/unnamed-chunk-51-2.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>However, the mean/variance per species is meaningless here.</p>
+<p><span class="math inline">\(h2_k(i, j)\)</span> can also be defined from the canonical correlation scores:</p>
+<p><span class="math display">\[h2_k(i, j) = \frac{\sqrt{n} (S_R + S_C  \Lambda^{1/2})}{2}\]</span></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>mcolsH2 <span class="ot">&lt;-</span> <span class="fu">meanfacwt</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>colind, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
-<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>varcolsH2 <span class="ot">&lt;-</span> <span class="fu">varfacwt</span>(H2, <span class="at">fac =</span> Yfreq0<span class="sc">$</span>colind, <span class="at">wt =</span> Yfreq0<span class="sc">$</span>Freq)</span>
-<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>mcolsH2<span class="sc">/</span>cca<span class="sc">$</span>co</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Find back the formula from the scores </span></span>
+<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a>H2_cancor <span class="ot">&lt;-</span> (<span class="fu">sqrt</span>(n)<span class="sc">*</span>(scoreR[, <span class="dv">1</span><span class="sc">:</span>l] <span class="sc">+</span> scoreC[, <span class="dv">1</span><span class="sc">:</span>l] <span class="sc">%*%</span> <span class="fu">diag</span>(lambda_CCA<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>))))<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb93-3"><a href="#cb93-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb93-4"><a href="#cb93-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(H2_cancor<span class="sc">/</span>H2) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>        Comp1    Comp2    Comp3       Comp4      Comp5      Comp6
-sp1  2.204927 2.214188 3.033045  2.84939410   9.599730  57.187463
-sp2  2.292703 2.759724 2.732078  3.50121666   6.790996   7.094938
-sp3  2.038055 2.218691 7.394548  2.98424261   5.120691   9.019759
-sp4  2.043008 2.028701 2.922493  2.98096628   5.569064   7.903319
-sp5  1.854812 2.515655 1.892381 -2.41233483   6.596884   6.916464
-sp6  2.099441 1.691536 1.579981  3.88945766   3.281467  -8.867692
-sp7  2.417125 1.099654 2.531431  5.63440402   5.526149   9.326447
-sp8  2.688827 2.452282 2.331410  2.23407070   8.627137   7.315956
-sp9  1.878870 2.357545 2.590693  2.93413118   5.070225   6.221136
-sp10 1.968900 2.679521 2.402911  3.85373483   6.925532   5.598789
-sp11 2.443190 2.749714 3.074070  4.66511345   6.134031   8.085768
-sp12 2.122282 2.265638 2.870196  3.65703158  24.337013   5.473179
-sp13 2.579059 1.167765 3.330972  2.84273353   6.972203 -49.776718
-sp14 2.055910 1.616859 2.196444  3.33736859   5.602885   5.266113
-sp15 2.289341 3.455500 2.921559 -0.05911166  -0.541863   5.415114
-sp16 2.503668 3.493476 3.887590  2.68787715 -33.273799   8.738308
-sp17 2.053918 2.606138 2.696418  2.63123598   4.974831   7.132595
-sp18 2.136156 2.184527 2.913183  3.21802069   4.316072   9.149164
-sp19 2.345203 1.846607 2.512503  4.61801260   6.012300   3.312290
-sp21 1.835712 2.512696 3.777919  2.73235559   5.961087  14.924682
-sp22 1.999947 2.082287 2.353229 -1.64401094   4.074915  -7.733470</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>varcolsH2<span class="sc">/</span>varcolsRC</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>            X1           X2        X3        X4         X5          X6
-1   1.06510099   1.28338143 0.9968892 1.8783638  3.0281093   1.8926897
-2   0.76319303   1.58662753 1.2072889 0.9761483  5.3943004   2.4378017
-3   0.94075445   0.22277106 0.3740693 0.4458427  5.2134738 206.3467611
-4   1.82796063   1.26736570 1.1172710 1.8223508  5.0252265   4.1099058
-5   0.26141856   0.59946940 0.7285742 2.6626261 66.8787701   0.8151891
-6   1.08129630   1.27404278 1.0479188 1.6857533  2.2842158   2.3137396
-7          NaN          NaN       NaN       NaN        NaN         NaN
-8   1.22909000   0.79894351 2.1249995 1.3039092  2.3466962   3.0797365
-9   0.45585849   0.40004426 4.0809608 0.5725448  0.9045940   2.0419116
-10  1.29801206   1.85864705 1.2502562 2.0021665  3.5598796   3.9077261
-11  0.99192984   0.87027258 0.7178052 1.7455824  2.3503642   2.0851215
-12  1.79936920   1.76448991 2.1663448 1.2382071  2.7083390   2.2500473
-13         NaN          NaN       NaN       NaN        NaN         NaN
-14  0.07474319 103.04431697 0.2264867 0.2873537  0.2298883   1.4471310
-15 23.41075227   0.60430791 3.7474804 0.1828772  2.5384605  38.9563104
-16  6.92953611   0.07789058 3.0039412 0.7543632  9.8005577   1.2840238
-17  2.67129153   0.35939661 1.2802335 1.0029803  1.0071618   1.8968154
-18  1.25065759   2.70457580 1.7160757 1.1141613  2.2687371   1.8856903
-19  1.18649678   1.17954097 0.9611250 2.0050774  1.7043000   2.5101147
-20  0.72585943   0.45927710 0.4740258 5.4316998  6.9768796   2.2908477
-21  6.81766645   1.45963901 2.6966869 1.0689390  2.1683218   1.9424546</code></pre>
+<pre><code>[1] TRUE</code></pre>
 </div>
 </div>
 
 
 
+</section>
 </section>
 </section>
 
