@@ -19,7 +19,9 @@ library(adegraphics)
 library(expm)
 
 # Plots
-source(here("functions/plot.R"))
+library(ggplot2)
+library(CAnetwork)
+library(patchwork)
 ```
 
 ```{r}

@@ -23,8 +23,9 @@ source(here("functions/dpcaiv2-ade4.R"))
 library(expm)
 
 # Plots
+library(CAnetwork)
 library(patchwork)
-source(here("functions/plot.R"))
+library(ggplot2)
 ```
 
 

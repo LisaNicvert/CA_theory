@@ -26,8 +26,6 @@ source(here("functions/reciprocal.R"))
 library(expm)
 
 # Plots
-source(here("functions/plot.R"))
-# library(gridExtra)
 library(CAnetwork)
 ```
 

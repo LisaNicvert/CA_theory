@@ -15,12 +15,11 @@ library(here)
 library(ade4)
 library(adegraphics)
 
+library(CAnetwork)
+library(patchwork)
+
 # Matrix algebra
 library(expm)
-
-# Plots
-library(gridExtra)
-source(here("functions/plot.R"))
 ```
 
 ```{r}
@@ -444,6 +443,7 @@ $U_0$ and $V_0$:
 
 ```{r, fig.height=4, fig.width=8, warning=FALSE}
 #| code-fold: true
+
 # Plot sites ---
 g1 <- multiplot(indiv_row = U0, 
           indiv_row_lab = rownames(Y), 
@@ -456,7 +456,7 @@ g2 <- multiplot(indiv_row = V0,
           row_color = params$colspp,
           eig = lambda)
 
-grid.arrange(grobs = list(g1, g2), nrow = 1)
+(g1 + g2) + plot_layout(axis_titles = "collect")
 ```
 
 
@@ -476,7 +476,7 @@ g2 <- multiplot(indiv_row = V,
           row_color = params$colspp,
           eig = lambda)
 
-grid.arrange(grobs = list(g1, g2), nrow = 1)
+(g1 + g2) + plot_layout(axis_titles = "collect")
 ```
 
 ### Scaling type 1

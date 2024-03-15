@@ -19,6 +19,7 @@ Throughout this document, we will analyze a matrix $Y$ ($r \times c$) and two as
 
 ```{r, echo = FALSE, message = FALSE}
 library(here)
+library(CAnetwork)
 
 dat <- readRDS(here("data/Barbaro2012.rds"))
 Y <- dat$comm
@@ -36,10 +37,6 @@ k <- dim(T_)[2]
 -   $T$ ($c =$ `r c` $\times$ $k =$ `r k`) represents bird species traits
 
 ```{r, echo = FALSE}
-library(ggplot2)
-
-source(here("functions/plot.R"))
-
 plotmat(T_ = TRUE, E = TRUE,
         r = r, c = c, l = l, k = k)
 ```
