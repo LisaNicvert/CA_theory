@@ -640,7 +640,7 @@ gwa <- multiplot(indiv_row = Ustar1, # WA for sites
                  # var_col = BS_C1norm, var_col_lab = colnames(T_),
                  row_color = params$colsite, col_color = params$colspp,
                  eig = lambda) +
-  ggtitle("Sites LC scores\nwith species\nnormed at 1")
+  ggtitle("Sites WA scores with species\nnormed at 1")
 
 glc + gwa + 
   plot_layout(axis_titles = "collect")

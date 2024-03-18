@@ -636,9 +636,11 @@ all(abs(varrows_nr_scaled/varrowsRC - 1) < zero)
 #| code-fold: true
 s.class(H1, 
         fac = Yfreq0$row, plabels.col = params$colsite, 
+        wt = Yfreq0$Freq,
         main = "Non-reciprocal scaling")
 s.class(H,
         fac = Yfreq0$row, plabels.col = params$colsite, 
+        wt = Yfreq0$Freq,
         main = "Reciprocal scaling")
 ```
 
@@ -708,8 +710,15 @@ all(abs(res[-sp1, ]/varcolsRC[-sp1, ] - 1) < zero) # Factor 2/mu
 
 ```{r}
 #| code-fold: true
-s.class(H2, fac = Yfreq0$row, main = "Non-reciprocal scaling")
-s.class(H, fac = Yfreq0$row, main = "Reciprocal scaling")
+fac_col <- Yfreq0$col
+s.class(H2, 
+        fac = fac_col, plabels.col = params$colspp, 
+        wt = Yfreq0$Freq,
+        main = "Non-reciprocal scaling")
+s.class(H, 
+        fac = fac_col, plabels.col = params$colspp, 
+        wt = Yfreq0$Freq,
+        main = "Reciprocal scaling")
 ```
 
 

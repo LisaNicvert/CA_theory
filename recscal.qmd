@@ -1552,8 +1552,12 @@ all(abs(varrows_nr_scaled/varrows - 1) < zero)
 ```{r}
 #| code-fold: true
 
-s.class(H1, fac = Yfreq0$row, main = "Non-reciprocal scaling")
-s.class(H, fac = Yfreq0$row, main = "Reciprocal scaling")
+s.class(H1, fac = Yfreq0$row, 
+        wt = Yfreq0$Freq,
+        main = "Non-reciprocal scaling")
+s.class(H, fac = Yfreq0$row, 
+        wt = Yfreq0$Freq,
+        main = "Reciprocal scaling")
 ```
 
 
@@ -1618,8 +1622,12 @@ all(abs(varcols_nr_scaled[-sp1, ]/varcols[-sp1, ] - 1) < zero) # same as recipro
 
 ```{r}
 #| code-fold: true
-s.class(H2, fac = Yfreq0$row, main = "Non-reciprocal scaling")
-s.class(H, fac = Yfreq0$row, main = "Reciprocal scaling")
+s.class(H2, fac = Yfreq0$row, 
+        wt = Yfreq0$Freq,
+        main = "Non-reciprocal scaling")
+s.class(H, fac = Yfreq0$row, 
+        wt = Yfreq0$Freq,
+        main = "Reciprocal scaling")
 ```
 
 
