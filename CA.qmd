@@ -220,7 +220,7 @@ The $p_{0ij}$ values are equal to the $\chi$ values, a constant apart: $p_{0ij} 
 We perform the SVD of $P_0$:
 
 $$
-P_0 = U \Delta V_0^\top
+P_0 = U_0 \Delta V_0^\top
 $$
 
 Where $P_0$ is $r \times c$, $U_0$ is $r \times c$, $\Delta$ is a $c \times c$ diagonal matrix (assuming $r \geq c$; the table can be transposed to meet this condition) and $V_0$ is $c \times c$.
