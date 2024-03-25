@@ -482,16 +482,19 @@ for (i in 1:r) {
   
   # Compute the part with the sum on Cj
   # we add all coordinates Cj^2 weighted by the number of observations on site i
-  sumCj <- t(Y[i, ]) %*% as.matrix(cca$co)^2
+  sumCj <- t(Y[i, ]) %*% as.matrix(cca$c1)^2
+  # sumCj <- t(Y[i, ]) %*% as.matrix(cca$co)^2
 
   # Fill i-th row with site i variance along each axis
-  varrowsC_CCA[i, ] <- 1/(n*lambda_CCA)*((1/yi_[i])*sumCj - lambda_CCA*as.numeric(Li)^2)
+  # varrowsC_CCA[i, ] <- 1/(n*lambda_CCA)*((1/yi_[i])*sumCj - lambda_CCA*as.numeric(Li)^2)
+  varrowsC_CCA[i, ] <- 1/n*((1/yi_[i])*sumCj - as.numeric(Li)^2)
 }
 ```
 
 ```{r}
 varrowsC[, 1:ncol(varrowsRC)]/varrowsC_CCA
 ```
+
 
 ##### scoreR
 

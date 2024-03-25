@@ -76,10 +76,10 @@ These scores can be presented in a matrix $H$ ($n_\bar{0} \times K$). Here, $n_\
 $H$ can be computed from the scores of the correspondence analysis of $Y$. The score $h_k(i, j)$ for row $i$, column $j$ and axis $k$ is:
 
 $$
-h_k(i, j) = \frac{u^\star_k(i) + v^\star_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+h_k(i, j) = \frac{u^\star_{ik} + v^\star_{jk}}{\sqrt{2 \lambda_k \mu_k}}
 $$
 
-where $v^\star_k(j)$ and $u^\star_k(i)$ are the vectors of scores obtained by weighted averaging for CA for axis $k$ (respectively equal to `co` and `li`).
+where $v^\star_{jk}$ and $u^\star_{ik}$ are the vectors of scores obtained by weighted averaging for CA for axis $k$ (respectively equal to `co` and `li`).
 
 
 if $y_{ij} = 0$, then the score $h_k(i, j)$ is not defined.
@@ -134,10 +134,10 @@ rec_ca <- reciprocal.coa(ca)
 We can get the coordinates of row-column pairs (ie each cell in the original table $Y$) with:
 
 $$
-h_k(i, j) = \frac{u^\star_k(i) + v^\star_k(j)}{\sqrt{2 \lambda_k \mu_k}}
+h_k(i, j) = \frac{u^\star_{ik} + v^\star_{jk}}{\sqrt{2 \lambda_k \mu_k}}
 $$
 
-where $u^\star_k(i)$ is the coordinate of row (site) $i$ on axis $k$ and $v^\star_k(j)$ is the same for column (species) $j$ and $\mu_k = 1 + \sqrt{\lambda_k}$.
+where $u^\star_{ik}$ is the coordinate of row (site) $i$ on axis $k$ and $v^\star_{jk}$ is the same for column (species) $j$ and $\mu_k = 1 + \sqrt{\lambda_k}$.
 
 ```{r}
 mu <- 1 + sqrt(lambda)
@@ -224,6 +224,7 @@ colnames(tabC) <- colnames(Y)
 
 # Get weights
 wt <- Yfreq0$Freq
+Dw <- diag(wt)
 ```
 
 Below are the first lines of tables $R$ and $C$ (respectively):
@@ -243,16 +244,53 @@ tabR_scaled <- scalewt(tabR, wt,
 tabC_scaled <- scalewt(tabC, wt, 
                        scale = FALSE)
 
-res <- cancor(diag(sqrt(wt)) %*% tabR_scaled, 
-              diag(sqrt(wt)) %*% tabC_scaled, 
-              xcenter = FALSE, ycenter = FALSE)
-# res gives the coefficients of the linear combinations that maximizes the correlation between the 2 dimensions
-ncol(res$xcoef) # r-1 columns -> R_scaled is not of full rank
-ncol(res$ycoef) # c-1 columns -> C_scaled is not of full rank
+cancorRC <- cancor(diag(sqrt(wt)) %*% tabR_scaled, 
+                   diag(sqrt(wt)) %*% tabC_scaled, 
+                   xcenter = FALSE, ycenter = FALSE) # set to false because we did our own centering before
+
+# cancorRC gives the coefficients of the linear combinations that maximizes the correlation between the 2 dimensions
+ncol(cancorRC$xcoef) # r-1 columns -> R_scaled is not of full rank
+ncol(cancorRC$ycoef) # c-1 columns -> C_scaled is not of full rank
 
 # Compute these scores from this coef
-scoreR <- tabR_scaled[, 1:(r-1)]  %*% res$xcoef
-scoreC <- tabC_scaled[, 1:(c-1)]  %*% res$ycoef
+scoreR <- tabR_scaled[, 1:(r-1)]  %*% cancorRC$xcoef
+scoreC <- tabC_scaled[, 1:(c-1)]  %*% cancorRC$ycoef
+```
+
+```{r}
+# t(cancorRC$xcoef) %*% diag(1, nrow(cancorRC$xcoef)) %*% cancorRC$xcoef
+
+# scoreR and scoreC are normed to wt
+res <- t(scoreR) %*% diag(wt) %*% scoreR # R^t Dw R = 1
+all(abs(res - diag(1, ncol(scoreR))) < zero) 
+
+res <- t(scoreC) %*% diag(wt) %*% scoreC # C^t Dw C = 1
+all(abs(res - diag(1, ncol(scoreC))) < zero)
+```
+
+Below, we reproduce the same analysis, but we don't multiply matrices with weights:
+
+```{r}
+cancorRC2 <- cancor(tabR_scaled, tabC_scaled, 
+                    xcenter = FALSE, ycenter = FALSE)
+
+# Compute these scores from this coef
+scoreR2 <- tabR_scaled[, 1:(r-1)]  %*% cancorRC2$xcoef[, 1:(r-1)]
+scoreC2 <- tabC_scaled[, 1:(c-1)]  %*% cancorRC2$ycoef[, 1:(c-1)]
+
+# Scores 2 are not normed at wt
+res <- t(scoreR2) %*% diag(wt, nrow(scoreR2)) %*% scoreR2 # R2^t Dw R2 =/= 1
+all(abs(res - diag(1, ncol(scoreR2))) < zero) 
+
+res <- t(scoreC2) %*% diag(wt, nrow(scoreC2)) %*% scoreC2 # C2^t Dw C2 =/= 1
+all(abs(res - diag(1, ncol(scoreC2))) < zero)
+
+# They are normed at 1
+res <- t(scoreR2) %*% diag(1, nrow(scoreR2)) %*% scoreR2 # R2^t D1 R2 = 1
+all(abs(res - diag(1, ncol(scoreR2))) < zero)
+
+res <- t(scoreC2) %*% diag(1, nrow(scoreC2)) %*% scoreC2 # C2^t D1 C2 = 1
+all(abs(res - diag(1, ncol(scoreC2))) < zero)
 ```
 
 Finally, we compute $H = (S_R + S_C)_{scaled}$.
@@ -268,6 +306,55 @@ We check the agreement of $H$ defined with CA of with canonical correlation anal
 ```{r}
 # Check agreement of RC score and H score defined above
 all(abs(scoreRC_scaled/H) - 1 < zero)
+```
+
+#### Canonical correlation analysis "by hand"
+
+We try to compute the canonical correlation "by hand":
+
+```{r}
+# Unweighted
+matR <- scale(tabR, scale = FALSE, 
+              center = FALSE)
+matC <- scale(tabC, scale = FALSE, 
+              center = FALSE)
+
+SRR <- t(matR) %*% matR
+SRC <- t(matR) %*% matC
+SCC <- t(matC) %*% matC
+
+K <- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC)) 
+
+svdK <- svd(K)
+# Canonical coefficients
+xcoefK <- solve(chol(SRR)) %*% svdK$u
+ycoefK <- solve(chol(t(SCC))) %*% svdK$v
+# Canonical variates
+scoreRK <- matR %*% xcoefK
+scoreCK <- matC %*% ycoefK
+
+# svdK$d[1:(c-1)]/cancorRC$cor
+# xcoefK[1:(r-1), 1:(c-1)]/cancorRC$xcoef[, 1:(c-1)]
+# ycoefK[1:(c-1), 1:(c-1)]/cancorRC$ycoef[, 1:(c-1)]
+# 
+# scoreRK[, 1:(c-1)]/scoreR[, 1:(c-1)]
+# scoreCK[, 1:(c-1)]/scoreC[, 1:(c-1)]
+
+# SRR <- t(tabR_scaled) %*% diag(sqrt(wt)) %*% tabR_scaled
+# SRC <- t(tabR_scaled) %*% diag(sqrt(wt)) %*% tabC_scaled
+# SCC <- t(tabC_scaled) %*% diag(sqrt(wt)) %*% tabC_scaled
+# 
+# K <- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC)) 
+# 
+# # SVD
+# svdK <- svd(K)
+# # Canonical coefficients
+# xcoefK <- solve(chol(t(SRR))) %*% svdK$u
+# ycoefK <- solve(chol(t(SCC))) %*% svdK$v
+# 
+# svdK$d[1:(c-1)]/cancorRC$cor
+# xcoefK[1:(r-1), 1:(c-1)]/cancorRC$xcoef[, 1:(c-1)]
+# ycoefK[1:(c-1), 1:(c-1)]/cancorRC$ycoef[, 1:(c-1)]
 ```
 
 ### Plots
@@ -339,9 +426,9 @@ Similarly, the variances are weighted variances (can be computed with `varfacwt`
 
 |                                  | Rows (sites)                                                                               | Columns (species)                                                                           |
 |-------------------|------------------------------|------------------------|
-| Mean for axis $k$                | $$m_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} h_k(i, j)$$                           | $$m_k(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} h_k(i, j)$$                           |
-| Variance for axis $k$            | $$s_k^2(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \left(h_k(i, j) - m_k(i)\right)^2$$ | $$s_k^2(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} \left(h_k(i, j) - m_k(j)\right)^2$$ |
-| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}h_k(i, j)h_l(i, j) - m_k(i)m_l(i)$$  | $$c_{kl}(j) = \frac{1}{y_{\cdot j}}\sum_{i=1}^r y_{ij}h_k(i, j)h_l(i, j) - m_k(j)m_l(j)$$   |
+| Mean for axis $k$                | $$m_{ik} = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} h_k(i, j)$$                           | $$m_{jk} = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} h_k(i, j)$$                           |
+| Variance for axis $k$            | $$s^2_{ik} = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \left(h_k(i, j) - m_{ik}\right)^2$$ | $$s^2_{jk} = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} \left(h_k(i, j) - m_{jk}\right)^2$$ |
+| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}h_k(i, j)h_l(i, j) - m_{ik}m_{il}$$  | $$c_{kl}(j) = \frac{1}{y_{\cdot j}}\sum_{i=1}^r y_{ij}h_k(i, j)h_l(i, j) - m_{jk}m_{jl}$$   |
 
 **Formulas using CA scores**
 
@@ -354,11 +441,11 @@ The variances are equivalent to a "weighted variance" (the formula resembles the
 
 |                                  | Rows (sites)                                                                                                                                                                                | Columns (species)                                                                                                                                                                           |
 |-------------------|------------------------------|------------------------|
-| Mean for axis $k$                | $$m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} u^\star_k(i)$$                                                                                                                                  | $$m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} v^\star_k(j)$$                                                                                                                                  |
-| Variance for axis $k$            | $$s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_k(j)}^2 \right) - \lambda_k {u^\star_k(i)}^2 \right)$$                                             | $$s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_k(i)}^2 \right) - \lambda_k {v^\star_k(j)}^2 \right)$$                                             |
-| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} v^\star_k(j) v^\star_l(j) - \sqrt{\lambda_k \lambda_l} u^\star_k(i)u^\star_l(i) \right)$$ | $$c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} u^\star_k(i) u^\star_l(i) - \sqrt{\lambda_k \lambda_l} v^\star_k(j)v^\star_l(j) \right)$$ |
+| Mean for axis $k$                | $$m_{ik} = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} u^\star_{ik}$$                                                                                                                                  | $$m_{jk} = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} v^\star_{jk}$$                                                                                                                                  |
+| Variance for axis $k$            | $$s^2_{ik} = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_{jk}}^2 \right) - \lambda_k {u^\star_{ik}}^2 \right)$$                                             | $$s^2_{jk} = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_{ik}}^2 \right) - \lambda_k {v^\star_{jk}}^2 \right)$$                                             |
+| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} v^\star_{jk} v^\star_{jl} - \sqrt{\lambda_k \lambda_l} u^\star_{ik}u^\star_{il} \right)$$ | $$c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} u^\star_{ik} u^\star_{il} - \sqrt{\lambda_k \lambda_l} v^\star_{jk}v^\star_{jl} \right)$$ |
 
-***Note: formulas for the variances $s^2_k(i)$ and $s^2_k(j)$ are different from formula (15) in @thioulouse1992 (no square root at the denominator  $2\lambda_k\mu_k$).***
+***Note: formulas for the variances $s^2_{ik}$ and $s^2_{jk}$ are different from formula (15) in @thioulouse1992 (no square root at the denominator  $2\lambda_k\mu_k$).***
 :::
 
 
@@ -369,7 +456,7 @@ The variances are equivalent to a "weighted variance" (the formula resembles the
 We compute the weighted mean of $h_k(i, j)$ per row = site $i$.
 
 $$
-m_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} h_k(i, j)
+m_{ik} = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} h_k(i, j)
 $$
 We can compute means using a loop:
 
@@ -428,10 +515,10 @@ all(abs(mrows_ade4/mrows) - 1 < zero)
 We compute the (weighted) variance of $h_k(i, j)$ per row = site $i$.
 
 $$
-s_k^2(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \left(h_k(i, j) - m_k(i)\right)^2
+s^2_{ik} = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \left(h_k(i, j) - m_{ik}\right)^2
 $$ 
 
-*NB: in the original article [@thioulouse1992] they use the compact variance formula, $s_k^2(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c \left(y_{ij} h_k(i, j)^2\right) - m_k(i)^2$ but I prefer the other formula.*
+*NB: in the original article [@thioulouse1992] they use the compact variance formula, $s^2{ik} = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c \left(y_{ij} h_k(i, j)^2\right) - m_{ik}^2$ but I prefer the other formula.*
 
 We can use a loop:
 
@@ -492,7 +579,7 @@ all(varrows_ax1/varrows[, 1] - 1 < zero)
 Finally, we can compute the covariance between scores on the several axes per row = site $i$. The covariance between two axes $l$ and $m$ of the multivariate space for site = row $i$ is defined as:
 
 $$
-c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}h_k(i, j)h_l(i, j) - m_k(i)m_l(i)
+c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}h_k(i, j)h_l(i, j) - m_{ik}m_{il}
 $$
 
 ```{r}
@@ -576,7 +663,7 @@ all(covrows_kl_plot/covrows_kl2 - 1 < zero)
 Symetrically, we can compute the means, variances and covariances per columns = species $j$.
 
 $$
-m_k(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} h_k(i, j)
+m_{jk} = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} h_k(i, j)
 $$
 
 ```{r}
@@ -594,7 +681,7 @@ all(res - 1 < zero)
 
 
 $$
-s_k^2(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} \left(h_k(i, j) - m_k(j)\right)^2
+s^2_{jk} = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} \left(h_k(i, j) - m_{jk}\right)^2
 $$
 
 ```{r}
@@ -626,7 +713,7 @@ all(res - 1 < zero)
 ```
 
 
-$$c_{kl}(j) = \frac{1}{y_{\cdot j}}\sum_{i=1}^r y_{ij}h_k(i, j)h_l(i, j) - m_k(j)m_l(j)$$
+$$c_{kl}(j) = \frac{1}{y_{\cdot j}}\sum_{i=1}^r y_{ij}h_k(i, j)h_l(i, j) - m_{jk}m_{jl}$$
 
 ```{r}
 #| code-fold: true
@@ -651,10 +738,10 @@ all(reslist[-sp1])
 The conditional means and variances of rows scores on axis $k$ for row $i$ can also be computed as:
 
 $$
-m_k(i) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} u^\star_k(i)
+m_{ik} = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} u^\star_{ik}
 $$
 
-where $u^\star_k(i)$ corresponds to the `li` for site $i$ on axis $k$.
+where $u^\star_{ik}$ corresponds to the `li` for site $i$ on axis $k$.
 
 ```{r}
 mrows_ca <- sweep(ca$li, 2, sqrt(mu)/sqrt(2*lambda), "*")
@@ -666,10 +753,10 @@ all(mrows_ca/mrows_ade4 - 1 < zero)
 The variance can be computed as:
 
 $$
-s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_k(j)}^2 \right) - \lambda_k {u^\star_k(i)}^2 \right)
+s^2_{ik} = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_{jk}}^2 \right) - \lambda_k {u^\star_{ik}}^2 \right)
 $$ 
 
-***Note: this formula is different from formula (15) in @thioulouse1992 (no square root at the denominator $2\lambda_k\mu_k$. Numerical computations suggest this is the correct formula.***
+***Note: this formula is different from formula (15) in @thioulouse1992 (no square root at the denominator $2\lambda_k\mu_k$). Numerical computations suggest this is the correct formula.***
 
 ```{r}
 varrows_ca <- matrix(nrow = r, 
@@ -697,7 +784,7 @@ all(varrows_ca/varrows_ade4 - 1 < zero)
 We can also compute the covariance using CA coordinates:
 
 $$
-c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} v^\star_k(j) v^\star_l(j) - \sqrt{\lambda_k \lambda_l} u^\star_k(i)u^\star_l(i) \right)
+c_{kl}(i) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c y_{ij} v^\star_{jk} v^\star_{jl} - \sqrt{\lambda_k \lambda_l} u^\star_{ik} u^\star_{il} \right)
 $$
 
 We will use the same values as above for $k$ and $l$: $k =$ `r k` and $l =$ `r l`.
@@ -722,7 +809,7 @@ all(covrows_ca_kl/covrows_kl2 - 1 < zero)
 Similarly, column statistics can be computed from CA with the following formulas:
 
 $$
-m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} v^\star_k(j)
+m_{jk} = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} v^\star_{jk}
 $$
 ```{r}
 mcols_ca <- sweep(ca$co, 2, sqrt(mu)/sqrt(2*lambda), "*")
@@ -732,7 +819,7 @@ all(mcols_ca/mcols_ade4 - 1 < zero)
 ```
 
 $$
-s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_k(i)}^2 \right) - \lambda_k {v^\star_k(j)}^2 \right)
+s^2_{jk} = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_{ik}}^2 \right) - \lambda_k {v^\star_{jk}}^2 \right)
 $$
 
 ```{r}
@@ -758,7 +845,7 @@ all(varcols_ca[-sp1, ]/varcols_ade4[-sp1, ] - 1 < zero)
 
 
 $$
-c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} u^\star_k(i) u^\star_l(i) - \sqrt{\lambda_k \lambda_l} v^\star_k(j)v^\star_l(j) \right)
+c_{kl}(j) = \frac{1}{2\sqrt{\lambda_k \lambda_l} \sqrt{\mu_k \mu_l}} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} u^\star_{ik} u^\star_{il} - \sqrt{\lambda_k \lambda_l} v^\star_{jk}v^\star_{jl} \right)
 $$
 
 
@@ -782,13 +869,13 @@ all(covcols_kl[-sp1]/covcols_kl_ca[-sp1] - 1 < zero)
 
 ## Conditional means and variances of R scores and C scores
 
-*Note: in this part, we change the notation (notation previously used in this part) and use $L_k(i)$ for `li` and $L1_k(i)$ for `l1` (and the same with $C_k(j)$ for `co` and $C1_k(j)$ for `c1`).*
+*Note: in this part, we used to change the notation and use $L_k(i)$ for `li` ($u^\star$) and $L1_k(i)$ for `l1` ($u$) (and the same with $C_k(j)$ for `co` ($v^\star$) and $C1_k(j)$ for `c1` ($v$)). Some old notation may remain.*
 
 ::: {.callout-tip title="*TL;DR*"}
 
 We can also compute compute means, variances and covariances with the R score or the C score.
 
-We use the notation $m_k(i)$/$s^2_k(i)$ for the mean/variances of sites (index $i$) computed with the RC scores and $mR_k(i)$/$sR^2_k(i)$ for the mean/variances of sites computed with the R score. For the means computed for species, we use index $j$ and for the means/variances computed with C scores, we use $mC$/$sC^2$.
+We use the notation $m_{ik}$/$s^2_{ik}$ for the mean/variances of sites (index $i$) computed with the RC scores and $mR_{ik})$/$sR^2_{ik}$ for the mean/variances of sites computed with the R score. For the means computed for species, we use index $j$ and for the means/variances computed with C scores, we use $mC$/$sC^2$.
 
 **Definition**
 
@@ -798,16 +885,16 @@ The definitions are simply the groupwise mean, variance and covariance.
 
 |                       | Rows (sites)                      | Columns (species)        |
 |-----------------------|-----------------------------------|--------------------------|
-| Mean for axis $k$     | $$mR_k(i) = \frac{1}{y_{i\cdot}} \sum_j y_{ij} ~ \text{scoreR}_k(i, j)$$ | $$mR_k(j) = \frac{1}{y_{\cdot j}} \sum_i y_{ij} ~ \text{scoreR}_k(i, j)$$ |                                      
-| Variance for axis $k$ |  $$sR^2_k(i) = \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \text{scoreR}(i, j)^2 - mR_k(i)^2$$ | $$sR^2_k(j) = \frac{1}{y_{i \cdot}} \sum_j y_{ij} ~ \text{scoreR}(i, j)^2 - mR_k(j)^2$$ |
+| Mean for axis $k$     | $$mR_{ik} = \frac{1}{y_{i\cdot}} \sum_j y_{ij} ~ \text{scoreR}_k(i, j)$$ | $$mR_{jk} = \frac{1}{y_{\cdot j}} \sum_i y_{ij} ~ \text{scoreR}_k(i, j)$$ |                                      
+| Variance for axis $k$ |  $$sR^2_{ik} = \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \text{scoreR}_k(i, j)^2 - mR_{ik}^2$$ | $$sR^2_{jk} = \frac{1}{y_{i \cdot}} \sum_j y_{ij} ~ \text{scoreR}_k(i, j)^2 - mR_{jk}^2$$ |
 | Covariance between axes $k$, $l$ | | |
 
 + using C score
 
 |                       | Rows (sites)                      | Columns (species)        |
 |-----------------------|-----------------------------------|--------------------------|
-| Mean for axis $k$     | $$mC_k(i) = \frac{1}{y_{i\cdot}} \sum_j y_{ij} ~ \text{scoreC}_k(i, j)$$ | $$mC_k(j) = \frac{1}{y_{\cdot j}} \sum_i y_{ij} ~ \text{scoreC}_k(i, j)$$ |
-| Variance for axis $k$ | $$sC^2_k(i) = \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \text{scoreC}(i, j)^2 - mC_k(i)^2$$ | $$sC^2_k(j) = \frac{1}{y_{i \cdot}} \sum_j y_{ij} ~ \text{scoreC}(i, j)^2 - mC_k(j)^2$$ |
+| Mean for axis $k$     | $$mC_{ik} = \frac{1}{y_{i\cdot}} \sum_j y_{ij} ~ \text{scoreC}_k(i, j)$$ | $$mC_{jk} = \frac{1}{y_{\cdot j}} \sum_i y_{ij} ~ \text{scoreC}_k(i, j)$$ |
+| Variance for axis $k$ | $$sC^2_{ik} = \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \text{scoreC}(i, j)^2 - mC_{ik}^2$$ | $$sC^2_{jk} = \frac{1}{y_{i \cdot}} \sum_j y_{ij} ~ \text{scoreC}(i, j)^2 - mC_{jk}^2$$ |
 | Covariance between axes $k$, $l$ | | |
 
 **Formulas using CA score**
@@ -818,8 +905,8 @@ Now we can "prove" that the values defined above can be recomputed from the CA s
 
 |                       | Rows (sites)                        | Columns (species)        |
 |-----------------------|-------------------------------------|--------------------------|
-| Mean for axis $k$     | $\frac{1}{\sqrt{n}} L1_k(i)$ | $\frac{1}{\sqrt{n}} C_k(j)$ |
-| Variance for axis $k$ | None                                | $$\frac{1}{n \lambda_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} L_k^2(i) \right) - \lambda_k C_k^2(j) \right)$$ |
+| Mean for axis $k$     | $\frac{1}{\sqrt{n}} u_{ik}$ | $\frac{1}{\sqrt{n}} v^\star_{jk}$ |
+| Variance for axis $k$ | None                                | $$\frac{1}{n \lambda_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} {u^\star_{ik}}^2 \right) - \lambda_k {v^\star_{ik}}^2 \right)$$ |
 | Covariance between axes $k$, $l$ | None                     |                          |
 
 
@@ -827,8 +914,8 @@ Now we can "prove" that the values defined above can be recomputed from the CA s
 
 |                       | Rows (sites)                      | Columns (species)        |
 |-----------------------|-----------------------------------|--------------------------|
-| Mean for axis $k$     | $L_k(i) \times \frac{1}{\sqrt{n}}$ | $C1_k(j) \times \frac{1}{\sqrt{n}}$ |
-| Variance for axis $k$ |  $$\frac{1}{n \lambda_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k L_k^2(i) \right)$$ | None                   |
+| Mean for axis $k$     | $u^\star_{ik} \times \frac{1}{\sqrt{n}}$ | $v_{jk} \times \frac{1}{\sqrt{n}}$ |
+| Variance for axis $k$ |  $$\frac{1}{n \lambda_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} {v^\star_{jk}}^2 \right) - \lambda_k {u^\star_{ik}}^2 \right)$$ | None                   |
 | Covariance between axes $k$, $l$ |                         | None                    |
 
 
@@ -841,21 +928,21 @@ Finally, we can relate the quantity computed above (with the definition or with 
 
 |                       | Rows (sites)                      | Columns (species)        |
 |-----------------------|-----------------------------------|--------------------------|
-| Mean for axis $k$     | $$mR_k(i) = \frac{\sqrt{2}}{\sqrt{\mu_k n}} m_k(i)$$ | $$mR_k(j) = \frac{\sqrt{2 \lambda_k}}{\sqrt{\mu_k n}} m_k(j)$$ |
-| Variance for axis $k$ | None | $$sR^2_k(j) = \frac{2 \mu_k}{n} s^2_k(j)$$ |
+| Mean for axis $k$     | $$mR_{ik} = \frac{\sqrt{2}}{\sqrt{\mu_k n}} m_{ik}$$ | $$mR_{jk} = \frac{\sqrt{2 \lambda_k}}{\sqrt{\mu_k n}} m_{jk}$$ |
+| Variance for axis $k$ | None | $$sR^2_{jk} = \frac{2 \mu_k}{n} s^2_{jk}$$ |
 | Covariance between axes $k$, $l$ |  | |
 
 + using C score
 
 |                       | Rows (sites)                      | Columns (species)        |
 |-----------------------|-----------------------------------|--------------------------|
-| Mean for axis $k$     | $$mC_k(i) =  \frac{\sqrt{2 \lambda_k}}{\sqrt{\mu_k n}} m_k(i)$$ | $$mC_k(j) = \frac{\sqrt{2}}{\sqrt{\mu_k n}} m_k(j) $$ |
-| Variance for axis $k$ | $$sC^2_k(i) = \frac{2 \mu_k}{n} s^2_k(i)$$ | None |
+| Mean for axis $k$     | $$mC_{ik} =  \frac{\sqrt{2 \lambda_k}}{\sqrt{\mu_k n}} m_{ik}$$ | $$mC_{jk} = \frac{\sqrt{2}}{\sqrt{\mu_k n}} m_{jk} $$ |
+| Variance for axis $k$ | $$sC^2_{ik} = \frac{2 \mu_k}{n} s^2_{ik}$$ | None |
 | Covariance between axes $k$, $l$ |  | |
 
 :::
 
-This is not at all developed in the article of @thioulouse1992, but we could also use directly the R scores and the C scores to compute the groupwise (species- or sites-wise) mean and variances. In fact, the means and variances computed from the scoresR and scoresC should be related to the means and variances computed from $L_k(i)$ = `li` and $C_k(j)$ = `co`, since scoreR = `l1` and scoreC = `c1`.
+This is not at all developed in the article of @thioulouse1992, but we could also use directly the R scores and the C scores to compute the groupwise (species- or sites-wise) mean and variances. In fact, the means and variances computed from the scoresR and scoresC should be related to the means and variances computed from $u^\star$ = `li` and $v^\star$ = `co`, since scoreR = `l1` and scoreC = `c1`.
 
 We bother computing these because with CCA and dc-CA, we can't use directly RC scores. 
 
@@ -875,7 +962,7 @@ We compute the mean score per site from the **column** scores.
 mrowsC <- meanfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq)
 ```
 
-We have $mC_k(i) = \frac{L_k(i)}{\sqrt{n}}$.
+We have $mC_{ik} = \frac{u^\star_{ik}}{\sqrt{n}}$.
 
 ```{r}
 res <- mrowsC/(ca$li * 1/sqrt(n))
@@ -884,17 +971,17 @@ all(res - 1 < zero)
 
 We can prove that equality: we begin by writing the weighted mean formula of scoreC:
 
-$$mC_k(i) = \frac{1}{y_{i\cdot}} \sum_i y_{ij} ~ \text{scoreC}_k(i, j)$$
-We replace scoreC with $\frac{C1_k(j)}{\sqrt{n}}$ (this equality remains to be proven):
+$$mC_{ik} = \frac{1}{y_{i\cdot}} \sum_i y_{ij} ~ \text{scoreC}_k(i, j)$$
+We replace scoreC with $\frac{v_{jk}}{\sqrt{n}}$ (this equality remains to be proven):
 
-$$mC_k(i) = \frac{1}{y_{i\cdot}} \sum_i y_{ij} \frac{C1_k(j)}{\sqrt{n}}$$
+$$mC_k(i) = \frac{1}{y_{i\cdot}} \sum_i y_{ij} \frac{v_{jk}}{\sqrt{n}}$$
 
 Then we remove $\frac{1}{n}$ from the sum:
 
-$$mC_k(i) = \frac{1}{\sqrt{n}}\frac{1}{y_{i\cdot}} \sum_i y_{ij} C1_k(j)$$
-By definition, the `li` are at the mean of the `c1` so we can replace $\frac{1}{y_{i\cdot}} \sum_i y_{ij} C1_k(j)$ with $L_k(i)$:
+$$mC_{ik} = \frac{1}{\sqrt{n}}\frac{1}{y_{i\cdot}} \sum_i y_{ij} v_{jk}$$
+By definition, the `li` are at the mean of the `c1` so we can replace $\frac{1}{y_{i\cdot}} \sum_i y_{ij} v_{jk}$ with $u^\star_{jk}$:
 
-$$mC_k(i)  = \frac{1}{\sqrt{n}} L_k(i)$$
+$$mC_{ik}  = \frac{1}{\sqrt{n}} u^\star_{jk}$$
 
 ##### Variance
 Now, we compare variances computed with the scoreC and variances computed with the scoreRC.
@@ -904,7 +991,7 @@ varrowsC <- varfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq)
 ```
 
 
-We have $sC_k^2(i) = \frac{2\mu_k}{n} ~ s^2_k(i)$.
+We have $sC_{ik}^2 = \frac{2\mu_k}{n} ~ s^2_{ik}$.
 
 ```{r}
 res <- varrowsC / (varrows %*% diag(2*mu) / n)
@@ -916,14 +1003,14 @@ Here too, we can prove the relationship above between the variance of the RC sco
 
 $$
 \begin{align}
-sC_k^2(i) 
-&= \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \text{scoreC}(i, j)^2 - mC_k(i)^2\\ 
-&= \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \left(\frac{C1_k(j)}{\sqrt{n}}\right)^2 - \left(\frac{L_k(i)}{\sqrt{n}}\right)^2\\ 
-&= \frac{1}{n} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ C1_k(j)^2 - L_k(i)^2\right)\\ 
-&= \frac{1}{n} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \left( \frac{C_k(j)}{\sqrt{\lambda_k}}\right)^2 - L_k(i)^2\right)\\ 
-&= \frac{1}{n} \times \frac{1}{\lambda_k} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ C_k(j)^2 - \lambda_k L_k(i)^2\right)\\ 
-&= \frac{1}{n} \times \frac{1}{\lambda_k} \times 2\lambda_k \mu_k \times \frac{1}{2\lambda_k \mu_k} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ C_k(j)^2 - \lambda_k L_k(i)^2\right)\\ 
-sC_k^2(i) &= \frac{2\mu_k}{n} ~ s^2_k(i)
+sC_{ik}^2 
+&= \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \text{scoreC}(i, j)^2 - mC_{ik}^2\\ 
+&= \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \left(\frac{v_{jk}}{\sqrt{n}}\right)^2 - \left(\frac{v^\star_{ik}}{\sqrt{n}}\right)^2\\ 
+&= \frac{1}{n} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ v_{jk}^2 - {v^\star_{ik}}^2\right)\\ 
+&= \frac{1}{n} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \left( \frac{v^\star_{jk}}{\sqrt{\lambda_k}}\right)^2 - {u^\star_{ik}}^2\right)\\ 
+&= \frac{1}{n} \times \frac{1}{\lambda_k} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ {v^\star_{jk}}^2 - \lambda_k {u^\star_{ik}}^2\right)\\ 
+&= \frac{1}{n} \times \frac{1}{\lambda_k} \times 2\lambda_k \mu_k \times \frac{1}{2\lambda_k \mu_k} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ {v^\star_{jk}}^2 - \lambda_k {u^\star_{ik}}^2\right)\\ 
+sC_{ik}^2 &= \frac{2\mu_k}{n} ~ s^2_{ik}
 \end{align}
 $$
 
@@ -950,7 +1037,7 @@ mrowsR_nw <- meanfacwt(scoreR, fac = Yfreq0$row)
 all(mrowsR/mrowsR_nw - 1 < zero)
 ```
 
-We have $mR_k(i) = \frac{L1_k(i)}{\sqrt{n}}$.
+We have $mR_{ik} = \frac{u_{ik}}{\sqrt{n}}$.
 
 ```{r}
 res <- mrowsR * sqrt(n)/ca$l1
@@ -1005,7 +1092,7 @@ We compute the mean score per species from the **column** scores.
 mcolsC <- meanfacwt(scoreC, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 ```
 
-We have $mC_k(j) = \frac{C1_k(j)}{\sqrt{n}}$.
+We have $mC_{jk} = \frac{v_{jk}}{\sqrt{n}}$.
 
 ```{r}
 # Check
@@ -1027,7 +1114,7 @@ We compute the mean score per species from the **row** scores.
 mcolsR <- meanfacwt(scoreR, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 ```
 
-We have $mR_k(j) = \frac{C_k(j)}{\sqrt{n}}$.
+We have $mR_{jk} = \frac{v^\star_{jk}}{\sqrt{n}}$.
 
 ```{r}
 res <- mcolsR/(ca$co/sqrt(n))
@@ -1042,7 +1129,7 @@ We compute the variance of species (columns) from the R score:
 varcolsR <- varfacwt(scoreR, fac = Yfreq0$colind, wt = Yfreq0$Freq)
 ```
 
-We have $sR_k^2(j) = \frac{2\mu_k}{n} ~ s^2_k(j)$.
+We have $sR^2_{jk} = \frac{2\mu_k}{n} ~ s^2_{jk}$.
 
 ```{r}
 # Check
@@ -1385,6 +1472,10 @@ $$L_k(i) = \sum_{j=1}^c p_{j|i} C_k(j)$$
 
 with $p_{j|i} = \frac{y_{ij}}{y_{i \cdot}}$. This formula relates species and samples scores in CA.
 
+
+With our notation:
+
+$$u^\star_{ik} = \sum_{j=1}^c p_{j|i} v^\star_{jk}$$
 ```{r}
 # Test formula for a given k
 k <- 2
@@ -1407,6 +1498,10 @@ res/ca$li[, k] # not equal
 We find that in fact the correct formula is
 
 $$L_k(i) = \frac{1}{\sqrt{\lambda_k}}\sum_{j=1}^c p_{j|i} C_k(j)$$
+
+Or, with our notation:
+
+$$v^\star_{ik} = \frac{1}{\sqrt{\lambda_k}}\sum_{j=1}^c p_{j|i} u^\star_{jk}$$
 
 ```{r}
 res/sqrt(lambda[k])/ca$li[, k]

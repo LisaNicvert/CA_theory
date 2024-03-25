@@ -2131,11 +2131,13 @@ sp22 0.1498454 0.1586454 0.1867878 -0.1976291 0.2959281 0.415688</code></pre>
 <span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Compute the part with the sum on Cj</span></span>
 <span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># we add all coordinates Cj^2 weighted by the number of observations on site i</span></span>
-<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>  sumCj <span class="ot">&lt;-</span> <span class="fu">t</span>(Y[i, ]) <span class="sc">%*%</span> <span class="fu">as.matrix</span>(cca<span class="sc">$</span>co)<span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fill i-th row with site i variance along each axis</span></span>
-<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>  varrowsC_CCA[i, ] <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>(n<span class="sc">*</span>lambda_CCA)<span class="sc">*</span>((<span class="dv">1</span><span class="sc">/</span>yi_[i])<span class="sc">*</span>sumCj <span class="sc">-</span> lambda_CCA<span class="sc">*</span><span class="fu">as.numeric</span>(Li)<span class="sc">^</span><span class="dv">2</span>)</span>
-<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>  sumCj <span class="ot">&lt;-</span> <span class="fu">t</span>(Y[i, ]) <span class="sc">%*%</span> <span class="fu">as.matrix</span>(cca<span class="sc">$</span>c1)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># sumCj &lt;- t(Y[i, ]) %*% as.matrix(cca$co)^2</span></span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fill i-th row with site i variance along each axis</span></span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># varrowsC_CCA[i, ] &lt;- 1/(n*lambda_CCA)*((1/yi_[i])*sumCj - lambda_CCA*as.numeric(Li)^2)</span></span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>  varrowsC_CCA[i, ] <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>n<span class="sc">*</span>((<span class="dv">1</span><span class="sc">/</span>yi_[i])<span class="sc">*</span>sumCj <span class="sc">-</span> <span class="fu">as.numeric</span>(Li)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>varrowsC[, <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(varrowsRC)]<span class="sc">/</span>varrowsC_CCA</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
