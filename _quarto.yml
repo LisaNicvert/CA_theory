@@ -11,7 +11,7 @@ project:
     - recscal_dcca.qmd
 
 website:
-  title: "The theory of multivariate analyses"
+  title: "The theory of correspondences analyses"
   navbar:
     left:
       - href: index.qmd
