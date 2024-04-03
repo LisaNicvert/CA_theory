@@ -583,31 +583,31 @@ c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}h_k(i, j)h_l(i, j) - m_{ik}m
 $$
 
 ```{r}
-k <- 1
-l <- 2
+kk <- 1
+lk <- 2
 ```
 
-Below, we compute the covariance between axes $k =$ `r k` and $l =$ `r l`.
+Below, we compute the covariance between axes $k =$ `r kk` and $l =$ `r lk`.
 
 ```{r}
 # Test to compute covariance for site 3 only
 i <- 3
 rows <- which(Yfreq0$row == i)
 
-covrow1 <- (1/yi_[i])*sum(Yfreq0$Freq[rows] * H[rows, k] * H[rows, l]) - mrows[i, k]*mrows[i, l]
+covrow1 <- (1/yi_[i])*sum(Yfreq0$Freq[rows] * H[rows, kk] * H[rows, lk]) - mrows[i, kk]*mrows[i, lk]
 ```
 
 ```{r}
 # Compute covariances for all sites
 
 # Create a df containing intermediate computation and row = site identifier
-df <- data.frame(var = Yfreq0$Freq*H[, k]*H[, l], 
+df <- data.frame(var = Yfreq0$Freq*H[, kk]*H[, lk], 
                  by = Yfreq0$row)
 # Get the sum over the different species for each site
 sum_per_site <- aggregate(df$var, list(df$by), sum)$x
 
 # Then vector-compute covariances
-covrows_kl <- (1/yi_)*sum_per_site - mrows[, k]*mrows[, l]
+covrows_kl <- (1/yi_)*sum_per_site - mrows[, kk]*mrows[, lk]
 ```
 
 We check that the loop does what we want:
@@ -624,7 +624,7 @@ We could also obtain the same result with `covfacwt`.
 covrows <- covfacwt(H, fac = Yfreq0$row, wt = Yfreq0$Freq)
 # Output: a list of length fac (here, sites) with the variance covariance matrices for each site
 
-covrows_kl2 <- sapply(covrows, function(c) c[k, l])
+covrows_kl2 <- sapply(covrows, function(c) c[kk, lk])
 
 res <- covrows_kl/covrows_kl2
 all(res - 1 < zero)
@@ -648,11 +648,11 @@ all(reslist)
 
 ```{r}
 # Get results from ade4 plot
-covrows_plot <- s.class(rec_ca[,  k:l], 
+covrows_plot <- s.class(rec_ca[,  kk:lk], 
                         fac = rec_ca$Row,
                         wt = rec_ca$Weight, 
                         plot = FALSE)
-covrows_kl_plot <- sapply(covrows_plot@stats$covvar, function(x) x[k, l])
+covrows_kl_plot <- sapply(covrows_plot@stats$covvar, function(x) x[kk, lk])
 
 # Check
 all(covrows_kl_plot/covrows_kl2 - 1 < zero)
@@ -869,8 +869,6 @@ all(covcols_kl[-sp1]/covcols_kl_ca[-sp1] - 1 < zero)
 
 ## Conditional means and variances of R scores and C scores
 
-*Note: in this part, we used to change the notation and use $L_k(i)$ for `li` ($u^\star$) and $L1_k(i)$ for `l1` ($u$) (and the same with $C_k(j)$ for `co` ($v^\star$) and $C1_k(j)$ for `c1` ($v$)). Some old notation may remain.*
-
 ::: {.callout-tip title="*TL;DR*"}
 
 We can also compute compute means, variances and covariances with the R score or the C score.
@@ -1005,8 +1003,8 @@ $$
 \begin{align}
 sC_{ik}^2 
 &= \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \text{scoreC}(i, j)^2 - mC_{ik}^2\\ 
-&= \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \left(\frac{v_{jk}}{\sqrt{n}}\right)^2 - \left(\frac{v^\star_{ik}}{\sqrt{n}}\right)^2\\ 
-&= \frac{1}{n} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ v_{jk}^2 - {v^\star_{ik}}^2\right)\\ 
+&= \frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \left(\frac{v_{jk}}{\sqrt{n}}\right)^2 - \left(\frac{u^\star_{ik}}{\sqrt{n}}\right)^2\\ 
+&= \frac{1}{n} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ v_{jk}^2 - {u^\star_{ik}}^2\right)\\ 
 &= \frac{1}{n} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ \left( \frac{v^\star_{jk}}{\sqrt{\lambda_k}}\right)^2 - {u^\star_{ik}}^2\right)\\ 
 &= \frac{1}{n} \times \frac{1}{\lambda_k} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ {v^\star_{jk}}^2 - \lambda_k {u^\star_{ik}}^2\right)\\ 
 &= \frac{1}{n} \times \frac{1}{\lambda_k} \times 2\lambda_k \mu_k \times \frac{1}{2\lambda_k \mu_k} \left(\frac{1}{y_{\cdot j}} \sum_j y_{ij} ~ {v^\star_{jk}}^2 - \lambda_k {u^\star_{ik}}^2\right)\\ 
@@ -1649,9 +1647,11 @@ all(abs(varrows_nr_scaled/varrows - 1) < zero)
 
 s.class(H1, fac = Yfreq0$row, 
         wt = Yfreq0$Freq,
+        plabels.col = params$colsite,
         main = "Non-reciprocal scaling")
 s.class(H, fac = Yfreq0$row, 
         wt = Yfreq0$Freq,
+        plabels.col = params$colsite,
         main = "Reciprocal scaling")
 ```
 
@@ -1717,11 +1717,14 @@ all(abs(varcols_nr_scaled[-sp1, ]/varcols[-sp1, ] - 1) < zero) # same as recipro
 
 ```{r}
 #| code-fold: true
-s.class(H2, fac = Yfreq0$row, 
+colfac <- factor(Yfreq0$col)
+s.class(H2, fac = colfac, 
         wt = Yfreq0$Freq,
+        plabels.col = params$colspp,
         main = "Non-reciprocal scaling")
-s.class(H, fac = Yfreq0$row, 
+s.class(H, fac = colfac, 
         wt = Yfreq0$Freq,
+        plabels.col = params$colspp,
         main = "Reciprocal scaling")
 ```
 
