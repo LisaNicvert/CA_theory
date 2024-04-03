@@ -762,8 +762,14 @@ Vstar_wa <- diag(dc^(-1/2)) %*% t(P0hat) %*% U0
 res <- Vstar_wa/Vstar
 all(res[, 1:neig] - 1 < zero)
 
+# U
 Vstar_wa_U <- diag(dc^(-1/2)) %*% t(P0hat) %*% diag(dr^(1/2)) %*% U
 res <- Vstar_wa_U/Vstar
+all(res[, 1:neig] - 1 < zero)
+
+# Tests with score Z2
+Vstar_wa_Z <- diag(dc^(-1)) %*% t(P) %*% Z2
+res <- Vstar_wa_Z/Vstar
 all(res[, 1:neig] - 1 < zero)
 ```
 
