@@ -6,6 +6,7 @@ project:
     - CA.qmd
     - CCA.qmd
     - dcCA.qmd
+    - CCorA.qmd
     - recscal.qmd
     - recscal_cca.qmd
     - recscal_dcca.qmd
@@ -22,6 +23,8 @@ website:
         text: Canonical CA (CCA)
       - href: dcCA.qmd
         text: Double constrained CA (dc-CA)
+      - href: CCorA.qmd
+        text: Canonical correlation analysis (CCorA)
       - href: recscal.qmd
         text: Reciprocal scaling (CA)
       - href: recscal_cca.qmd

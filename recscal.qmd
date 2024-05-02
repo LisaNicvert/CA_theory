@@ -308,55 +308,6 @@ We check the agreement of $H$ defined with CA of with canonical correlation anal
 all(abs(scoreRC_scaled/H) - 1 < zero)
 ```
 
-#### Canonical correlation analysis "by hand"
-
-We try to compute the canonical correlation "by hand":
-
-```{r}
-# Unweighted
-matR <- scale(tabR, scale = FALSE, 
-              center = FALSE)
-matC <- scale(tabC, scale = FALSE, 
-              center = FALSE)
-
-SRR <- t(matR) %*% matR
-SRC <- t(matR) %*% matC
-SCC <- t(matC) %*% matC
-
-K <- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC)) 
-
-svdK <- svd(K)
-# Canonical coefficients
-xcoefK <- solve(chol(SRR)) %*% svdK$u
-ycoefK <- solve(chol(t(SCC))) %*% svdK$v
-# Canonical variates
-scoreRK <- matR %*% xcoefK
-scoreCK <- matC %*% ycoefK
-
-# svdK$d[1:(c-1)]/cancorRC$cor
-# xcoefK[1:(r-1), 1:(c-1)]/cancorRC$xcoef[, 1:(c-1)]
-# ycoefK[1:(c-1), 1:(c-1)]/cancorRC$ycoef[, 1:(c-1)]
-# 
-# scoreRK[, 1:(c-1)]/scoreR[, 1:(c-1)]
-# scoreCK[, 1:(c-1)]/scoreC[, 1:(c-1)]
-
-# SRR <- t(tabR_scaled) %*% diag(sqrt(wt)) %*% tabR_scaled
-# SRC <- t(tabR_scaled) %*% diag(sqrt(wt)) %*% tabC_scaled
-# SCC <- t(tabC_scaled) %*% diag(sqrt(wt)) %*% tabC_scaled
-# 
-# K <- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC)) 
-# 
-# # SVD
-# svdK <- svd(K)
-# # Canonical coefficients
-# xcoefK <- solve(chol(t(SRR))) %*% svdK$u
-# ycoefK <- solve(chol(t(SCC))) %*% svdK$v
-# 
-# svdK$d[1:(c-1)]/cancorRC$cor
-# xcoefK[1:(r-1), 1:(c-1)]/cancorRC$xcoef[, 1:(c-1)]
-# ycoefK[1:(c-1), 1:(c-1)]/cancorRC$ycoef[, 1:(c-1)]
-```
-
 ### Plots
 
 The scores $H$ are displayed below on the first two axes:
