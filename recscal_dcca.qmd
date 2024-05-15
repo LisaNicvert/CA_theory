@@ -16,12 +16,6 @@ library(here)
 library(ade4)
 library(adegraphics)
 
-# dc-CA
-source(here("functions/dpcaiv2-ade4.R"))
-
-# Reciprocal scaling
-source(here("functions/reciprocal.R"))
-
 # Matrix algebra
 library(expm)
 
@@ -100,12 +94,6 @@ lambda_dcca <- dcca$eig
 mu_dcca <- 1 + sqrt(lambda_dcca)
 ```
 
-We also compute reciprocal scaling for comparison:
-
-```{r}
-rec_dcca <- reciprocal.dpcaiv(dcca)
-```
-
 ```{r}
 # Transform matrix to count table
 Yfreq <- as.data.frame(as.table(Y))
@@ -131,10 +119,6 @@ for (kl in 1:length(lambda_dcca)) { # For each axis
 }
 ```
 
-```{r, include = FALSE}
-# Check result
-rec_dcca[,1:neig]/H
-```
 
 ### From canonical correlation analysis
 

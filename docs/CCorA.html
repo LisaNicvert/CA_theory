@@ -318,15 +318,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>First, we scale the matrices with custom weights:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Center tables</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>YR_scaled <span class="ot">&lt;-</span> <span class="fu">scalewt</span>(YR, wt, </span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>YC_scaled <span class="ot">&lt;-</span> <span class="fu">scalewt</span>(YC, wt, </span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">scale =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>YR_scaled <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">sqrt</span>(wt)) <span class="sc">%*%</span> <span class="fu">scalewt</span>(YR, wt, </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>YC_scaled <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">sqrt</span>(wt)) <span class="sc">%*%</span> <span class="fu">scalewt</span>(YC, wt, </span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">scale =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we try to perform a weighted version.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>cancorRC <span class="ot">&lt;-</span> <span class="fu">cancor</span>(<span class="fu">diag</span>(<span class="fu">sqrt</span>(wt)) <span class="sc">%*%</span> YR_scaled, </span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">diag</span>(<span class="fu">sqrt</span>(wt)) <span class="sc">%*%</span> YC_scaled, </span>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>cancorRC <span class="ot">&lt;-</span> <span class="fu">cancor</span>(YR_scaled, </span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                   YC_scaled, </span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">xcenter =</span> <span class="cn">FALSE</span>, <span class="at">ycenter =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we do it by hand. First, we compute matrix <span class="math inline">\(K\)</span>:</p>
@@ -335,7 +335,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>SRC <span class="ot">&lt;-</span> <span class="fu">t</span>(YR_scaled) <span class="sc">%*%</span> YC_scaled</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>SCC <span class="ot">&lt;-</span> <span class="fu">t</span>(YC_scaled) <span class="sc">%*%</span> YC_scaled</span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># K &lt;- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC)) </span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># K &lt;- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC))</span></span>
 <span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(SRR))) <span class="sc">%*%</span> SRC <span class="sc">%*%</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(SCC)) </span>
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>svdK <span class="ot">&lt;-</span> <span class="fu">svd</span>(K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -343,6 +343,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Compare singular values to canonical correlations:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>((svdK<span class="sc">$</span>d<span class="sc">/</span>cancorRC<span class="sc">$</span>cor[<span class="dv">1</span><span class="sc">:</span><span class="dv">21</span>] <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] FALSE</code></pre>
+</div>
+</div>
+<p>Then, we compute canonical coefficients:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Canonical coefficients</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>xcoefK <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(SRR)) <span class="sc">%*%</span> svdK<span class="sc">$</span>u</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>ycoefK <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">chol</span>(<span class="fu">t</span>(SCC))) <span class="sc">%*%</span> svdK<span class="sc">$</span>v</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(xcoefK[<span class="dv">1</span><span class="sc">:</span><span class="dv">25</span>, ]<span class="sc">/</span>cancorRC<span class="sc">$</span>xcoef[, <span class="dv">1</span><span class="sc">:</span><span class="dv">21</span>]) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] FALSE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(ycoefK[<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>]<span class="sc">/</span>cancorRC<span class="sc">$</span>ycoef) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] FALSE</code></pre>
 </div>

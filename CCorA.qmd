@@ -140,17 +140,17 @@ First, we scale the matrices with custom weights:
 
 ```{r}
 # Center tables
-YR_scaled <- scalewt(YR, wt, 
-                     scale = FALSE)
-YC_scaled <- scalewt(YC, wt, 
-                     scale = FALSE)
+YR_scaled <- diag(sqrt(wt)) %*% scalewt(YR, wt, 
+                                        scale = FALSE)
+YC_scaled <- diag(sqrt(wt)) %*% scalewt(YC, wt, 
+                                        scale = FALSE)
 ```
 
 Now, we try to perform a weighted version.
 
 ```{r}
-cancorRC <- cancor(diag(sqrt(wt)) %*% YR_scaled, 
-                   diag(sqrt(wt)) %*% YC_scaled, 
+cancorRC <- cancor(YR_scaled, 
+                   YC_scaled, 
                    xcenter = FALSE, ycenter = FALSE)
 ```
 
@@ -161,7 +161,7 @@ SRR <- t(YR_scaled) %*% YR_scaled
 SRC <- t(YR_scaled) %*% YC_scaled
 SCC <- t(YC_scaled) %*% YC_scaled
 
-# K <- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC)) 
+# K <- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC))
 K <- solve(sqrtm(t(SRR))) %*% SRC %*% solve(sqrtm(SCC)) 
 
 svdK <- svd(K)
@@ -171,4 +171,15 @@ Compare singular values to canonical correlations:
 
 ```{r}
 all((svdK$d/cancorRC$cor[1:21] - 1) < zero)
+```
+
+Then, we compute canonical coefficients:
+
+```{r}
+# Canonical coefficients
+xcoefK <- solve(sqrtm(SRR)) %*% svdK$u
+ycoefK <- solve(chol(t(SCC))) %*% svdK$v
+
+all(abs(abs(xcoefK[1:25, ]/cancorRC$xcoef[, 1:21]) - 1) < zero)
+all(abs(abs(ycoefK[1:20, 1:20]/cancorRC$ycoef) - 1) < zero)
 ```

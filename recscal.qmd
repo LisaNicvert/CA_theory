@@ -15,12 +15,6 @@ library(here)
 library(ade4)
 library(adegraphics)
 
-# dc-CA
-source(here("functions/dpcaiv2-ade4.R"))
-
-# Reciprocal scaling
-source(here("functions/reciprocal.R"))
-
 # Matrix algebra
 library(expm)
 

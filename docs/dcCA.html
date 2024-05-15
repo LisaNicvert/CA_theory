@@ -248,16 +248,13 @@ div.csl-indent {
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ade4)</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(adegraphics)</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># dc-CA</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"functions/dpcaiv2-ade4.R"</span>))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Matrix algebra</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(expm)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Matrix algebra</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(expm)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(CAnetwork)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Plots</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(CAnetwork)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -721,8 +718,8 @@ div.csl-indent {
 </div>
 <div class="callout-body-container callout-body">
 <p>We define matrix <span class="math inline">\(D\)</span> as:</p>
-<p><span class="math display">\[D = [E_{center}^\top D_r E_{center}]^{-1/2} E_{center}^\top P T_{center} [T_{center}^\top D_c T_{center}]^{-1/2}\]</span></p>
-<p><em>Note: contrary to <span class="citation" data-cites="terbraak2018">Braak, Šmilauer, and Dray (<a href="#ref-terbraak2018" role="doc-biblioref">2018</a>)</span>, in this document we use the matrice of relative counts <span class="math inline">\(P\)</span> instead of the matrix of absolte counts <span class="math inline">\(Y\)</span>.</em></p>
+<p><span class="math display">\[D = [\tilde{E}^\top D_r \tilde{E}]^{-1/2} \tilde{E}^\top P_0 \tilde{T} [\tilde{T}^\top D_c \tilde{T}]^{-1/2}\]</span></p>
+<p><em>Note: contrary to <span class="citation" data-cites="terbraak2018">Braak, Šmilauer, and Dray (<a href="#ref-terbraak2018" role="doc-biblioref">2018</a>)</span>, in this document we use the matrix <span class="math inline">\(P_0\)</span> instead of <span class="math inline">\(Y\)</span>.</em></p>
 <p>We perform the SVD of <span class="math inline">\(D\)</span>:</p>
 <p><span class="math display">\[
 D = B_0 \Delta C_0^\top
@@ -733,20 +730,20 @@ D = B_0 \Delta C_0^\top
 <p><strong>Transformation of <span class="math inline">\(B_0\)</span> and <span class="math inline">\(C_0\)</span></strong></p>
 <p>Then, we transform <span class="math inline">\(B_0\)</span> and <span class="math inline">\(C_0\)</span> (scaling):</p>
 <ul>
-<li><span class="math inline">\(B = [E_{center}^\top D_r E_{center}]^{-1/2} B_0\)</span> (coefficients for rows/environmental variables)</li>
-<li><span class="math inline">\(C = [T_{center}^\top D_c T_{center}]^{-1/2} C_0\)</span> (coefficients for columns/species traits)</li>
+<li><span class="math inline">\(B = [\tilde{E}^\top D_r \tilde{E}]^{-1/2} B_0\)</span> (coefficients for rows/environmental variables)</li>
+<li><span class="math inline">\(C = [\tilde{T}^\top D_c \tilde{T}]^{-1/2} C_0\)</span> (coefficients for columns/species traits)</li>
 </ul>
 <p><strong>Individuals coordinates</strong></p>
 <p>The individuals coordinates (species or sites) can be computed in two ways:</p>
 <p>Linear combinations (LC scores) are computed from those coefficients :</p>
 <ul>
-<li><span class="math inline">\(U = E_{center} B\)</span> for the rows (sites)</li>
-<li><span class="math inline">\(V = T_{center} C\)</span> for columns (species)</li>
+<li><span class="math inline">\(U = \tilde{E} B\)</span> for the rows (sites)</li>
+<li><span class="math inline">\(V = \tilde{T} C\)</span> for columns (species)</li>
 </ul>
 <p>Weighted averages (WA scores) are computed from the scores of the <strong>other</strong> individuals:</p>
 <ul>
-<li><span class="math inline">\(U^\star = {D_r}^{-1} P V\)</span> for row (sites) scores</li>
-<li><span class="math inline">\(V^\star = {D_c}^{-1} P^\top U\)</span> for column (species) scores</li>
+<li><span class="math inline">\(U^\star = {D_r}^{-1} P_0 V\)</span> for row (sites) scores</li>
+<li><span class="math inline">\(V^\star = {D_c}^{-1} {P_0}^\top U\)</span> for column (species) scores</li>
 </ul>
 </div>
 </div>
@@ -767,73 +764,91 @@ D = B_0 \Delta C_0^\top
 </section>
 <section id="center-matrices" class="level3">
 <h3 class="anchored" data-anchor-id="center-matrices">Center matrices</h3>
-<p>We define <span class="math inline">\(P\)</span> as the relative counts of <span class="math inline">\(Y\)</span>:</p>
+<p>We define <span class="math inline">\(P\)</span> as the relative counts of <span class="math inline">\(Y\)</span> and <span class="math inline">\(P_0\)</span> as its centered scaled version:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>P <span class="ot">&lt;-</span> Y<span class="sc">/</span><span class="fu">sum</span>(Y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>P <span class="ot">&lt;-</span> Y<span class="sc">/</span><span class="fu">sum</span>(Y)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize P0 matrix</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>P0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">ncol =</span> <span class="fu">ncol</span>(Y), <span class="at">nrow =</span> <span class="fu">nrow</span>(Y))</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(P0) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(Y)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(P0) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(Y)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(Y)) { <span class="co"># For each row</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Y)) { <span class="co"># For each column</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Do the sum</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    pi_ <span class="ot">&lt;-</span> <span class="fu">sum</span>(P[i, ])</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    p_j <span class="ot">&lt;-</span> <span class="fu">sum</span>(P[, j])</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute the transformation</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    P0[i, j] <span class="ot">&lt;-</span> (P[i, j] <span class="sc">-</span> (pi_<span class="sc">*</span>p_j))<span class="sc">/</span><span class="fu">sqrt</span>(pi_<span class="sc">*</span>p_j)</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>First, we need to center the traits and environment matrices (resp. <span class="math inline">\(T_{center}\)</span> and <span class="math inline">\(E_{center}\)</span>). To do so, we use the occurrences in matrix <span class="math inline">\(P\)</span> as weights:</p>
+<p>First, we need to center-scale the traits and environment matrices (resp. <span class="math inline">\(\tilde{T}\)</span> and <span class="math inline">\(\tilde{E}\)</span>). To do so, we use the occurrences in matrix <span class="math inline">\(P\)</span> as weights:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>E_wt <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(P)<span class="sc">/</span><span class="fu">nrow</span>(E)</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>Ecenter <span class="ot">&lt;-</span> <span class="fu">scalewt</span>(E, <span class="at">wt =</span> E_wt, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>Escaled <span class="ot">&lt;-</span> <span class="fu">scalewt</span>(E, <span class="at">wt =</span> E_wt, <span class="at">scale =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>T_wt <span class="ot">&lt;-</span> <span class="fu">colSums</span>(P)<span class="sc">/</span><span class="fu">nrow</span>(T_)</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>Tcenter <span class="ot">&lt;-</span> <span class="fu">scalewt</span>(T_, <span class="at">wt =</span> T_wt, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>Tscaled <span class="ot">&lt;-</span> <span class="fu">scalewt</span>(T_, <span class="at">wt =</span> T_wt, <span class="at">scale =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check centering</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>M1 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rep</span>(<span class="dv">1</span>, <span class="fu">nrow</span>(P)), <span class="at">nrow =</span> <span class="dv">1</span>)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(M1 <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">rowSums</span>(P)) <span class="sc">%*%</span> Ecenter) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(M1 <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">rowSums</span>(P)) <span class="sc">%*%</span> Escaled) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>M1 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rep</span>(<span class="dv">1</span>, <span class="fu">ncol</span>(P)), <span class="at">nrow =</span> <span class="dv">1</span>)</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(M1 <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">colSums</span>(P)) <span class="sc">%*%</span> Tcenter) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(M1 <span class="sc">%*%</span> <span class="fu">diag</span>(<span class="fu">colSums</span>(P)) <span class="sc">%*%</span> Tscaled) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
-<p>This is equivalent to centering “inflated” versions of these matrices matching the occurrence counts in <span class="math inline">\(P\)</span> (below).</p>
+<p>This is equivalent to scaling “inflated” versions of these matrices matching the occurrence counts in <span class="math inline">\(P\)</span> (below).</p>
 <p><span class="math display">\[
-E_{center} = E - \bar{E}_{infl} =\left[e_i \sum_i y_{i\cdot}e_i/y_{\cdot\cdot} \right]
+\tilde{E} = \frac{E - \bar{E}_{infl}}{\sigma_{Einfl}}
 \]</span></p>
 <p><span class="math display">\[
-T_{center} = T - \bar{T}_{infl} = \left[t_j \sum_j y_{\cdot j}t_j/y_{\cdot\cdot} \right]
+\tilde{T} = \frac{T - \bar{T}_{infl}}{\sigma_{Tinfl}}
 \]</span></p>
 <div class="cell">
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Center E -----</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>pi_ <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(P)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>Ecenter2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(E), <span class="at">ncol =</span> <span class="fu">ncol</span>(E))</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>Escaled2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(E), <span class="at">ncol =</span> <span class="fu">ncol</span>(E))</span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Ecenter)) {</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  Ecenter2[, i] <span class="ot">&lt;-</span> E[, i] <span class="sc">-</span> <span class="fu">sum</span>(E[, i]<span class="sc">*</span>pi_)<span class="sc">/</span><span class="fu">sum</span>(P)</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="co"># This is the same as computing a mean on inflated data matrix Einfl and centering E with these means</span></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Center T -----</span></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>p_j <span class="ot">&lt;-</span> <span class="fu">colSums</span>(P)</span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>Tcenter2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(T_), <span class="at">ncol =</span> <span class="fu">ncol</span>(T_))</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(Tcenter2) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(T_)</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(Tcenter2) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(T_)</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Tcenter)) {</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>  Tcenter2[, j] <span class="ot">&lt;-</span> T_[, j] <span class="sc">-</span> (<span class="fu">sum</span>(T_[, j]<span class="sc">*</span>p_j)<span class="sc">/</span><span class="fu">sum</span>(P))</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Escaled)) {</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  emean <span class="ot">&lt;-</span> <span class="fu">sum</span>(E[, i]<span class="sc">*</span>pi_<span class="sc">/</span><span class="fu">sum</span>(P))</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  Escaled2[, i] <span class="ot">&lt;-</span> (E[, i] <span class="sc">-</span> emean)<span class="sc">/</span>(<span class="fu">sqrt</span>(<span class="fu">sum</span>(pi_<span class="sc">*</span>(E[, i] <span class="sc">-</span> emean)<span class="sc">^</span><span class="dv">2</span>)))</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="co"># This is the same as computing a mean on inflated data matrix Einfl and centering E with these means</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Center T -----</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>p_j <span class="ot">&lt;-</span> <span class="fu">colSums</span>(P)</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>Tscaled2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="fu">nrow</span>(T_), <span class="at">ncol =</span> <span class="fu">ncol</span>(T_))</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(Tscaled2) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(T_)</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(Tscaled2) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(T_)</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Tscaled)) {</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>  tmean <span class="ot">&lt;-</span> <span class="fu">sum</span>(T_[, j]<span class="sc">*</span>p_j<span class="sc">/</span><span class="fu">sum</span>(P))</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>  Tscaled2[, j] <span class="ot">&lt;-</span> (T_[, j] <span class="sc">-</span> tmean)<span class="sc">/</span>(<span class="fu">sqrt</span>(<span class="fu">sum</span>(p_j<span class="sc">*</span>(T_[, j] <span class="sc">-</span> tmean)<span class="sc">^</span><span class="dv">2</span>)))</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check equivalence between the 2 methods</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Ecenter<span class="sc">/</span>Ecenter2 <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Escaled<span class="sc">/</span>Escaled2 <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Tcenter<span class="sc">/</span>Tcenter2 <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Tscaled<span class="sc">/</span>Tscaled2 <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
@@ -843,10 +858,10 @@ T_{center} = T - \bar{T}_{infl} = \left[t_j \sum_j y_{\cdot j}t_j/y_{\cdot\cdot}
 <section id="rationale-regression" class="level3">
 <h3 class="anchored" data-anchor-id="rationale-regression">Rationale: regression</h3>
 <p>Then, we search scores <span class="math inline">\(u\)</span> and <span class="math inline">\(v\)</span> that maximize the fourth-corner correlation <span class="math inline">\(u^\top P v\)</span> (where <span class="math inline">\(u\)</span> are the sites (rows) scores and <span class="math inline">\(v\)</span> are the species (columns) scores).</p>
-<p>In this framework, we define <span class="math inline">\(u\)</span> and <span class="math inline">\(v\)</span> as linear combinations of traits and environmental variables: <span class="math inline">\(u = E_{center}b\)</span> and <span class="math inline">\(v = T_{center}c\)</span>.</p>
-<p>So in the end, we need to maximize <span class="math inline">\(u^\top P v\)</span> with respect to the coefficients vectors <span class="math inline">\(b\)</span> and <span class="math inline">\(c\)</span>:</p>
+<p>In this framework, we define <span class="math inline">\(u\)</span> and <span class="math inline">\(v\)</span> as linear combinations of traits and environmental variables: <span class="math inline">\(u = \tilde{E}b\)</span> and <span class="math inline">\(v = \tilde{T}c\)</span>.</p>
+<p>So in the end, we need to maximize <span class="math inline">\(u^\top P_0 v\)</span> with respect to the coefficients vectors <span class="math inline">\(b\)</span> and <span class="math inline">\(c\)</span>:</p>
 <p><span class="math display">\[
-\max_{b, c}(u^\top P v) = \max_{b, c}\left(\left[E_{center}b\right]^\top P  T_{center}c \right)
+\max_{b, c}(u^\top P v) = \max_{b, c}\left(\left[\tilde{E}b\right]^\top P \tilde{T}c \right)
 \]</span></p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -860,18 +875,18 @@ Note
 <div class="callout-body-container callout-body">
 <p>These equations are written for the first axis, but we can also write them in matrix form:</p>
 <p><span class="math display">\[
-\max_{B, C}(U^\top P V) = \max_{B, C}\left(\left[E_{center}B\right]^\top P T_{center}C \right)
+\max_{B, C}(U^\top P V) = \max_{B, C}\left(\left[\tilde{E}B\right]^\top P \tilde{T}C \right)
 \]</span></p>
 </div>
 </div>
-<p>We define the diagonal matrices <span class="math inline">\(D_r\)</span> and <span class="math inline">\(D_c\)</span>, which contain the column and row sums (respectively). We introduce the following constraint on <span class="math inline">\(U\)</span> and <span class="math inline">\(V\)</span>: <span class="math inline">\(u^\top D_r u = 1\)</span> and <span class="math inline">\(v^\top D_c v = 1\)</span>. It means that the matrices <span class="math inline">\(U\)</span> and <span class="math inline">\(V\)</span> are orthonormal with respect to the weights <span class="math inline">\(D_r\)</span> and <span class="math inline">\(D_c\)</span>. (In fact, these constraints will be relaxed later depending on the scaling (see below)).</p>
+<p>We define the diagonal matrices <span class="math inline">\(D_r\)</span> and <span class="math inline">\(D_c\)</span>, which contain the column and row sums of <span class="math inline">\(P\)</span> (respectively). We introduce the following constraint on <span class="math inline">\(U\)</span> and <span class="math inline">\(V\)</span>: <span class="math inline">\(u^\top D_r u = 1\)</span> and <span class="math inline">\(v^\top D_c v = 1\)</span>. It means that the matrices <span class="math inline">\(U\)</span> and <span class="math inline">\(V\)</span> are orthonormal with respect to the weights <span class="math inline">\(D_r\)</span> and <span class="math inline">\(D_c\)</span>. (In fact, these constraints will be relaxed later depending on the scaling (see below)).</p>
 <p>To find the coefficients <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span> defined above, we can perform a SVD or two diagonalizations (see below).</p>
 </section>
 <section id="svd" class="level3">
 <h3 class="anchored" data-anchor-id="svd">SVD</h3>
 <p>To find the coefficients <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span>, we perform the SVD of a matrix <span class="math inline">\(D\)</span> defined as:</p>
 <p><span class="math display">\[
-D = \underbrace{[E_{center}^\top D_r E_{center}]^{-1/2}}_{L^{-1/2}} \underbrace{E_{center}^\top P T_{center}}_{R} \underbrace{[T_{center}^\top D_c T_{center}]^{-1/2}}_{K^{-1/2}}
+D = \underbrace{[\tilde{E}^\top D_r \tilde{E}]^{-1/2}}_{L^{-1/2}} \underbrace{\tilde{E}^\top P \tilde{T}}_{R} \underbrace{[\tilde{T}^\top D_c \tilde{T}]^{-1/2}}_{K^{-1/2}}
 \]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define weights</span></span>
@@ -883,15 +898,15 @@ D = \underbrace{[E_{center}^\top D_r E_{center}]^{-1/2}}_{L^{-1/2}} \underbrace{
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define intermediate matrices</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>L <span class="ot">&lt;-</span> <span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> Ecenter</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>R <span class="ot">&lt;-</span> <span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> P <span class="sc">%*%</span> Tcenter</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> <span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> Tcenter</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>L <span class="ot">&lt;-</span> <span class="fu">t</span>(Escaled) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> Escaled</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>R <span class="ot">&lt;-</span> <span class="fu">t</span>(Escaled) <span class="sc">%*%</span> P <span class="sc">%*%</span> Tscaled</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> <span class="fu">t</span>(Tscaled) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> Tscaled</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>With our dataset:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> Ecenter)) <span class="sc">%*%</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> P <span class="sc">%*%</span> Tcenter <span class="sc">%*%</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> Tcenter))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Escaled) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> Escaled)) <span class="sc">%*%</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t</span>(Escaled) <span class="sc">%*%</span> P <span class="sc">%*%</span> Tscaled <span class="sc">%*%</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">solve</span>(<span class="fu">sqrtm</span>(<span class="fu">t</span>(Tscaled) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> Tscaled))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We perform the SVD of <span class="math inline">\(D\)</span>:</p>
 <p><span class="math display">\[D = B_0 \Delta C_0^\top\]</span></p>
@@ -924,22 +939,22 @@ D = \underbrace{[E_{center}^\top D_r E_{center}]^{-1/2}}_{L^{-1/2}} \underbrace{
 <p>Equivalently, we can also diagonalize the matrices <span class="math inline">\(M\)</span> and <span class="math inline">\(M_2\)</span> defined below.</p>
 <p><span class="math inline">\(M\)</span> is defined as:</p>
 <p><span id="eq-M"><span class="math display">\[
-M = [\underbrace{E_{center}^\top D_r E_{center}}_{L} ]^{-1} \underbrace{E_{center}^\top P T_{center}}_{R} [ \underbrace{T_{center}^\top D_c T_{center}}_{K} ]^{-1} \underbrace{T_{center}^\top P^\top E_{center}}_{R^\top}
+M = [\underbrace{\tilde{E}^\top D_r \tilde{E}}_{L} ]^{-1} \underbrace{\tilde{E}^\top P \tilde{T}}_{R} [ \underbrace{\tilde{T}^\top D_c \tilde{T}}_{K} ]^{-1} \underbrace{\tilde{T}^\top P^\top \tilde{E}}_{R^\top}
 \tag{1}\]</span></span></p>
 <p>We can also view <span class="math inline">\(M\)</span> as:</p>
 <p><span class="math display">\[
-M = \underbrace{\left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top P T_{center}}_{\hat{E}_{center} = \beta T_{center}} \underbrace{\left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top P^\top E_{center}}_{\hat{T}_{center} = \gamma E_{center}}
+M = \underbrace{\left[\tilde{E}^\top D_r \tilde{E} \right]^{-1} \tilde{E}^\top P \tilde{T}}_{\hat{E}_{center} = \beta \tilde{T}} \underbrace{\left[\tilde{T}^\top D_c \tilde{T} \right]^{-1} \tilde{T}^\top P^\top \tilde{E}}_{\hat{T}_{center} = \gamma \tilde{E}}
 \]</span></p>
-<p>where <span class="math inline">\(\hat{E}_{center}\)</span> is the predicted values of <em>sites</em> variables from <em>species</em> traits. Reciprocally, <span class="math inline">\(\hat{T}_{center}\)</span> is the predicted values of <em>species</em> traits from <em>sites</em> variables. <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\gamma\)</span> are the vectors of the regression coefficients. From <a href="#eq-M">Equation&nbsp;1</a>, we have <span class="math inline">\(\beta = \left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top P\)</span> and <span class="math inline">\(\gamma = \left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top P^\top\)</span>.</p>
+<p>where <span class="math inline">\(\hat{E}_{center}\)</span> is the predicted values of <em>sites</em> variables from <em>species</em> traits. Reciprocally, <span class="math inline">\(\hat{T}_{center}\)</span> is the predicted values of <em>species</em> traits from <em>sites</em> variables. <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\gamma\)</span> are the vectors of the regression coefficients. From <a href="#eq-M">Equation&nbsp;1</a>, we have <span class="math inline">\(\beta = \left[\tilde{E}^\top D_r \tilde{E} \right]^{-1} \tilde{E}^\top P\)</span> and <span class="math inline">\(\gamma = \left[\tilde{T}^\top D_c \tilde{T} \right]^{-1} \tilde{T}^\top P^\top\)</span>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>M <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> Ecenter) <span class="sc">%*%</span> <span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> P <span class="sc">%*%</span> Tcenter <span class="sc">%*%</span> <span class="fu">solve</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> Tcenter) <span class="sc">%*%</span> <span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> Ecenter</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>M <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">t</span>(Escaled) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> Escaled) <span class="sc">%*%</span> <span class="fu">t</span>(Escaled) <span class="sc">%*%</span> P <span class="sc">%*%</span> Tscaled <span class="sc">%*%</span> <span class="fu">solve</span>(<span class="fu">t</span>(Tscaled) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> Tscaled) <span class="sc">%*%</span> <span class="fu">t</span>(Tscaled) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> Escaled</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><span class="math inline">\(M_2\)</span> is defined as:</p>
 <p><span class="math display">\[
-M_2 = \underbrace{\left[T_{center}^\top D_c T_{center} \right]^{-1} T_{center}^\top P^\top E_{center}}_{\hat{T}_{center} = \gamma E_{center}} \underbrace{\left[E_{center}^\top D_r E_{center} \right]^{-1} E_{center}^\top P T_{center}}_{\hat{E}_{center} = \beta T_{center}}
+M_2 = \underbrace{\left[\tilde{T}^\top D_c \tilde{T} \right]^{-1} \tilde{T}^\top P^\top \tilde{E}}_{\hat{T}_{center} = \gamma \tilde{E}} \underbrace{\left[\tilde{E}^\top D_r \tilde{E} \right]^{-1} \tilde{E}^\top P \tilde{T}}_{\hat{E}_{center} = \beta \tilde{T}}
 \]</span></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>M2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> Tcenter) <span class="sc">%*%</span> <span class="fu">t</span>(Tcenter) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> Ecenter <span class="sc">%*%</span> <span class="fu">solve</span>(<span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> Ecenter) <span class="sc">%*%</span> <span class="fu">t</span>(Ecenter) <span class="sc">%*%</span> P <span class="sc">%*%</span> Tcenter </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>M2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">t</span>(Tscaled) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> Tscaled) <span class="sc">%*%</span> <span class="fu">t</span>(Tscaled) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> Escaled <span class="sc">%*%</span> <span class="fu">solve</span>(<span class="fu">t</span>(Escaled) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> Escaled) <span class="sc">%*%</span> <span class="fu">t</span>(Escaled) <span class="sc">%*%</span> P <span class="sc">%*%</span> Tscaled </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The eigenvectors matrices of these diagonalizations give us <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span>:</p>
 <ul>
@@ -981,7 +996,7 @@ M_2 = C \Lambda_c C^{-1}
 <span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>lambdaC <span class="co"># l = 6 non-null eigenvalues</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1]  1.394874e-01  8.873668e-02  4.918362e-02  1.379753e-02  8.736645e-03
-[6]  2.485683e-03 -1.025803e-18</code></pre>
+[6]  2.485683e-03 -1.180064e-17</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>C_diag <span class="ot">&lt;-</span> eigC<span class="sc">$</span>vectors</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1021,7 +1036,7 @@ M_2 = C \Lambda_c C^{-1}
 \end{array}
 \right.
 \]</span></p>
-<p>(We recall that <span class="math inline">\(L = E_{center}^\top D_r E_{center}\)</span> and <span class="math inline">\(K = T_{center}^\top D_c T_{center}\)</span>).</p>
+<p>(We recall that <span class="math inline">\(L = \tilde{E}^\top D_r \tilde{E}\)</span> and <span class="math inline">\(K = \tilde{T}^\top D_c \tilde{T}\)</span>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>B <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(L)) <span class="sc">%*%</span> B0 </span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>C <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">sqrtm</span>(K)) <span class="sc">%*%</span> C0</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1037,25 +1052,18 @@ M_2 = C \Lambda_c C^{-1}
 <pre><code>[1] 1 1 1 1 1 1</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="co"># B and C are normed with L and K</span></span>
-<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(B, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="fu">sqrt</span>(<span class="fu">sum</span>(x<span class="sc">^</span><span class="dv">2</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 31.27063 57.99206 81.06909 67.68646 86.23340 88.33241</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(C, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="fu">sqrt</span>(<span class="fu">sum</span>(x<span class="sc">^</span><span class="dv">2</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 1.905060 2.714419 3.397999 4.832457 1.714880 2.707478</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="co"># t(B) L B is the identity matrix</span></span>
-<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>id_l <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="dv">1</span>, <span class="at">nrow =</span> l, <span class="at">ncol =</span> l)</span>
-<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>((<span class="fu">t</span>(B) <span class="sc">%*%</span> L <span class="sc">%*%</span> B) <span class="sc">-</span> id_l) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="co"># t(B) L B is the identity matrix</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>id_l <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="dv">1</span>, <span class="at">nrow =</span> l, <span class="at">ncol =</span> l)</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>((<span class="fu">t</span>(B) <span class="sc">%*%</span> L <span class="sc">%*%</span> B) <span class="sc">-</span> id_l) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="co"># t(C) K C is the identity matrix</span></span>
-<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>id_c <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>, k<span class="dv">-1</span>), <span class="dv">0</span>),</span>
-<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> k, <span class="at">ncol =</span> k) <span class="co"># Identity minus last vector (zero)</span></span>
-<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>C_k <span class="ot">&lt;-</span> <span class="fu">cbind</span>(C, <span class="fu">rep</span>(<span class="dv">0</span>, k)) <span class="co"># Add null eigenvector</span></span>
-<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">t</span>(C_k) <span class="sc">%*%</span> K <span class="sc">%*%</span> C_k <span class="sc">-</span> id_c) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co"># t(C) K C is the identity matrix</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>id_c <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>, k<span class="dv">-1</span>), <span class="dv">0</span>),</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> k, <span class="at">ncol =</span> k) <span class="co"># Identity minus last vector (zero)</span></span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>C_k <span class="ot">&lt;-</span> <span class="fu">cbind</span>(C, <span class="fu">rep</span>(<span class="dv">0</span>, k)) <span class="co"># Add null eigenvector</span></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">t</span>(C_k) <span class="sc">%*%</span> K <span class="sc">%*%</span> C_k <span class="sc">-</span> id_c) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
@@ -1067,25 +1075,25 @@ M_2 = C \Lambda_c C^{-1}
 <h4 class="anchored" data-anchor-id="lc-scores">LC scores</h4>
 <p>Using the coefficients <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span>, we can now define scores for sites and species scores as a linear combination of their variables:</p>
 <ul>
-<li>sites scores predicted by environmental variables are <span class="math inline">\(U = E_{center} B\)</span></li>
+<li>sites scores predicted by environmental variables are <span class="math inline">\(U = \tilde{E} B\)</span></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>U <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B</span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check it is the same as ade4 scores</span></span>
-<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(U<span class="sc">/</span>dcca<span class="sc">$</span>l1) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>U <span class="ot">&lt;-</span> Escaled <span class="sc">%*%</span> B0</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check it is the same as ade4 scores</span></span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(U<span class="sc">/</span>dcca<span class="sc">$</span>l1) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
+<pre><code>[1] FALSE</code></pre>
 </div>
 </div>
 <ul>
-<li>species scores predicted by their traits are <span class="math inline">\(V = T_{center} C\)</span></li>
+<li>species scores predicted by their traits are <span class="math inline">\(V = \tilde{T} C\)</span></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C</span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check it is the same as ade4 scores</span></span>
-<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(V<span class="sc">/</span>dcca<span class="sc">$</span>c1) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> Tscaled <span class="sc">%*%</span> C</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check it is the same as ade4 scores</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(V<span class="sc">/</span>dcca<span class="sc">$</span>c1) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
@@ -1098,10 +1106,10 @@ M_2 = C \Lambda_c C^{-1}
 <li>sites scores as weighted averages of species scores are <span class="math inline">\(U^\star = D_r^{-1} P V\)</span></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>Ustar <span class="ot">&lt;-</span> <span class="fu">diag</span>(dr<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span>)) <span class="sc">%*%</span> P <span class="sc">%*%</span> V</span>
-<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check it is the same as ade4 scores</span></span>
-<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Ustar<span class="sc">/</span>dcca<span class="sc">$</span>lsR) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>Ustar <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dr) <span class="sc">%*%</span> P <span class="sc">%*%</span> V</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check it is the same as ade4 scores</span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Ustar<span class="sc">/</span>dcca<span class="sc">$</span>lsR) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
@@ -1110,12 +1118,12 @@ M_2 = C \Lambda_c C^{-1}
 <li>species scores as weighted averages of sites scores are <span class="math inline">\(V^\star = D_c^{-1} P^\top U\)</span></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>Vstar <span class="ot">&lt;-</span> <span class="fu">diag</span>(dc<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span>)) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> U</span>
-<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check it is the same as ade4 scores</span></span>
-<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Vstar<span class="sc">/</span>dcca<span class="sc">$</span>lsQ) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>Vstar <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dc) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> U</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Check it is the same as ade4 scores</span></span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Vstar<span class="sc">/</span>dcca<span class="sc">$</span>lsQ) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] TRUE</code></pre>
+<pre><code>[1] FALSE</code></pre>
 </div>
 </div>
 </section>
@@ -1136,8 +1144,8 @@ M_2 = C \Lambda_c C^{-1}
 <p>There are two types of coordinates: linear combination scores (LC scores) and weighted averages scores (WA scores) for the sites and species individuals.</p>
 <p><strong>The general formulas are:</strong></p>
 <ul>
-<li>the LC scores for rows (sites) are <span class="math inline">\(U_i = E_{center} B \Lambda^{\alpha/2}\)</span></li>
-<li>the LC scores for columns (species) are <span class="math inline">\(V_i = T_{center}C_i \Lambda^{(1 - \alpha)/2}\)</span></li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(U_i = \tilde{E} B \Lambda^{\alpha/2}\)</span></li>
+<li>the LC scores for columns (species) are <span class="math inline">\(V_i = \tilde{T}C_i \Lambda^{(1 - \alpha)/2}\)</span></li>
 <li>the WA scores for rows (sites) are <span class="math inline">\(U^\star_i = {D_r}^{-1} P V_i\)</span></li>
 <li>the WA scores for columns (species) are <span class="math inline">\(V^\star_i = {D_c}^{-1} P^\top U_i\)</span></li>
 <li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_{Bi} = B \Lambda^{\alpha/2}\)</span></li>
@@ -1146,8 +1154,8 @@ M_2 = C \Lambda_c C^{-1}
 <p>In these formulas, note that the WA scores for one dimension are computed from the predicted scores of the other dimension.</p>
 <p><strong>Scaling type 1 (<span class="math inline">\(\alpha = 1\)</span>)</strong></p>
 <ul>
-<li>the LC scores for rows (sites) are <span class="math inline">\(U_1 = E_{center} B \Lambda^{1/2}\)</span> (<code>li</code>)</li>
-<li>the LC scores for columns (species) are <span class="math inline">\(V_1 = T_{center}C\)</span> (<code>c1</code>)</li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(U_1 = \tilde{E} B \Lambda^{1/2}\)</span> (<code>li</code>)</li>
+<li>the LC scores for columns (species) are <span class="math inline">\(V_1 = \tilde{T}C\)</span> (<code>c1</code>)</li>
 <li>the WA scores for rows (sites) are <span class="math inline">\(U^\star_1 = {D_r}^{-1} P V_1\)</span> (<code>lsR</code>)</li>
 <li>the WA scores for columns (species) are <span class="math inline">\(V^\star_1 = {D_c}^{-1} P^\top U_1\)</span></li>
 <li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_{B1} = B \Lambda^{1/2}\)</span></li>
@@ -1155,8 +1163,8 @@ M_2 = C \Lambda_c C^{-1}
 </ul>
 <p><strong>Scaling type 2 (<span class="math inline">\(\alpha = 0\)</span>)</strong></p>
 <ul>
-<li>the LC scores for rows (sites) are <span class="math inline">\(U_2 = E_{center} B\)</span> (<code>l1</code>)</li>
-<li>the LC scores for columns (species) are <span class="math inline">\(V_2 = T_{center}C \Lambda^{1/2}\)</span> (<code>co</code>)</li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(U_2 = \tilde{E} B\)</span> (<code>l1</code>)</li>
+<li>the LC scores for columns (species) are <span class="math inline">\(V_2 = \tilde{T}C \Lambda^{1/2}\)</span> (<code>co</code>)</li>
 <li>the WA scores for rows (sites) are <span class="math inline">\(U^\star_2 = {D_r}^{-1} P V_2\)</span></li>
 <li>the WA scores for columns (species) are <span class="math inline">\(V^\star_2 = {D_c}^{-1} P^\top U_2\)</span> (<code>lsQ</code>)</li>
 <li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_{B2} = B\)</span></li>
@@ -1164,8 +1172,8 @@ M_2 = C \Lambda_c C^{-1}
 </ul>
 <p><strong>Scaling type 3 (<span class="math inline">\(\alpha = 1/2\)</span>)</strong></p>
 <ul>
-<li>the LC scores for rows (sites) are <span class="math inline">\(U_3 = E_{center} B \Lambda^{1/4}\)</span></li>
-<li>the LC scores for columns (species) are <span class="math inline">\(V_3 = T_{center} C \Lambda^{1/4}\)</span></li>
+<li>the LC scores for rows (sites) are <span class="math inline">\(U_3 = \tilde{E} B \Lambda^{1/4}\)</span></li>
+<li>the LC scores for columns (species) are <span class="math inline">\(V_3 = \tilde{T} C \Lambda^{1/4}\)</span></li>
 <li>the WA scores for rows (sites) are <span class="math inline">\(U^\star_3 = {D_r}^{-1} P V_3\)</span></li>
 <li>the WA scores for columns (species) are <span class="math inline">\(V^\star_3 = {D_c}^{-1} P^\top U_3\)</span></li>
 <li>the correlations with axes for the rows (environmental variables) are <span class="math inline">\(BS_{B3} = B \Lambda^{1/4}\)</span></li>
@@ -1192,47 +1200,45 @@ M_2 = C \Lambda_c C^{-1}
 </ul>
 <p>With the scaling type 1, <span class="math inline">\(BS_{B1}\)</span> represents the correlation between environmental variables and species and <span class="math inline">\(BS_{C1}\)</span> represents the correlation between species traits and species.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>U1 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B <span class="sc">%*%</span> Delta <span class="co"># rows</span></span>
-<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>V1 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C <span class="co"># columns</span></span>
-<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
-<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>Ustar1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dr) <span class="sc">%*%</span> P <span class="sc">%*%</span> V1 <span class="co"># rows</span></span>
-<span id="cb74-7"><a href="#cb74-7" aria-hidden="true" tabindex="-1"></a>Vstar1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dc) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> U1  <span class="co"># columns</span></span>
-<span id="cb74-8"><a href="#cb74-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-9"><a href="#cb74-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables scores</span></span>
-<span id="cb74-10"><a href="#cb74-10" aria-hidden="true" tabindex="-1"></a>BS_B1 <span class="ot">&lt;-</span> B <span class="sc">%*%</span> Delta</span>
-<span id="cb74-11"><a href="#cb74-11" aria-hidden="true" tabindex="-1"></a>BS_C1 <span class="ot">&lt;-</span> C</span>
-<span id="cb74-12"><a href="#cb74-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-13"><a href="#cb74-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
-<span id="cb74-14"><a href="#cb74-14" aria-hidden="true" tabindex="-1"></a>BS_B1norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_B1, <span class="dv">1</span>)</span>
-<span id="cb74-15"><a href="#cb74-15" aria-hidden="true" tabindex="-1"></a>BS_C1norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_C1, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>U1 <span class="ot">&lt;-</span> Escaled <span class="sc">%*%</span> B <span class="sc">%*%</span> Delta <span class="co"># rows</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>V1 <span class="ot">&lt;-</span> Tscaled <span class="sc">%*%</span> C <span class="co"># columns</span></span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>Ustar1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dr) <span class="sc">%*%</span> P <span class="sc">%*%</span> V <span class="co"># rows</span></span>
+<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>Vstar1 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dc) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> U  <span class="co"># columns</span></span>
+<span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a><span class="co"># # Variables scores</span></span>
+<span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>BS_B1 <span class="ot">&lt;-</span> B <span class="sc">%*%</span> Delta</span>
+<span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a>BS_C1 <span class="ot">&lt;-</span> C</span>
+<span id="cb70-12"><a href="#cb70-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-13"><a href="#cb70-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
+<span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>BS_B1norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_B1, <span class="dv">1</span>)</span>
+<span id="cb70-15"><a href="#cb70-15" aria-hidden="true" tabindex="-1"></a>BS_C1norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_C1, <span class="dv">1</span>)</span>
+<span id="cb70-16"><a href="#cb70-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-17"><a href="#cb70-17" aria-hidden="true" tabindex="-1"></a>BS_C1 <span class="ot">&lt;-</span> <span class="fu">t</span>(Tscaled) <span class="sc">%*%</span> Dc <span class="sc">%*%</span> V</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare results to ade4</span></span>
-<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(U1<span class="sc">/</span>dcca<span class="sc">$</span>li) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># sites LC</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare results to ade4</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(U1<span class="sc">/</span>dcca<span class="sc">$</span>li) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># sites LC</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(V1<span class="sc">/</span>dcca<span class="sc">$</span>c1) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># spp LC</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(V1<span class="sc">/</span>dcca<span class="sc">$</span>c1) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># spp LC</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Ustar1<span class="sc">/</span>dcca<span class="sc">$</span>lsR) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># sites WA</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Ustar1<span class="sc">/</span>dcca<span class="sc">$</span>lsR) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># sites WA</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(Vstar1<span class="sc">/</span>dcca<span class="sc">$</span>lsQ) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero) <span class="co"># not stored in ade4</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(Vstar1<span class="sc">/</span>dcca<span class="sc">$</span>lsQ) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero) <span class="co"># not stored in ade4</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] FALSE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(BS_B1norm<span class="sc">/</span>dcca<span class="sc">$</span>corR) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># not true</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(BS_C1<span class="sc">/</span>dcca<span class="sc">$</span>corQ) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(BS_C1norm<span class="sc">/</span>dcca<span class="sc">$</span>corQ) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># not true, but should be</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE</code></pre>
+<pre><code>[1] TRUE</code></pre>
 </div>
 </div>
 <section id="plots" class="level4">
@@ -1245,40 +1251,40 @@ M_2 = C \Lambda_c C^{-1}
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
-<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U1, <span class="co"># LC for sites</span></span>
-<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_col =</span> V1, <span class="co"># LC1 for spp</span></span>
-<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
-<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B1norm, var_row_lab = colnames(E),</span></span>
-<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C1norm, var_col_lab = colnames(T_),</span></span>
-<span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Sites LC scores with species</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
-<span id="cb87-10"><a href="#cb87-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb87-11"><a href="#cb87-11" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
-<span id="cb87-12"><a href="#cb87-12" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Ustar1, <span class="co"># WA for sites</span></span>
-<span id="cb87-13"><a href="#cb87-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_col =</span> V1, <span class="co"># LC1 for spp</span></span>
-<span id="cb87-14"><a href="#cb87-14" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
-<span id="cb87-15"><a href="#cb87-15" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B1norm, var_row_lab = colnames(E),</span></span>
-<span id="cb87-16"><a href="#cb87-16" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C1norm, var_col_lab = colnames(T_),</span></span>
-<span id="cb87-17"><a href="#cb87-17" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb87-18"><a href="#cb87-18" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb87-19"><a href="#cb87-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Sites WA scores with species</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
-<span id="cb87-20"><a href="#cb87-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb87-21"><a href="#cb87-21" aria-hidden="true" tabindex="-1"></a>glc <span class="sc">+</span> gwa <span class="sc">+</span> </span>
-<span id="cb87-22"><a href="#cb87-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">"collect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U1, <span class="co"># LC for sites</span></span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_col =</span> V1, <span class="co"># LC1 for spp</span></span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B1norm, var_row_lab = colnames(E),</span></span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C1norm, var_col_lab = colnames(T_),</span></span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Sites LC scores with species</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
+<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-11"><a href="#cb81-11" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb81-12"><a href="#cb81-12" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Ustar1, <span class="co"># WA for sites</span></span>
+<span id="cb81-13"><a href="#cb81-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_col =</span> V1, <span class="co"># LC1 for spp</span></span>
+<span id="cb81-14"><a href="#cb81-14" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb81-15"><a href="#cb81-15" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B1norm, var_row_lab = colnames(E),</span></span>
+<span id="cb81-16"><a href="#cb81-16" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C1norm, var_col_lab = colnames(T_),</span></span>
+<span id="cb81-17"><a href="#cb81-17" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb81-18"><a href="#cb81-18" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb81-19"><a href="#cb81-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Sites WA scores with species</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
+<span id="cb81-20"><a href="#cb81-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-21"><a href="#cb81-21" aria-hidden="true" tabindex="-1"></a>glc <span class="sc">+</span> gwa <span class="sc">+</span> </span>
+<span id="cb81-22"><a href="#cb81-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">"collect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-33-1.png" class="img-fluid" width="768"></p>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_B1norm,</span>
-<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(E),</span>
-<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite)</span>
-<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_C1norm,</span>
-<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(T_),</span>
-<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_B1norm,</span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(E),</span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite)</span>
+<span id="cb82-4"><a href="#cb82-4" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_C1norm,</span>
+<span id="cb82-5"><a href="#cb82-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(T_),</span>
+<span id="cb82-6"><a href="#cb82-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-33-2.png" class="img-fluid" width="768"></p>
@@ -1302,42 +1308,42 @@ M_2 = C \Lambda_c C^{-1}
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>c1, <span class="co"># Species LC1</span></span>
-<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"LC scores for sites"</span>)</span>
-<span id="cb89-6"><a href="#cb89-6" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>li, <span class="co"># Sites LC</span></span>
-<span id="cb89-7"><a href="#cb89-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb89-8"><a href="#cb89-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb89-9"><a href="#cb89-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb89-10"><a href="#cb89-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>c1, <span class="co"># Species LC1</span></span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"LC scores for sites"</span>)</span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>li, <span class="co"># Sites LC</span></span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-34-1.png" class="img-fluid" width="672"></p>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>c1, <span class="co"># Species LC1</span></span>
-<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"WA scores for sites"</span>)</span>
-<span id="cb90-6"><a href="#cb90-6" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>lsR, <span class="co"># Sites WA scores</span></span>
-<span id="cb90-7"><a href="#cb90-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb90-8"><a href="#cb90-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb90-9"><a href="#cb90-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb90-10"><a href="#cb90-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>c1, <span class="co"># Species LC1</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"WA scores for sites"</span>)</span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>lsR, <span class="co"># Sites WA scores</span></span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-34-2.png" class="img-fluid" width="672"></p>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(dcca<span class="sc">$</span>corQ,</span>
-<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp)</span>
-<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(dcca<span class="sc">$</span>corR,</span>
-<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(dcca<span class="sc">$</span>corQ,</span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp)</span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(dcca<span class="sc">$</span>corR,</span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-34-3.png" class="img-fluid" width="672"></p>
@@ -1357,46 +1363,43 @@ M_2 = C \Lambda_c C^{-1}
 </ul>
 <p>With the scaling type 2, <span class="math inline">\(BS_{B2}\)</span> represents the correlation between environmental variables and sites and <span class="math inline">\(BS_{C2}\)</span> represents the correlation between species traits and sites.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
-<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>U2 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B <span class="co"># rows</span></span>
-<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>V2 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C <span class="sc">%*%</span> Delta <span class="co"># columns</span></span>
-<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
-<span id="cb92-6"><a href="#cb92-6" aria-hidden="true" tabindex="-1"></a>Ustar2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dr) <span class="sc">%*%</span> P <span class="sc">%*%</span> V2 <span class="co"># rows</span></span>
-<span id="cb92-7"><a href="#cb92-7" aria-hidden="true" tabindex="-1"></a>Vstar2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dc) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> U2 <span class="co"># columns</span></span>
-<span id="cb92-8"><a href="#cb92-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb92-9"><a href="#cb92-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables scores</span></span>
-<span id="cb92-10"><a href="#cb92-10" aria-hidden="true" tabindex="-1"></a>BS_B2 <span class="ot">&lt;-</span> B</span>
-<span id="cb92-11"><a href="#cb92-11" aria-hidden="true" tabindex="-1"></a>BS_C2 <span class="ot">&lt;-</span> C <span class="sc">%*%</span> Delta</span>
-<span id="cb92-12"><a href="#cb92-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb92-13"><a href="#cb92-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
-<span id="cb92-14"><a href="#cb92-14" aria-hidden="true" tabindex="-1"></a>BS_B2norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_B2, <span class="dv">1</span>)</span>
-<span id="cb92-15"><a href="#cb92-15" aria-hidden="true" tabindex="-1"></a>BS_C2norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_C2, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>U2 <span class="ot">&lt;-</span> Escaled <span class="sc">%*%</span> B <span class="co"># rows</span></span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>V2 <span class="ot">&lt;-</span> Tscaled <span class="sc">%*%</span> C <span class="sc">%*%</span> Delta <span class="co"># columns</span></span>
+<span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>Ustar2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dr) <span class="sc">%*%</span> P <span class="sc">%*%</span> V2 <span class="co"># rows</span></span>
+<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a>Vstar2 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dc) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> U2 <span class="co"># columns</span></span>
+<span id="cb86-8"><a href="#cb86-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-9"><a href="#cb86-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables scores</span></span>
+<span id="cb86-10"><a href="#cb86-10" aria-hidden="true" tabindex="-1"></a>BS_B2 <span class="ot">&lt;-</span> <span class="fu">t</span>(Escaled) <span class="sc">%*%</span> Dr <span class="sc">%*%</span> U2</span>
+<span id="cb86-11"><a href="#cb86-11" aria-hidden="true" tabindex="-1"></a><span class="co"># BS_B2 &lt;- B</span></span>
+<span id="cb86-12"><a href="#cb86-12" aria-hidden="true" tabindex="-1"></a><span class="co"># BS_C2 &lt;- C %*% Delta</span></span>
+<span id="cb86-13"><a href="#cb86-13" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb86-14"><a href="#cb86-14" aria-hidden="true" tabindex="-1"></a><span class="co"># # Normalize</span></span>
+<span id="cb86-15"><a href="#cb86-15" aria-hidden="true" tabindex="-1"></a><span class="co"># BS_B2norm &lt;- normalize(BS_B2, 1)</span></span>
+<span id="cb86-16"><a href="#cb86-16" aria-hidden="true" tabindex="-1"></a><span class="co"># BS_C2norm &lt;- normalize(BS_C2, 1)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(U2<span class="sc">/</span>dcca<span class="sc">$</span>l1) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># LC sites</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(U2<span class="sc">/</span>dcca<span class="sc">$</span>l1) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># LC sites</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb95"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(V2<span class="sc">/</span>dcca<span class="sc">$</span>co) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># LC spp</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(V2<span class="sc">/</span>dcca<span class="sc">$</span>co) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># LC spp</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Vstar2<span class="sc">/</span>dcca<span class="sc">$</span>lsQ) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># WA spp</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Vstar2<span class="sc">/</span>dcca<span class="sc">$</span>lsQ) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># WA spp</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb99"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Ustar2<span class="sc">/</span>dcca<span class="sc">$</span>lsR) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># not stored in ade4</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(Ustar2<span class="sc">/</span>dcca<span class="sc">$</span>lsR) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># WA site</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb101"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(BS_B2norm<span class="sc">/</span>dcca<span class="sc">$</span>corR) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># Not equal, but should be</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb95"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(<span class="fu">abs</span>(BS_B2<span class="sc">/</span>dcca<span class="sc">$</span>corR) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">&lt;</span> zero)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb103"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">abs</span>(BS_C2norm<span class="sc">/</span>dcca<span class="sc">$</span>corQ) <span class="sc">-</span> <span class="dv">1</span> <span class="sc">&lt;</span> zero) <span class="co"># Not equal</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] FALSE</code></pre>
+<pre><code>[1] TRUE</code></pre>
 </div>
 </div>
 <section id="plots-1" class="level4">
@@ -1409,74 +1412,71 @@ M_2 = C \Lambda_c C^{-1}
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb105"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
-<span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U2, <span class="at">indiv_col =</span> V2, </span>
-<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
-<span id="cb105-4"><a href="#cb105-4" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B2norm, var_row_lab = colnames(E),</span></span>
-<span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C2norm, var_col_lab = colnames(T_),</span></span>
-<span id="cb105-6"><a href="#cb105-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb105-7"><a href="#cb105-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb105-8"><a href="#cb105-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Species LC scores with sites</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
-<span id="cb105-9"><a href="#cb105-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb105-10"><a href="#cb105-10" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
-<span id="cb105-11"><a href="#cb105-11" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U2, <span class="at">indiv_col =</span> Vstar2, </span>
-<span id="cb105-12"><a href="#cb105-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
-<span id="cb105-13"><a href="#cb105-13" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B2norm, var_row_lab = colnames(E),</span></span>
-<span id="cb105-14"><a href="#cb105-14" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C2norm, var_col_lab = colnames(T_),</span></span>
-<span id="cb105-15"><a href="#cb105-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb105-16"><a href="#cb105-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb105-17"><a href="#cb105-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Species WA scores with sites</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
-<span id="cb105-18"><a href="#cb105-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb105-19"><a href="#cb105-19" aria-hidden="true" tabindex="-1"></a>glc <span class="sc">+</span> gwa <span class="sc">+</span> </span>
-<span id="cb105-20"><a href="#cb105-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">"collect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U2, <span class="at">indiv_col =</span> V2, </span>
+<span id="cb97-3"><a href="#cb97-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb97-4"><a href="#cb97-4" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B2norm, var_row_lab = colnames(E),</span></span>
+<span id="cb97-5"><a href="#cb97-5" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C2norm, var_col_lab = colnames(T_),</span></span>
+<span id="cb97-6"><a href="#cb97-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb97-7"><a href="#cb97-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb97-8"><a href="#cb97-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Species LC scores with sites</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
+<span id="cb97-9"><a href="#cb97-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb97-10"><a href="#cb97-10" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb97-11"><a href="#cb97-11" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U2, <span class="at">indiv_col =</span> Vstar2, </span>
+<span id="cb97-12"><a href="#cb97-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb97-13"><a href="#cb97-13" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B2norm, var_row_lab = colnames(E),</span></span>
+<span id="cb97-14"><a href="#cb97-14" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C2norm, var_col_lab = colnames(T_),</span></span>
+<span id="cb97-15"><a href="#cb97-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb97-16"><a href="#cb97-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb97-17"><a href="#cb97-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Species WA scores with sites</span><span class="sc">\n</span><span class="st">normed at 1"</span>)</span>
+<span id="cb97-18"><a href="#cb97-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb97-19"><a href="#cb97-19" aria-hidden="true" tabindex="-1"></a>glc <span class="sc">+</span> gwa <span class="sc">+</span> </span>
+<span id="cb97-20"><a href="#cb97-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">"collect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid" width="768"></p>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_B2norm,</span>
-<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(E),</span>
-<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite)</span>
-<span id="cb106-4"><a href="#cb106-4" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_C2norm,</span>
-<span id="cb106-5"><a href="#cb106-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(T_),</span>
-<span id="cb106-6"><a href="#cb106-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="co"># s.corcircle(BS_B2norm,</span></span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a><span class="co">#             labels = colnames(E),</span></span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a><span class="co">#             plabels.col = params$colsite)</span></span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a><span class="co"># s.corcircle(BS_C2norm,</span></span>
+<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a><span class="co">#             labels = colnames(T_),</span></span>
+<span id="cb98-6"><a href="#cb98-6" aria-hidden="true" tabindex="-1"></a><span class="co">#             plabels.col = params$colspp, add = TRUE)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output-display">
-<p><img src="dcCA_files/figure-html/unnamed-chunk-37-2.png" class="img-fluid" width="768"></p>
-</div>
 </div>
 <p><strong>There is no interpretation for species - species traits (<span class="math inline">\(V_2\)</span> - <span class="math inline">\(BS_{C2}\)</span>).</strong></p>
 <p>With ade4:</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb107"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>li, <span class="co"># LC1 sites</span></span>
-<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"LC scores for species"</span>)</span>
-<span id="cb107-6"><a href="#cb107-6" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>co, <span class="co"># LC species</span></span>
-<span id="cb107-7"><a href="#cb107-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb107-8"><a href="#cb107-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb107-9"><a href="#cb107-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb107-10"><a href="#cb107-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb99"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>li, <span class="co"># LC1 sites</span></span>
+<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"LC scores for species"</span>)</span>
+<span id="cb99-6"><a href="#cb99-6" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>co, <span class="co"># LC species</span></span>
+<span id="cb99-7"><a href="#cb99-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb99-8"><a href="#cb99-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb99-9"><a href="#cb99-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb99-10"><a href="#cb99-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-38-1.png" class="img-fluid" width="672"></p>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb108"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>l1, <span class="co"># LC1 sites</span></span>
-<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb108-4"><a href="#cb108-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colsite,</span>
-<span id="cb108-5"><a href="#cb108-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"WA scores for species"</span>)</span>
-<span id="cb108-6"><a href="#cb108-6" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>lsQ, <span class="co"># WA species</span></span>
-<span id="cb108-7"><a href="#cb108-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb108-8"><a href="#cb108-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb108-9"><a href="#cb108-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb108-10"><a href="#cb108-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>l1, <span class="co"># LC1 sites</span></span>
+<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colsite,</span>
+<span id="cb100-5"><a href="#cb100-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"WA scores for species"</span>)</span>
+<span id="cb100-6"><a href="#cb100-6" aria-hidden="true" tabindex="-1"></a><span class="fu">s.label</span>(dcca<span class="sc">$</span>lsQ, <span class="co"># WA species</span></span>
+<span id="cb100-7"><a href="#cb100-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.optim =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb100-8"><a href="#cb100-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">plabels.col  =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb100-9"><a href="#cb100-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">ppoints.col =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb100-10"><a href="#cb100-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-38-2.png" class="img-fluid" width="672"></p>
@@ -1496,59 +1496,59 @@ M_2 = C \Lambda_c C^{-1}
 </ul>
 <p>With the scaling type 3, <span class="math inline">\(BS_{B3}\)</span> and <span class="math inline">\(BS_{C3}\)</span> represent the geometric mean of their correlation with species and sites.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb109"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
-<span id="cb109-2"><a href="#cb109-2" aria-hidden="true" tabindex="-1"></a>U3 <span class="ot">&lt;-</span> Ecenter <span class="sc">%*%</span> B <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="co"># rows</span></span>
-<span id="cb109-3"><a href="#cb109-3" aria-hidden="true" tabindex="-1"></a>V3 <span class="ot">&lt;-</span> Tcenter <span class="sc">%*%</span> C <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="co"># columns</span></span>
-<span id="cb109-4"><a href="#cb109-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb109-5"><a href="#cb109-5" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
-<span id="cb109-6"><a href="#cb109-6" aria-hidden="true" tabindex="-1"></a>Ustar3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dr) <span class="sc">%*%</span> P <span class="sc">%*%</span> V3 <span class="co"># rows</span></span>
-<span id="cb109-7"><a href="#cb109-7" aria-hidden="true" tabindex="-1"></a>Vstar3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dc) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> U3 <span class="co"># columns</span></span>
-<span id="cb109-8"><a href="#cb109-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb109-9"><a href="#cb109-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables scores</span></span>
-<span id="cb109-10"><a href="#cb109-10" aria-hidden="true" tabindex="-1"></a>BS_B3 <span class="ot">&lt;-</span> B <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
-<span id="cb109-11"><a href="#cb109-11" aria-hidden="true" tabindex="-1"></a>BS_C3 <span class="ot">&lt;-</span> C <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
-<span id="cb109-12"><a href="#cb109-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb109-13"><a href="#cb109-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
-<span id="cb109-14"><a href="#cb109-14" aria-hidden="true" tabindex="-1"></a>BS_B3norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_B3, <span class="dv">1</span>)</span>
-<span id="cb109-15"><a href="#cb109-15" aria-hidden="true" tabindex="-1"></a>BS_C3norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_C3, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb101"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>U3 <span class="ot">&lt;-</span> Escaled <span class="sc">%*%</span> B <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="co"># rows</span></span>
+<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a>V3 <span class="ot">&lt;-</span> Tscaled <span class="sc">%*%</span> C <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>) <span class="co"># columns</span></span>
+<span id="cb101-4"><a href="#cb101-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-5"><a href="#cb101-5" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb101-6"><a href="#cb101-6" aria-hidden="true" tabindex="-1"></a>Ustar3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dr) <span class="sc">%*%</span> P <span class="sc">%*%</span> V3 <span class="co"># rows</span></span>
+<span id="cb101-7"><a href="#cb101-7" aria-hidden="true" tabindex="-1"></a>Vstar3 <span class="ot">&lt;-</span> <span class="fu">solve</span>(Dc) <span class="sc">%*%</span> <span class="fu">t</span>(P) <span class="sc">%*%</span> U3 <span class="co"># columns</span></span>
+<span id="cb101-8"><a href="#cb101-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-9"><a href="#cb101-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables scores</span></span>
+<span id="cb101-10"><a href="#cb101-10" aria-hidden="true" tabindex="-1"></a>BS_B3 <span class="ot">&lt;-</span> B <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb101-11"><a href="#cb101-11" aria-hidden="true" tabindex="-1"></a>BS_C3 <span class="ot">&lt;-</span> C <span class="sc">%*%</span> Delta<span class="sc">^</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb101-12"><a href="#cb101-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-13"><a href="#cb101-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
+<span id="cb101-14"><a href="#cb101-14" aria-hidden="true" tabindex="-1"></a>BS_B3norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_B3, <span class="dv">1</span>)</span>
+<span id="cb101-15"><a href="#cb101-15" aria-hidden="true" tabindex="-1"></a>BS_C3norm <span class="ot">&lt;-</span> <span class="fu">normalize</span>(BS_C3, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="plots-2" class="level4">
 <h4 class="anchored" data-anchor-id="plots-2">Plots</h4>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb110"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
-<span id="cb110-2"><a href="#cb110-2" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U3, <span class="at">indiv_col =</span> V3, </span>
-<span id="cb110-3"><a href="#cb110-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
-<span id="cb110-4"><a href="#cb110-4" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B3norm, var_row_lab = colnames(E),</span></span>
-<span id="cb110-5"><a href="#cb110-5" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C3norm, var_col_lab = colnames(T_),</span></span>
-<span id="cb110-6"><a href="#cb110-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb110-7"><a href="#cb110-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb110-8"><a href="#cb110-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"LC scores"</span>)</span>
-<span id="cb110-9"><a href="#cb110-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb110-10"><a href="#cb110-10" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
-<span id="cb110-11"><a href="#cb110-11" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Ustar3, <span class="at">indiv_col =</span> Vstar3, </span>
-<span id="cb110-12"><a href="#cb110-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
-<span id="cb110-13"><a href="#cb110-13" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B3norm, var_row_lab = colnames(E),</span></span>
-<span id="cb110-14"><a href="#cb110-14" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C3norm, var_col_lab = colnames(T_),</span></span>
-<span id="cb110-15"><a href="#cb110-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
-<span id="cb110-16"><a href="#cb110-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
-<span id="cb110-17"><a href="#cb110-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"WA scores"</span>)</span>
-<span id="cb110-18"><a href="#cb110-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb110-19"><a href="#cb110-19" aria-hidden="true" tabindex="-1"></a>glc <span class="sc">+</span> gwa <span class="sc">+</span> </span>
-<span id="cb110-20"><a href="#cb110-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">"collect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LC scores</span></span>
+<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>glc <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> U3, <span class="at">indiv_col =</span> V3, </span>
+<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb102-4"><a href="#cb102-4" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B3norm, var_row_lab = colnames(E),</span></span>
+<span id="cb102-5"><a href="#cb102-5" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C3norm, var_col_lab = colnames(T_),</span></span>
+<span id="cb102-6"><a href="#cb102-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb102-7"><a href="#cb102-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb102-8"><a href="#cb102-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"LC scores"</span>)</span>
+<span id="cb102-9"><a href="#cb102-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-10"><a href="#cb102-10" aria-hidden="true" tabindex="-1"></a><span class="co"># WA scores</span></span>
+<span id="cb102-11"><a href="#cb102-11" aria-hidden="true" tabindex="-1"></a>gwa <span class="ot">&lt;-</span> <span class="fu">multiplot</span>(<span class="at">indiv_row =</span> Ustar3, <span class="at">indiv_col =</span> Vstar3, </span>
+<span id="cb102-12"><a href="#cb102-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">indiv_row_lab =</span> <span class="fu">rownames</span>(Y), <span class="at">indiv_col_lab =</span> <span class="fu">colnames</span>(Y), </span>
+<span id="cb102-13"><a href="#cb102-13" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_row = BS_B3norm, var_row_lab = colnames(E),</span></span>
+<span id="cb102-14"><a href="#cb102-14" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># var_col = BS_C3norm, var_col_lab = colnames(T_),</span></span>
+<span id="cb102-15"><a href="#cb102-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">row_color =</span> params<span class="sc">$</span>colsite, <span class="at">col_color =</span> params<span class="sc">$</span>colspp,</span>
+<span id="cb102-16"><a href="#cb102-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">eig =</span> lambda) <span class="sc">+</span></span>
+<span id="cb102-17"><a href="#cb102-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"WA scores"</span>)</span>
+<span id="cb102-18"><a href="#cb102-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-19"><a href="#cb102-19" aria-hidden="true" tabindex="-1"></a>glc <span class="sc">+</span> gwa <span class="sc">+</span> </span>
+<span id="cb102-20"><a href="#cb102-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">"collect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-40-1.png" class="img-fluid" width="576"></p>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb111"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb111-1"><a href="#cb111-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_B3norm,</span>
-<span id="cb111-2"><a href="#cb111-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(E),</span>
-<span id="cb111-3"><a href="#cb111-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite)</span>
-<span id="cb111-4"><a href="#cb111-4" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_C3norm,</span>
-<span id="cb111-5"><a href="#cb111-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(T_),</span>
-<span id="cb111-6"><a href="#cb111-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb103"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_B3norm,</span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(E),</span>
+<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colsite)</span>
+<span id="cb103-4"><a href="#cb103-4" aria-hidden="true" tabindex="-1"></a><span class="fu">s.corcircle</span>(BS_C3norm,</span>
+<span id="cb103-5"><a href="#cb103-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">labels =</span> <span class="fu">colnames</span>(T_),</span>
+<span id="cb103-6"><a href="#cb103-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">plabels.col =</span> params<span class="sc">$</span>colspp, <span class="at">add =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <p><img src="dcCA_files/figure-html/unnamed-chunk-40-2.png" class="img-fluid" width="576"></p>
