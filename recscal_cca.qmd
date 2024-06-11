@@ -62,77 +62,48 @@ plotmat(r = r, c = c, l = l,
 
 ## Computation
 
-### From CCA scores
+::: {.callout-tip title="*TL;DR*"}
+We can compute reciprocal scaling score using CCorA and CCA scores.
 
-We compute the $H_k(i, j)$ from the LC (for rows = sites) and WA (for columns = species) scores computed with CCA (noted $LC$ and $C$). This formula is a direct extension of formula (11) in @thioulouse1992 but we replace the CA ordination scores with the CCA ordination scores.
+**From canonical correlation analysis**
+We perform the CCorA of tables $E_{infl}$ and $Y_{infl}$. The two sets of scores give the correspondences in sites and species space.
 
-In CCA, we have several scores for the sites. The notation $LC_k(i)$ represents the LC scores (or the `li` of ade4). The $C_k(j)$ are the species scores `co`.
-
-$$
-H_k(i, j) = \frac{LC_k(i) + C_k(j)}{\sqrt{2 \lambda_k \mu_k}}
-$$
-
-```{r}
-Ydf <- as.data.frame(Y)
-ca <- dudi.coa(Ydf, 
-               scannf = FALSE,
-               nf = min(r - 1, c - 1))
-
-neig <- min(c(r-1, c, l))
-cca <- pcaiv(dudi = ca, 
-             df = E,
-             scannf = FALSE,
-             nf = neig)
-
-L_CCA <- cca$li
-C_CCA <- cca$co
-
-lambda_CCA <- cca$eig
-mu_CCA <- 1 + sqrt(lambda_CCA)
-```
-
-
-```{r}
-# Transform matrix to count table
-Yfreq <- as.data.frame(as.table(Y))
-colnames(Yfreq) <- c("row", "col", "Freq")
-
-# Remove the cells with no observation
-Yfreq0 <- Yfreq[-which(Yfreq$Freq == 0),]
-Yfreq0$colind <- match(Yfreq0$col, colnames(Y)) # match index and species names
-
-
-# Initialize results matrix
-H <- matrix(nrow = nrow(Yfreq0), 
-            ncol = length(lambda_CCA))
-
-for (k in 1:length(lambda_CCA)) { # For each axis
-  ind <- 1 # initialize row index
-  for (obs in 1:nrow(Yfreq0)) { # For each observation
-    i <- Yfreq0$row[obs]
-    j <- Yfreq0$col[obs]
-    H[ind, k] <- (L_CCA[i, k] + C_CCA[j, k])/sqrt(2*lambda_CCA[k]*mu_CCA[k])
-    ind <- ind + 1
-  }
-}
-```
+**From CCA**
+We can show that$scoreC = V$ (`c1`) and $scoreR = Z2$ (`l1`).
+:::
 
 
 ### From canonical correlation analysis
 
 To perform the canonical correlation analysis, we compute the inflated tables $R$ ($n_{\bar{0}} \times l$) and $C$ ($n_{\bar{0}} \times c$) from $Y$ ($r \times c$) and $E$ ($r \times l$). The difference with CA is that we use $E$ instead of $Y$ to compute the inflated table $R$. $R$ is equivalent to $E$ where rows of $E$ are duplicated as many times as there are correspondences in $Y$.
 
+```{r}
+# Transform matrix to count table
+P <- Y/sum(Y)
+Pfreq <- as.data.frame(as.table(P))
+colnames(Pfreq) <- c("row", "col", "Freq")
+
+# Remove the cells with no observation
+Pfreq0 <- Pfreq[-which(Pfreq$Freq == 0),]
+Pfreq0$colind <- match(Pfreq0$col, colnames(Y)) # match index and species names
+Pfreq0$col <- factor(Pfreq0$col)
+Pfreq0$row <- factor(Pfreq0$row)
+
+pi_ <- rowSums(P)
+p_j <- colSums(P)
+```
+
 We take the frequency table defined before and use it to compute the inflated tables (with weights):
 
 ```{r}
 # Create indicator tables
-tabR <- acm.disjonctif(as.data.frame(Yfreq0$row))
+tabR <- acm.disjonctif(as.data.frame(Pfreq0$row))
 tabR <- as.matrix(tabR) %*% as.matrix(E) # duplicate rows of E according to the correspondences of Y
-tabC <- acm.disjonctif(as.data.frame(Yfreq0$col))
+tabC <- acm.disjonctif(as.data.frame(Pfreq0$col))
 colnames(tabC) <- colnames(Y)
 
 # Get weights
-wt <- Yfreq0$Freq
+wt <- Pfreq0$Freq
 ```
 
 Below are the first lines of tables $R$ and $C$:
@@ -162,207 +133,61 @@ dim(res$ycoef) # c-1 columns -> C_scaled is not of full rank
 # Compute these scores from this coef
 scoreR <- tabR_scaled[, 1:l]  %*% res$xcoef
 scoreC <- tabC_scaled[, 1:(c-1)]  %*% res$ycoef
+rownames(scoreC) <- Pfreq0$col
+rownames(scoreR) <- Pfreq0$row
 ```
 
-We have $H = (S_R + S_C)_{scaled}$.
+### From CCA scores
 
 ```{r}
-# Get H
-scoreRC <- scoreR[, 1:l] + scoreC[, 1:l] # here l < c-1 so l axes
-scoreRC_scaled <- scalewt(scoreRC, wt = wt)
+neig <- min(c(r-1, c, l))
+ca <- dudi.coa(Y, 
+               nf = c-1, 
+               scannf = FALSE)
+cca <- pcaiv(dudi = ca, 
+             df = E,
+             scannf = FALSE,
+             nf = neig)
 ```
+
 
 ```{r}
-# Check result
-all(abs(scoreRC_scaled/H) - 1 < zero)
+sqrt(cca$eig)/res$cor
 ```
 
-### Plot RC scores
-
-```{r, warning=FALSE, fig.width=5, fig.height=4}
-#| code-fold: true
-multiplot(indiv_row = H, 
-          indiv_row_lab = paste0("site ", Yfreq0$row, "/", Yfreq0$col),
-          row_color = "black", eig = lambda_CCA)
-```
-
-## Conditional means and variances from RC scores
-
-::: {.callout-tip title="*TL;DR*"}
-Once we have the correspondences scores, we can group them by row (site) or column (species) to compute conditional summary statistics:
-
--   conditional mean for site $i$ or species $j$ (for each axis $k$)
--   conditional variance for site $i$ or species $j$ (for each axis $k$)
--   conditional covariance for site $i$ or species $j$ (between axes $k$ and $l$)
-
-These conditional statistics can be computed using $H_k(i,j)$ or using the CA scores:
-
-**Formulas using** $H_k(i,j)$
-
-The means and variances are simply the weighted means/variances of the $H_k(i, j)$ for a fixed $i$ or $j$.
-
-|                                  | Rows (sites)                                                                               | Columns (species)                                                                           |
-|-------------------|-----------------------------|------------------------|
-| Mean for axis $k$                | $$m_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} H_k(i,j)$$                           | $$m_k(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} H_k(i,j)$$                           |
-| Variance for axis $k$            | $$s_k^2(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \left(H_k(i,j) - m_k(i)\right)^2$$ | $$s_k^2(j) = \frac{1}{y_{\cdot j}} \sum_{i = 1}^r y_{ij} \left(H_k(i,j) - m_k(j)\right)^2$$ |
-| Covariance between axes $k$, $l$ | $$c_{kl}(i) = \frac{1}{y_{i \cdot}}\sum_{j=1}^c y_{ij}H_k(i, j)H_l(i, j) - m_k(i)m_l(i)$$  | $$c_{kl}(j) = \frac{1}{y_{\cdot j}}\sum_{i=1}^r y_{ij}H_k(i, j)H_l(i, j) - m_k(j)m_l(j)$$   |
-
-**Formulas using CCA scores**
-
-***Note that the LC score (notation:*** $LC$) is used for the species variance and the WA score (notation: $L$) for the sites variance.
-
-|                                  | Rows (sites)                                                                                                                                    | Columns (species)                                                                                                                                |
-|----------------------|----------------------------|-----------------------|
-| Mean for axis $k$                | $$m_k(i) =  \frac{1}{\sqrt{2 \mu_k}} \times (LC1_k(i) + L_k(i))$$                                                                               | $$m_k(j) = \frac{\sqrt{\mu_k}}{\sqrt{2\lambda_k}} C_k(j)$$                                                                                       |
-| Variance for axis $k$            | $$s^2_k(i) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k L_k^2(i) \right)$$ | $$s^2_k(j) = \frac{1}{2\lambda_k\mu_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} LC_k^2(i) \right) - \lambda_k C_k^2(j) \right)$$ |
-| Covariance between axes $k$, $l$ |                                                                                                                                                 |                                                                                                                                                  |
-:::
-
-Let's start from the means/variances computed from the RC scores ($H$).
+We check that unique scores correspond:
 
 ```{r}
-fac <- sqrt(mu_CCA)/sqrt(2*lambda_CCA)
-n <- sum(Y)
-```
-
-### For rows = sites
-
-Below is a graphical illustration of scoreRC grouped by rows:
-
-```{r}
-s.class(scoreRC,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$row),
-        plabels.col = params$colsite, 
-        main = "With RC score (points = correspondences)")
-```
-
-#### Formula with RC scores (definition)
-
-We compute the groupwise mean and variance.
-
-```{r}
-# With scaled values
-mrowsRC <- meanfacwt(scoreRC_scaled, fac = Yfreq0$row, wt = Yfreq0$Freq)
-mrowsRC/(as.matrix(cca$l1 + cca$ls) %*% diag(1/sqrt(2*mu_CCA)))
-```
-
-```{r}
-# With non-scaled values
-mrowsRC_ns <- meanfacwt(scoreRC, fac = Yfreq0$row, wt = Yfreq0$Freq)
-mrowsRC_ns/((cca$l1 + cca$ls)*1/sqrt(n))
-```
-
-Variances
-
-```{r}
-# With scaled values
-varrowsRC <- varfacwt(scoreRC_scaled, fac = Yfreq0$row, wt = Yfreq0$Freq)
-
-# With non-scaled values
-varrowsRC_ns <- varfacwt(scoreRC, fac = Yfreq0$row, wt = Yfreq0$Freq)
-```
-
-#### Variance formula with CCA scores
-
-```{r}
-# Get marginal counts
-yi_ <- rowSums(Y)
-y_j <- colSums(Y)
-
-varrowsCCA <- matrix(nrow = r, 
-                     ncol = l)
-
-for (i in 1:r) {
-  # Get CCA scores for site i
-  Li <- cca$ls[i, ]
-  
-  # Compute the part with the sum on Cj
-  # we add all coordinates Cj^2 weighted by the number of observations on site i
-  sumCj <- t(Y[i, ]) %*% as.matrix(cca$co)^2
-
-  # Fill i-th row with site i variance along each axis
-  varrowsCCA[i, ] <- (1/(2*lambda_CCA*mu_CCA)) * (((1/yi_[i])*sumCj) - lambda_CCA*as.numeric(Li)^2)
-}
-```
-
-```{r}
-varrowsRC/varrowsCCA
-```
-
-```{r, include=FALSE}
-# We can also check the non-scaled RC value
-varrowsRC_ns/(varrowsCCA %*% diag(2*mu_CCA/n))
-```
-
-### For columns = species
-
-Below is an illustration of the RC scores grouped by species.
-
-```{r}
-s.class(scoreRC,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$colind),
-        lab = colnames(Y),
+fac <- Pfreq0$col
+s.class(scoreC,
+        wt = wt,
+        fac = fac,
         plabels.col = params$colspp, 
-        main = "With RC score (points = correspondences)")
-```
+        main = "Unique C scores")
 
-#### Formula with RC scores (definition)
-
-```{r}
-mcolsRC <- meanfacwt(scoreRC_scaled, fac = Yfreq0$colind, wt = Yfreq0$Freq)
-
-mcolsRC/(as.matrix(cca$co) %*% diag(fac))
-```
-
-```{r}
-mcolsRC_ns <- meanfacwt(scoreRC, fac = Yfreq0$colind, wt = Yfreq0$Freq)
-
-mcolsRC_ns/cca$co
+fac <- Pfreq0$row
+s.class(scoreR,
+        wt = wt,
+        fac = fac,
+        plabels.col = params$colsite, 
+        main = "Unique R scores")
 ```
 
 ```{r}
-# With scaled values
-varcolsRC <- varfacwt(scoreRC_scaled, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+mrowsC <- meanfacwt(scoreC, fac = Pfreq0$col, wt = Pfreq0$Freq)
+all(abs(abs(mrowsC/cca$c1) - 1) < zero)
 
-# With non-scaled values
-varcolsRC_ns <- varfacwt(scoreRC, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+mrowsR <- meanfacwt(scoreR, fac = Pfreq0$row, wt = Pfreq0$Freq)
+all(abs(abs(mrowsR/cca$l1) - 1) < zero)
 ```
 
-#### Variance formula with CCA scores
-
-```{r}
-varcolsCCA <- matrix(nrow = c, 
-                     ncol = l)
-
-for (j in 1:c) {
-  # Get CCA scores for species j
-  Cj <- cca$co[j, ]
-  
-  # Compute the part with the sum on Li
-  # we add all coordinates Li^2 weighted by the number of observations on species j
-  sumLi <- t(Y[, j]) %*% as.matrix(cca$li)^2
-
-  # Fill i-th row with site i variance along each axis
-  varcolsCCA[j, ] <- (1/(2*lambda_CCA*mu_CCA)) * (((1/y_j[j])*sumLi) - lambda_CCA*as.numeric(Cj)^2)
-}
-```
-
-```{r}
-varcolsRC/varcolsCCA
-
-varcolsRC_ns/(varcolsCCA %*% diag(2*mu_CCA/n))
-```
-
-## Conditional means and variances from R scores and C scores
+## Conditional means and variances
 
 ::: {.callout-tip title="*TL;DR*"}
 For the scores computed with R scores and C scores, we have 3 types of formulas:
 
 -   definition (weighted mean/variance/covariance)
 -   formulas using the CCA scores
--   relation with the RC scores
 
 Here, we don't show the definition.
 
@@ -372,35 +197,17 @@ Here, we don't show the definition.
 
 |                                  | Rows (sites)                                                                       | Columns (species)                                                                                                                            |
 |------------------------|---------------------------|----------------------|
-| Mean for axis $k$                | $$mR_k(i) = \frac{1}{\sqrt{n}} LC1_k(i)$$ ($LC1 =$ normed LC score (`$l1`)) | $$mR_k(j) =   \frac{1}{\sqrt{n}} C_k(j)$$                                                                                              |
-| Variance for axis $k$            | None                                                                               | $$sR_k^2(j) = \frac{1}{n\lambda_k} \left( \frac{1}{y_{\cdot j}} \sum_{i = 1}^r \left(y_{ij} LC_k^2(i) \right) - \lambda_k C_k^2(j) \right)$$ |
+| Mean for axis $k$                | $m_k(i) = z2_{ik}$ (`$l1`) | $m_k(j) = v_{jk}$ (`$c1`)                                                                                             |
+| Variance for axis $k$            | None                                                                               | $$s_{jk}^2 =  \frac{1}{p_{\cdot j}} \sum_{i = 1}^r \left(p_{ij} {z2_{ik}}^2 - {v_{jk}}^2 \right)$$ |
 | Covariance between axes $k$, $l$ |                                                                                    |                                                                                                                                              |
 
 -   using C score
 
 |                                  | Rows (sites)                                                                                                                                | Columns (species)                                                                |
 |------------------------|---------------------------|----------------------|
-| Mean for axis $k$                | $$\frac{1}{\sqrt{n}} L_k(i)$$ ($L_k(i) =$ WA score (`$ls`))                                                                          | $$\frac{1}{\sqrt{n}} C1_k(j)$$ ($C1_k(j) =$ normed species score (`$c1`)) |
-| Variance for axis $k$            | $$sC_k^2(i) = \frac{1}{n\lambda_k} \left( \frac{1}{y_{i \cdot}} \sum_{j = 1}^c \left(y_{ij} C_k^2(j) \right) - \lambda_k L_k^2(i) \right)$$ | None                                                                             |
+| Mean for axis $k$                | $u^\star_{ik}$ (WA score `ls`)                                                                          | $$v_{jk}$$ (`$c1`) |
+| Variance for axis $k$            | $$s_k^2(i) = \frac{1}{p_{i \cdot}} \sum_{j = 1}^c \left(p_{ij} v_{jk} \right) - {u^\star_{ik}}^2$$ | None                                                                             |
 | Covariance between axes $k$, $l$ |                                                                                                                                             |                                                                                  |
-
-**Relation between RC scores and R score / C score**
-
--   using R score
-
-|                                  | Rows (sites)                                                                     | Columns (species)                                              |
-|------------------------|---------------------------|----------------------|
-| Mean for axis $k$                | $$mR_k(i) = \frac{\sqrt{2 \mu_k}}{\sqrt{n}} m_k(i) - \frac{1}{\sqrt{n}} L_k(i)$$ | $$mR_k(j) = \frac{\sqrt{2 \lambda_k}}{\sqrt{n \mu_k}} m_k(j)$$ |
-| Variance for axis $k$            | None                                                                             | $sR^2_k(j) =  \frac{2\mu_k}{n} s^2_k(j)$                 |
-| Covariance between axes $k$, $l$ |                                                                                  |                                                                |
-
--   using C score
-
-|                                  | Rows (sites)                                                                       | Columns (species)                                    |
-|------------------------|--------------------------|----------------------|
-| Mean for axis $k$                | $$mC_k(i) = \frac{\sqrt{2 \mu_k}}{\sqrt{n}} m_k(i) - \frac{1}{\sqrt{n}} LC1_k(i)$$ | $$mC_k(j) = \frac{\sqrt{2}}{\sqrt{n \mu_k}} m_k(j)$$ |
-| Variance for axis $k$            | $sC^2_k(i) = \frac{2\mu_k}{n} s^2_k(i)$                                     | None                                                 |
-| Covariance between axes $k$, $l$ |                                                                                    |                                                      |
 :::
 
 #### For rows = sites (group per row)
@@ -413,53 +220,38 @@ Below is a graphical illustration of scoreC grouped by rows:
 
 ```{r}
 s.class(scoreC,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$row),
+        wt = Pfreq0$Freq,
+        fac = as.factor(Pfreq0$row),
         ppoints.col = params$colspp,
         plabels.col = params$colsite, 
         main = "With C score (points = species scores)")
 ```
 
-We compute the following mean: $mC_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c y_{ij} \text{scoreC}_k(i,j)$. To compute these conditional means, we use the `meanfacwt` function from the `ade4` package.
+We compute the following mean: $m_k(i) = \frac{1}{y_{i\cdot}} \sum_{j = 1}^c p_{ij} \text{scoreC}_k(i,j)$. To compute these conditional means, we use the `meanfacwt` function from the `ade4` package.
 
 ```{r}
-mrowsC <- meanfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq)
+mrowsC <- meanfacwt(scoreC, fac = Pfreq0$row, wt = Pfreq0$Freq)
 ```
 
 Then we compare this to a score obtained from CCA.
 
 ```{r}
-mrowsC/(cca$ls * 1/sqrt(n))
+mrowsC/cca$ls
 ```
 
 ??????? axis 4 ?????
 
-```{r}
-mrowsC[, 1:k]/(mrowsRC %*% diag(sqrt(2*mu_CCA/n)) - 1/sqrt(n)*cca$l1)
-```
-
 Now let's compute the variance of scoreC per row:
 
 ```{r}
-varrowsC <- varfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq)
-```
-
-Compare it to the variance of the RC score:
-
-```{r}
-varrowsC[, 1:ncol(varrowsRC)]/(varrowsRC %*% diag(2*mu_CCA/n))
-```
-
-```{r, include=FALSE}
-# This is the same as
-varrowsC[, 1:ncol(varrowsRC)]/varrowsRC_ns
+varrowsC <- varfacwt(scoreC, fac = Pfreq0$row, wt = Pfreq0$Freq)
 ```
 
 We can use this relationship to find the formula using CCA scores:
 
 ```{r}
 varrowsC_CCA <- matrix(nrow = r, 
-                       ncol = k)
+                       ncol = neig)
 
 for (i in 1:r) {
   # Get CA scores for site i
@@ -467,34 +259,34 @@ for (i in 1:r) {
   
   # Compute the part with the sum on Cj
   # we add all coordinates Cj^2 weighted by the number of observations on site i
-  sumCj <- t(Y[i, ]) %*% as.matrix(cca$c1)^2
-  # sumCj <- t(Y[i, ]) %*% as.matrix(cca$co)^2
+  sumj <- t(P[i, ]) %*% as.matrix(cca$c1)^2
+  # sumj <- t(Y[i, ]) %*% as.matrix(cca$co)^2
 
   # Fill i-th row with site i variance along each axis
-  # varrowsC_CCA[i, ] <- 1/(n*lambda_CCA)*((1/yi_[i])*sumCj - lambda_CCA*as.numeric(Li)^2)
-  varrowsC_CCA[i, ] <- 1/n*((1/yi_[i])*sumCj - as.numeric(Li)^2)
+  # varrowsC_CCA[i, ] <- 1/(n*lambda_CCA)*((1/pi_[i])*sumj - lambda_CCA*as.numeric(Li)^2)
+  varrowsC_CCA[i, ] <- ((1/pi_[i])*sumj - as.numeric(Li)^2)
 }
 ```
 
 ```{r}
-varrowsC[, 1:ncol(varrowsRC)]/varrowsC_CCA
+varrowsC[, 1:neig]/varrowsC_CCA
 ```
 
 ```{r}
-varrowsC[, 1:ncol(varrowsRC)]/varrowsC_CCA
+varrowsC[, 1:neig]/varrowsC_CCA
 ```
 
 We can also compute the covariance between axes $k$ and $l$ for site $i$ from CCorA scores:
 
-$$c_{kl}(i) = \frac{1}{y_{i+}}\sum_{j=1}^c y_{ij}{s_Y}_k(i, j){s_Y}_l(i, j) - m_{ik}m_{il}$$
+$$c_{kl}(i) = \frac{1}{y_{i+}}\sum_{j=1}^c p_{ij}{s_Y}_k(i, j){s_Y}_l(i, j) - m_{ik}m_{il}$$
 
 ```{r}
-covarrowsC <- covfacwt(scoreC, fac = Yfreq0$row, wt = Yfreq0$Freq)
+covarrowsC <- covfacwt(scoreC, fac = Pfreq0$row, wt = Pfreq0$Freq)
 ```
 
 This is equivalent to the following formula using CCA scores:
 
-$$ c_{kl}(i) = \frac{1}{n} \left( \sum_{j=1}^c y_{ij}v_{jk}v_{jl} - u^\star_{ik}u^\star_{il} \right)$$
+$$ c_{kl}(i) = \frac{1}{n} \left( \sum_{j=1}^c p_{ij}v_{jk}v_{jl} - u^\star_{ik}u^\star_{il} \right)$$
 ```{r}
 # Define axes k and l
 kk <- 1
@@ -509,10 +301,10 @@ covarrowsC_CCA <- vector(mode = "numeric", length = r)
 
 for (i in 1:r) {
   # Compute the sum
-  sumCj <- sum(Y[i, ]*cca$c1[, kk]*cca$c1[, lk])
+  sumj <- sum(P[i, ]*cca$c1[, kk]*cca$c1[, lk])
 
   # Covariance for species i
-  covarrowsC_CCA[i] <- 1/n*((1/yi_[i])*sumCj - cca$ls[i, kk]*cca$ls[i, lk])
+  covarrowsC_CCA[i] <- ((1/pi_[i])*sumj - cca$ls[i, kk]*cca$ls[i, lk])
 }
 ```
 
@@ -531,8 +323,8 @@ Below is a graphical illustration of scoreR grouped by rows:
 
 ```{r}
 s.class(scoreR,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$row),
+        wt = Pfreq0$Freq,
+        fac = as.factor(Pfreq0$row),
         ppoints.col = params$colsite,
         plabels.col = params$colsite, 
         main = "With R score (points = sites scores)")
@@ -541,9 +333,9 @@ s.class(scoreR,
 All points of the same site ares superimposed.
 
 ```{r}
-mrowsR <- meanfacwt(scoreR, fac = Yfreq0$row, wt = Yfreq0$Freq)
+mrowsR <- meanfacwt(scoreR, fac = Pfreq0$row, wt = Pfreq0$Freq)
 
-mrowsR/(cca$l1*1/sqrt(n))
+mrowsR/cca$l1
 ```
 
 The variance is null.
@@ -556,8 +348,8 @@ We group the scoreC per species. Below is an illustration:
 
 ```{r}
 s.class(scoreC,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$colind),
+        wt = Pfreq0$Freq,
+        fac = as.factor(Pfreq0$colind),
         lab = colnames(Y),
         ppoints.col = params$colspp,
         plabels.col = params$colspp, 
@@ -565,9 +357,9 @@ s.class(scoreC,
 ```
 
 ```{r}
-mcolsC <- meanfacwt(scoreC, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+mcolsC <- meanfacwt(scoreC, fac = Pfreq0$colind, wt = Pfreq0$Freq)
 
-mcolsC/(cca$c1*1/sqrt(n))
+mcolsC/cca$c1
 ```
 
 The variance is null.
@@ -578,8 +370,8 @@ Below are the scoreR grouped by column:
 
 ```{r}
 s.class(scoreR,
-        wt = Yfreq0$Freq,
-        fac = as.factor(Yfreq0$colind),
+        wt = Pfreq0$Freq,
+        fac = as.factor(Pfreq0$colind),
         lab = colnames(Y),
         ppoints.col = params$colsite,
         plabels.col = params$colspp, 
@@ -587,22 +379,13 @@ s.class(scoreR,
 ```
 
 ```{r}
-mcolsR <- meanfacwt(scoreR, fac = Yfreq0$colind, wt = Yfreq0$Freq)
+mcolsR <- meanfacwt(scoreR, fac = Pfreq0$colind, wt = Pfreq0$Freq)
 
-mcolsR/(cca$co*1/sqrt(n))
+mcolsR/cca$co
 ```
 
 ```{r}
-varcolsR <- varfacwt(scoreR, fac = Yfreq0$colind, wt = Yfreq0$Freq)
-```
-
-```{r}
-varcolsR/(varcolsRC %*% diag(2*mu_CCA/n))
-```
-
-```{r, include=FALSE}
-# Same as
-varcolsR/varcolsRC_ns
+varcolsR <- varfacwt(scoreR, fac = Pfreq0$colind, wt = Pfreq0$Freq)
 ```
 
 Similarly we can use this relationship to compute the variance directly from the CCA scores (see in table).
@@ -610,15 +393,15 @@ Similarly we can use this relationship to compute the variance directly from the
 
 We can also compute the covariance between axes $k$ and $l$ for species $j$ from CCorA scores:
 
-$$c_{kl}(j) = \frac{1}{y_{+j}}\sum_{i=1}^r y_{ij}{s_R}_k(i, j){s_R}_l(i, j) - m_{jk}m_{jl}$$
+$$c_{kl}(j) = \frac{1}{y_{+j}}\sum_{i=1}^r p_{ij}{s_R}_k(i, j){s_R}_l(i, j) - m_{jk}m_{jl}$$
 
 ```{r}
-covarcolsR <- covfacwt(scoreR, fac = Yfreq0$col, wt = Yfreq0$Freq)
+covarcolsR <- covfacwt(scoreR, fac = Pfreq0$col, wt = Pfreq0$Freq)
 ```
 
 This is equivalent to the following formula using CCA scores:
 
-$$c_{kl}(j) = \frac{1}{n} \left( \sum_{i=1}^r y_{ij}z2_{ik}z2_{il} - v^\star_{jk}v^\star_{jl} \right)$$
+$$c_{kl}(j) = \frac{1}{n} \left( \sum_{i=1}^r p_{ij}z2_{ik}z2_{il} - v^\star_{jk}v^\star_{jl} \right)$$
 
 ```{r}
 # Define axes k and l
@@ -634,10 +417,10 @@ covarcolsR_CCA <- vector(mode = "numeric", length = c)
 
 for (j in 1:c) {
   # Compute the sum
-  sumi <- sum(Y[, j]*cca$l1[, kk]*cca$l1[, lk])
+  sumi <- sum(P[, j]*cca$l1[, kk]*cca$l1[, lk])
 
   # Covariance for species i
-  covarcolsR_CCA[j] <- 1/n*((1/y_j[j])*sumi - cca$co[j, kk]*cca$co[j, lk])
+  covarcolsR_CCA[j] <- ((1/p_j[j])*sumi - cca$co[j, kk]*cca$co[j, lk])
 }
 ```
 
@@ -659,20 +442,20 @@ We can remain in the 2 biplots showing $V$ with $U^\star$ (`c1` and `ls`) (scali
 
 To do that, we define the "CA-correspondences" $h1_k(i, j)$ for scaling type 1:
 
-$$h1_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2\sqrt{n}}$$
+$$h1_k(i, j) = \frac{u^\star_k(i) + v_k(j)}{2}$$
 
 ```{r}
 #| code-fold: true
 # Initialize results matrix
-H1 <- matrix(nrow = nrow(Yfreq0), 
-             ncol = length(lambda_CCA))
+H1 <- matrix(nrow = nrow(Pfreq0), 
+             ncol = neig)
 
-for (k in 1:length(lambda_CCA)) { # For each axis
+for (k in 1:neig) { # For each axis
   ind <- 1 # initialize row index
-  for (obs in 1:nrow(Yfreq0)) { # For each observation
-    i <- Yfreq0$row[obs]
-    j <- Yfreq0$col[obs]
-    H1[ind, k] <- (cca$ls[i, k] + cca$c1[j, k])/(2*sqrt(n))
+  for (obs in 1:nrow(Pfreq0)) { # For each observation
+    i <- Pfreq0$row[obs]
+    j <- Pfreq0$col[obs]
+    H1[ind, k] <- (cca$ls[i, k] + cca$c1[j, k])/2
     ind <- ind + 1
   }
 }
@@ -681,7 +464,7 @@ for (k in 1:length(lambda_CCA)) { # For each axis
 
 ```{r, warning=FALSE}
 #| code-fold: true
-corresp <- paste(Yfreq0$row, Yfreq0$col, sep = "-")
+corresp <- paste(Pfreq0$row, Pfreq0$col, sep = "-")
 multiplot(indiv_row = as.data.frame(H1), 
           indiv_row_lab = corresp,
           row_color = "black")
@@ -689,42 +472,30 @@ multiplot(indiv_row = as.data.frame(H1),
 
 ```{r}
 # Groupwise mean
-mrows_nr <- meanfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
-all(abs(abs(mrows_nr/(cca$ls/sqrt(n))) - 1) < zero)
-head(mrows_nr/mrowsRC) # It is different from the reciprocal scaling means
+mrows_nr <- meanfacwt(H1, fac = Pfreq0$row, wt = Pfreq0$Freq)
+all(abs(abs(mrows_nr/cca$ls) - 1) < zero)
 
 # Groupwise variance ---
 # Compare to RC score
-varrows_nr <- varfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
-res <- varrows_nr %*% diag(2*n/(mu_CCA)) # Factor 2*n/mu
-all(abs(abs(res/varrowsRC) - 1) < zero)
+varrows_nr <- varfacwt(H1, fac = Pfreq0$row, wt = Pfreq0$Freq)
 # Compare to mean of scoreC
-res2 <- 4*varrows_nr  # Factor 4
-all(abs(abs(res2/varrowsC[, 1:l]) - 1) < zero)
+res <- 4*varrows_nr  # Factor 4
+all(abs(abs(res/varrowsC[, 1:neig]) - 1) < zero)
 
 # Groupwise covariance
-covarrows_nr <- covfacwt(H1, fac = Yfreq0$row, wt = Yfreq0$Freq)
-res2 <- lapply(covarrows_nr, function(x) x*4)  # Factor 4
+covarrows_nr <- covfacwt(H1, fac = Pfreq0$row, wt = Pfreq0$Freq)
+res <- lapply(covarrows_nr, function(x) x*4)  # Factor 4
 # We check for the first covariance
-all(abs(abs(res2[[1]]/covarrowsC[[1]][1:l, 1:l]) - 1) < zero)
-
-# We could also multiply H1 before computing the variance
-H1_scaled <- H1 %*% diag(sqrt(2*n/mu_CCA)) # Factor sqrt(2/mu)
-varrows_nr_scaled <- varfacwt(H1_scaled, fac = Yfreq0$row, wt = Yfreq0$Freq)
-all(abs(varrows_nr_scaled/varrowsRC - 1) < zero)
+all(abs(abs(res[[1]]/covarrowsC[[1]][1:l, 1:l]) - 1) < zero)
 ```
 
 
 ```{r}
 #| code-fold: true
 s.class(H1, 
-        fac = Yfreq0$row, plabels.col = params$colsite, 
-        wt = Yfreq0$Freq,
+        fac = Pfreq0$row, plabels.col = params$colsite, 
+        wt = Pfreq0$Freq,
         main = "Non-reciprocal scaling")
-s.class(H,
-        fac = Yfreq0$row, plabels.col = params$colsite, 
-        wt = Yfreq0$Freq,
-        main = "Reciprocal scaling")
 ```
 
 
@@ -734,12 +505,11 @@ $h1_k(i, j)$ can also be defined from the canonical correlation scores:
 $$h1_k(i, j) = \frac{m_{ik} + {s_Y}_k(i, j)}{2}$$
 
 ```{r}
-tabR <- as.matrix(acm.disjonctif(as.data.frame(Yfreq0$row)))
+tabR <- as.matrix(acm.disjonctif(as.data.frame(Pfreq0$row)))
 scoreRls <- tabR %*% mrowsC # Duplicate means according to correspondences of R
 
 # Find back the formula from the scores 
 H1_cancor <- (scoreRls[, 1:l] + scoreC[, 1:l])/2
-# H1_cancor_scaled <- scalewt(H1_cancor, wt = wt/sum(wt))
 
 all(abs(abs(H1_cancor/H1) - 1) < zero)
 ```
@@ -748,20 +518,20 @@ all(abs(abs(H1_cancor/H1) - 1) < zero)
 
 We define the "CA-correspondences" $h2_k(i, j)$ for scaling type 2:
 
-$$h2_k(i, j) = \frac{z2_k(i) + v^\star_k(j)}{2\sqrt{n}}$$
+$$h2_k(i, j) = \frac{z2_k(i) + v^\star_k(j)}{2}$$
 
 ```{r}
 #| code-fold: true
 # Initialize results matrix
-H2 <- matrix(nrow = nrow(Yfreq0), 
-             ncol = length(lambda_CCA))
+H2 <- matrix(nrow = nrow(Pfreq0), 
+             ncol = neig)
 
-for (k in 1:length(lambda_CCA)) { # For each axis
+for (k in 1:neig) { # For each axis
   ind <- 1 # initialize row index
-  for (obs in 1:nrow(Yfreq0)) { # For each observation
-    i <- Yfreq0$row[obs]
-    j <- Yfreq0$col[obs]
-    H2[ind, k] <- (cca$l1[i, k] + cca$co[j, k])/(2*sqrt(n))
+  for (obs in 1:nrow(Pfreq0)) { # For each observation
+    i <- Pfreq0$row[obs]
+    j <- Pfreq0$col[obs]
+    H2[ind, k] <- (cca$l1[i, k] + cca$co[j, k])/2
     ind <- ind + 1
   }
 }
@@ -770,7 +540,7 @@ for (k in 1:length(lambda_CCA)) { # For each axis
 
 ```{r, warning=FALSE}
 #| code-fold: true
-corresp <- paste(Yfreq0$row, Yfreq0$col, sep = "-")
+corresp <- paste(Pfreq0$row, Pfreq0$col, sep = "-")
 multiplot(indiv_row = as.data.frame(H2), 
           indiv_row_lab = corresp,
           row_color = "black")
@@ -778,33 +548,22 @@ multiplot(indiv_row = as.data.frame(H2),
 
 ```{r}
 # Groupwise mean ---
-mcols_nr <- meanfacwt(H2, fac = Yfreq0$col, wt = Yfreq0$Freq)
+mcols_nr <- meanfacwt(H2, fac = Pfreq0$col, wt = Pfreq0$Freq)
 # Compare with CCA score
-all(abs(abs(mcols_nr/(cca$co/sqrt(n))) - 1) < zero) 
-# Compare with RC scores
-all(abs(abs(mcols_nr/cca$co) - 1) < zero)
-res <- mcols_nr %*% diag(sqrt(mu_CCA*n)/sqrt(2*lambda_CCA)) # factor sqrt(mu*n)/sqrt(2*lambda)
-all(abs(abs(res/mcolsRC) - 1) < zero) 
+all(abs(abs(mcols_nr/cca$co) - 1) < zero) 
 
 # Groupwise variance ---
-varcols_nr <- varfacwt(H2, fac = Yfreq0$col, wt = Yfreq0$Freq)
-varcols_nr_scaled <- varcols_nr %*% diag(2*n/(mu_CCA)) # factor 2*n/mu
-all(abs(abs(varcols_nr_scaled/varcolsRC)[-sp1,] - 1) < zero)
+varcols_nr <- varfacwt(H2, fac = Pfreq0$col, wt = Pfreq0$Freq)
 ```
 
 
 ```{r}
 #| code-fold: true
-fac_col <- factor(Yfreq0$col)
+fac_col <- factor(Pfreq0$col)
 s.class(H2, 
         fac = fac_col, plabels.col = params$colspp, 
-        wt = Yfreq0$Freq,
+        wt = Pfreq0$Freq,
         main = "Non-reciprocal scaling")
-
-s.class(H,
-        fac = fac_col, plabels.col = params$colspp, 
-        wt = Yfreq0$Freq,
-        main = "Reciprocal scaling")
 ```
 
 
@@ -814,7 +573,6 @@ $$h2_k(i, j) = \frac{ {s_R}_k(i, j) +  {s_Y}_k(i, j)  \sqrt{\lambda_k} }{2}$$
 
 ```{r}
 # Find back the formula from the scores 
-H2_cancor <- (scoreR[, 1:l] + scoreC[, 1:l] %*% diag(lambda_CCA^(1/2)))/2
-
+H2_cancor <- (scoreR[, 1:neig] + scoreC[, 1:neig] %*% diag(cca$eig^(1/2)))/2
 all(abs(abs(H2_cancor/H2) - 1) < zero)
 ```

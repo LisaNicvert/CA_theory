@@ -66,9 +66,20 @@ Yfreq0$colind <- match(Yfreq0$col, colnames(Y)) # match index and species names
 YR <- acm.disjonctif(as.data.frame(Yfreq0$row))
 colnames(YR) <- rownames(Y)
 YR <- as.matrix(YR)
+
 YC <- acm.disjonctif(as.data.frame(Yfreq0$col))
 colnames(YC) <- colnames(Y)
 YC <- as.matrix(YC)
+```
+
+```{r}
+P <- Y/sum(Y)
+Pfreq <- as.data.frame(as.table(P))
+colnames(Pfreq) <- c("row", "col", "Freq")
+
+# Remove the cells with no observation
+Pfreq0 <- Pfreq[-which(Pfreq$Freq == 0),]
+Pfreq0$colind <- match(Pfreq0$col, colnames(P)) # match index and species names
 ```
 
 ## Classical canonical correlation analysis
@@ -80,6 +91,7 @@ cancorRC <- cancor(YR,
                    YC,
                    xcenter = FALSE, ycenter = FALSE)
 
+neig <- min(r-1, c-1)
 ```
 
 Now, we do it by hand. First, we compute matrix 
@@ -99,7 +111,7 @@ svdK <- svd(K)
 Compare singular values to canonical correlations:
 
 ```{r}
-all((svdK$d/cancorRC$cor - 1) < zero)
+all((svdK$d[1:neig]/cancorRC$cor[1:neig] - 1) < zero)
 ```
 
 Then, we compute canonical coefficients:
@@ -109,8 +121,8 @@ Then, we compute canonical coefficients:
 xcoefK <- solve(chol(SRR)) %*% svdK$u
 ycoefK <- solve(chol(t(SCC))) %*% svdK$v
 
-all(abs(abs(xcoefK/cancorRC$xcoef[, 1:21]) - 1) < zero)
-all(abs(abs(ycoefK/cancorRC$ycoef) - 1) < zero)
+all(abs(abs(xcoefK[, 1:neig]/cancorRC$xcoef[, 1:neig]) - 1) < zero)
+all(abs(abs(ycoefK[, 1:neig]/cancorRC$ycoef[, 1:neig]) - 1) < zero)
 ```
 
 And the canonical variates:
@@ -123,8 +135,8 @@ scoreCK <- YC %*% ycoefK
 scoreR <- YR %*% cancorRC$xcoef
 scoreC <- YC %*% cancorRC$ycoef
 
-all(abs(abs(scoreRK/scoreR[, 1:21]) - 1) < zero)
-all(abs(abs(scoreCK/scoreC) - 1) < zero)
+all(abs(abs(scoreRK[, 1:neig]/scoreR[, 1:neig]) - 1) < zero)
+all(abs(abs(scoreCK[, 1:neig]/scoreC[, 1:neig]) - 1) < zero)
 ```
 
 
@@ -132,7 +144,7 @@ all(abs(abs(scoreCK/scoreC) - 1) < zero)
 
 ```{r}
 # Get weights
-wt <- Yfreq0$Freq
+wt <- Pfreq0$Freq
 Dw <- diag(wt)
 ```
 
@@ -140,46 +152,82 @@ First, we scale the matrices with custom weights:
 
 ```{r}
 # Center tables
-YR_scaled <- diag(sqrt(wt)) %*% scalewt(YR, wt, 
-                                        scale = FALSE)
-YC_scaled <- diag(sqrt(wt)) %*% scalewt(YC, wt, 
-                                        scale = FALSE)
+YR_scaled <- scalewt(YR, wt, scale = FALSE)
+YC_scaled <- scalewt(YC, wt, scale = FALSE)
 ```
 
-Now, we try to perform a weighted version.
+Now, we perform a weighted version with ADE4.
 
 ```{r}
-cancorRC <- cancor(YR_scaled, 
-                   YC_scaled, 
+cancorRC <- cancor(diag(sqrt(wt)) %*% YR_scaled, 
+                   diag(sqrt(wt)) %*% YC_scaled, 
                    xcenter = FALSE, ycenter = FALSE)
 ```
 
 Now, we do it by hand. First, we compute matrix $K$:
 
 ```{r}
-SRR <- t(YR_scaled) %*% YR_scaled
-SRC <- t(YR_scaled) %*% YC_scaled
-SCC <- t(YC_scaled) %*% YC_scaled
+SRR <- t(YR) %*% Dw %*% YR
+SRC <- t(YR_scaled) %*% Dw %*% YC_scaled
+SCC <- t(YC) %*% Dw %*% YC
 
-# K <- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC))
-K <- solve(sqrtm(t(SRR))) %*% SRC %*% solve(sqrtm(SCC)) 
+K <- solve(chol(t(SRR))) %*% SRC %*% solve(chol(SCC))
 
-svdK <- svd(K)
+svdK <- svd(K, nu = 25, nv = 20)
 ```
 
 Compare singular values to canonical correlations:
 
 ```{r}
-all((svdK$d/cancorRC$cor[1:21] - 1) < zero)
+all((svdK$d[1:neig]/cancorRC$cor[1:neig] - 1) < zero)
 ```
 
 Then, we compute canonical coefficients:
 
 ```{r}
 # Canonical coefficients
-xcoefK <- solve(sqrtm(SRR)) %*% svdK$u
+xcoefK <- solve(chol(SRR)) %*% svdK$u
 ycoefK <- solve(chol(t(SCC))) %*% svdK$v
 
-all(abs(abs(xcoefK[1:25, ]/cancorRC$xcoef[, 1:21]) - 1) < zero)
-all(abs(abs(ycoefK[1:20, 1:20]/cancorRC$ycoef) - 1) < zero)
+xcoefK[1:(r-1), ]/cancorRC$xcoef
+ycoefK[1:(c-1), ]/cancorRC$ycoef
+
+all(abs(abs(xcoefK[1:(r-1), ]/cancorRC$xcoef) - 1) < zero)
+all(abs(abs(ycoefK[1:(c-1), ]/cancorRC$ycoef) - 1) < zero)
 ```
+
+And the canonical variates:
+
+```{r}
+# Canonical variates with ade4
+scoreR <- YR_scaled[, 1:(r-1)]  %*% cancorRC$xcoef
+scoreC <- YC_scaled[, 1:(c-1)]  %*% cancorRC$ycoef
+
+# Check R C are normed at wt
+res <- t(scoreR) %*% diag(wt) %*% scoreR # R^t Dw R = 1
+all(abs(res - diag(1, ncol(scoreR))) < zero) 
+
+res <- t(scoreC) %*% diag(wt) %*% scoreC # R^t Dw R = 1
+all(abs(res - diag(1, ncol(scoreC))) < zero)
+```
+
+
+```{r}
+# Canonical variates with function
+scoreRK <- YR %*% xcoefK
+scoreCK <- YC %*% ycoefK
+
+# Check R C are normed at wt
+res <- t(scoreRK) %*% diag(wt) %*% scoreRK # R^t Dw R = 1
+all(abs(res - diag(1, ncol(scoreRK))) < zero) 
+
+res <- t(scoreCK) %*% diag(wt) %*% scoreCK # R^t Dw R = 1
+all(abs(res - diag(1, ncol(scoreCK))) < zero)
+```
+
+
+```{r}
+all(abs(abs(scoreR[,1:neig]/scoreRK[,1:neig]) - 1) < zero)
+all(abs(abs(scoreC[,1:neig]/scoreCK[,1:neig]) - 1) < zero)
+```
+
